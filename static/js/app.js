@@ -2,6 +2,8 @@
 let currentUser = null;
 let attendanceData = [];
 let employees = [];
+let filteredData = [];
+let selectedEmployee = null;
 
 // Utility functions
 function showLoading(text = 'Processing...') {
@@ -113,6 +115,7 @@ async function logout() {
         currentUser = null;
         attendanceData = [];
         employees = [];
+        selectedEmployee = null;
         showLoginPage();
         showNotification('Successfully logged out!');
     } catch (error) {
@@ -137,7 +140,7 @@ function showLoginPage() {
     document.getElementById('login-form').style.display = 'block';
 }
 
-function showDashboard() {
+async function showDashboard() {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('dashboard-section').style.display = 'block';
     
@@ -154,14 +157,23 @@ function showDashboard() {
     document.getElementById('date-picker').value = today;
     
     // Load initial data
-    loadAttendanceData();
+    await loadAttendanceData();
+    
+    if (currentUser.is_admin) {
+        await loadEmployees();
+        // Auto-select first employee if data is available
+        if (employees.length > 0 && attendanceData.length > 0) {
+            const firstEmployee = employees[0];
+            selectEmployee(firstEmployee);
+        }
+    }
+    
     loadPasswordResetRequests();
 }
 
 function showAdminDashboard() {
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('employee-panel').style.display = 'none';
-    loadEmployees();
 }
 
 function showEmployeeDashboard() {
@@ -205,8 +217,17 @@ async function uploadFile() {
         
         if (result.success) {
             showNotification(result.message);
-            loadAttendanceData();
-            loadEmployees();
+            
+            // Load data first
+            await loadAttendanceData();
+            await loadEmployees();
+            
+            // Auto-select first employee after upload
+            if (currentUser.is_admin && employees.length > 0 && attendanceData.length > 0) {
+                const firstEmployee = employees[0];
+                selectEmployee(firstEmployee);
+            }
+            
         } else {
             showNotification(result.message, 'error');
         }
@@ -219,6 +240,210 @@ async function uploadFile() {
     }
 }
 
+// **FIXED: Employee Search Functions**
+function searchEmployees() {
+    const searchTerm = document.getElementById('employee-search').value.trim();
+    
+    // **FIX: Allow empty search to show "no selection" state**
+    if (!searchTerm) {
+        // Don't auto-select anything when search is empty
+        selectedEmployee = null;
+        filteredData = [];
+        hideEmployeeProfile();
+        
+        // Remove search dropdown if exists
+        const dropdown = document.getElementById('search-results-dropdown');
+        if (dropdown) {
+            dropdown.remove();
+        }
+        
+        // Show message that search is cleared
+        const container = document.getElementById('attendance-table-container');
+        container.innerHTML = `
+            <div class="no-data">
+                <i class="fas fa-search"></i>
+                <h3>Search Cleared</h3>
+                <p>Type an employee name to search</p>
+            </div>
+        `;
+        
+        // Update stats to show full dataset
+        updateAdminStats();
+        return; // **IMPORTANT: Exit here, don't auto-select**
+    }
+    
+    // **CHECK: Ensure employees array exists and has data**
+    if (!employees || employees.length === 0) {
+        showNotification('No employees data available. Please upload attendance file first.', 'error');
+        return;
+    }
+    
+    // Filter employees based on search term
+    const matchingEmployees = employees.filter(emp => 
+        emp.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    if (matchingEmployees.length === 1) {
+        // If exactly one match, select that employee
+        selectEmployee(matchingEmployees[0]);
+    } else if (matchingEmployees.length === 0) {
+        // No matches found
+        showNotification('No employees found matching your search', 'warning');
+        hideEmployeeProfile();
+        
+        // Show no results message
+        const container = document.getElementById('attendance-table-container');
+        container.innerHTML = `
+            <div class="no-data">
+                <i class="fas fa-user-slash"></i>
+                <h3>No Matches Found</h3>
+                <p>No employees found matching "${searchTerm}"</p>
+            </div>
+        `;
+        
+        selectedEmployee = null;
+        filteredData = [];
+        updateAdminStats();
+    } else {
+        // Multiple matches - show dropdown or list for selection
+        showMultipleMatchesSelection(matchingEmployees);
+    }
+}
+
+
+// **NEW: Handle multiple search matches**
+function showMultipleMatchesSelection(matchingEmployees) {
+    // Create a temporary selection interface
+    const searchContainer = document.getElementById('employee-search').parentElement;
+    
+    // Remove existing dropdown if any
+    const existingDropdown = document.getElementById('search-results-dropdown');
+    if (existingDropdown) {
+        existingDropdown.remove();
+    }
+    
+    // Create dropdown for multiple matches
+    const dropdown = document.createElement('div');
+    dropdown.id = 'search-results-dropdown';
+    dropdown.className = 'search-dropdown';
+    
+    let dropdownHTML = '<div class="search-results-header">Select Employee:</div>';
+    matchingEmployees.forEach(employee => {
+        dropdownHTML += `
+            <div class="search-result-item" onclick="selectEmployeeFromSearch('${employee}')">
+                ${employee}
+            </div>
+        `;
+    });
+    
+    dropdown.innerHTML = dropdownHTML;
+    searchContainer.appendChild(dropdown);
+    
+    // Auto-hide dropdown after 10 seconds
+    setTimeout(() => {
+        if (dropdown.parentElement) {
+            dropdown.remove();
+        }
+    }, 10000);
+}
+
+// **NEW: Select employee from search dropdown**
+function selectEmployeeFromSearch(employeeName) {
+    selectEmployee(employeeName);
+    
+    // Remove search dropdown
+    const dropdown = document.getElementById('search-results-dropdown');
+    if (dropdown) {
+        dropdown.remove();
+    }
+}
+
+function selectEmployee(employeeName) {
+    selectedEmployee = employeeName;
+    document.getElementById('employee-search').value = employeeName;
+    
+    // Remove search dropdown if exists
+    const dropdown = document.getElementById('search-results-dropdown');
+    if (dropdown) {
+        dropdown.remove();
+    }
+    
+    // Filter data for selected employee
+    filteredData = attendanceData.filter(record => record.Employee === employeeName);
+    
+    // Show employee profile and data
+    showEmployeeProfile(employeeName);
+    displayAdminAttendanceData();
+    updateAdminStats();
+    
+    showNotification(`Viewing data for ${employeeName}`, 'success');
+}
+
+function clearEmployeeSearch() {
+    selectedEmployee = null;
+    filteredData = [];
+    
+    // **CLEAR SEARCH BOX**
+    document.getElementById('employee-search').value = '';
+    
+    hideEmployeeProfile();
+    
+    // Remove search dropdown if exists
+    const dropdown = document.getElementById('search-results-dropdown');
+    if (dropdown) {
+        dropdown.remove();
+    }
+    
+    // **DON'T AUTO-SELECT: Show empty state instead**
+    const container = document.getElementById('attendance-table-container');
+    container.innerHTML = `
+        <div class="no-data">
+            <i class="fas fa-search"></i>
+            <h3>Search Cleared</h3>
+            <p>Type an employee name to search, or upload data to get started</p>
+        </div>
+    `;
+    
+    updateAdminStats();
+    showNotification('Search cleared', 'success');
+}
+
+
+function showEmployeeProfile(employeeName) {
+    const profileCard = document.getElementById('employee-profile');
+    const employeeData = attendanceData.filter(record => record.Employee === employeeName);
+    
+    if (employeeData.length === 0) {
+        hideEmployeeProfile();
+        return;
+    }
+    
+    // Calculate stats for this employee
+    const totalDays = employeeData.length;
+    const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;
+    const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
+    const leaveDays = employeeData.filter(record => 
+        ['W/O', 'PL', 'SL', 'FL', 'HL'].some(leave => record.Status.startsWith(leave))
+    ).length;
+    const attendanceRate = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0;
+    
+    // Update profile card content
+    document.getElementById('profile-employee-name').textContent = employeeName;
+    document.getElementById('profile-total-days').textContent = totalDays;
+    document.getElementById('profile-present-days').textContent = presentDays;
+    document.getElementById('profile-absent-days').textContent = absentDays;
+    document.getElementById('profile-leave-days').textContent = leaveDays;
+    document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
+    
+    // Show the profile card
+    profileCard.classList.add('show');
+}
+
+function hideEmployeeProfile() {
+    const profileCard = document.getElementById('employee-profile');
+    profileCard.classList.remove('show');
+}
+
 // Data loading functions
 async function loadAttendanceData() {
     try {
@@ -226,18 +451,17 @@ async function loadAttendanceData() {
             document.getElementById('status-filter')?.value || 'All' : 
             document.getElementById('employee-status-filter')?.value || 'All';
         
-        const employeeFilter = currentUser.is_admin ? 
-            document.getElementById('employee-filter')?.value || '' : '';
-        
+        // **FIXED: Don't apply employee filter from dropdown when loading data**
+        // This was causing the issue - the dropdown filter was restricting data
         const url = new URL('/api/attendance', window.location.origin);
         if (statusFilter !== 'All') url.searchParams.append('status', statusFilter);
-        if (employeeFilter) url.searchParams.append('employee', employeeFilter);
         
         const response = await fetch(url);
         const result = await response.json();
         
         if (result.success) {
             attendanceData = result.data;
+            
             if (currentUser.is_admin) {
                 displayAdminAttendanceData();
                 updateAdminStats();
@@ -289,18 +513,29 @@ async function loadPasswordResetRequests() {
 function displayAdminAttendanceData() {
     const container = document.getElementById('attendance-table-container');
     
-    if (attendanceData.length === 0) {
+    // **FIXED: Use correct data based on selection**
+    let dataToDisplay;
+    
+    if (selectedEmployee) {
+        // Show selected employee's data
+        dataToDisplay = attendanceData.filter(record => record.Employee === selectedEmployee);
+    } else {
+        // Show all data (fallback)
+        dataToDisplay = attendanceData;
+    }
+    
+    if (dataToDisplay.length === 0) {
         container.innerHTML = `
             <div class="no-data">
                 <i class="fas fa-inbox"></i>
                 <h3>No Data Available</h3>
-                <p>Upload an Excel file to get started</p>
+                <p>${attendanceData.length === 0 ? 'Upload an Excel file to get started' : 'No records found for the selected employee'}</p>
             </div>
         `;
         return;
     }
     
-    const table = createAttendanceTable(attendanceData);
+    const table = createAttendanceTable(dataToDisplay);
     container.innerHTML = table;
 }
 
@@ -368,7 +603,6 @@ function createAttendanceTable(data) {
         <td>${comments}</td>
     </tr>
 `;
-
     });
     
     html += `
@@ -379,22 +613,19 @@ function createAttendanceTable(data) {
     return html;
 }
 
-// Add this function to your app.js
+// Mobile tooltip function
 function showMobileTooltip(element, comment) {
-    if (!comment.trim()) return; // Don't show empty tooltips
+    if (!comment.trim()) return;
     
-    // Remove any existing mobile tooltips
     const existingTooltip = document.querySelector('.mobile-tooltip');
     if (existingTooltip) {
         existingTooltip.remove();
     }
     
-    // Create mobile tooltip
     const tooltip = document.createElement('div');
     tooltip.className = 'mobile-tooltip';
     tooltip.textContent = comment;
     
-    // Position tooltip
     const rect = element.getBoundingClientRect();
     tooltip.style.position = 'fixed';
     tooltip.style.top = (rect.top - 10) + 'px';
@@ -403,7 +634,6 @@ function showMobileTooltip(element, comment) {
     
     document.body.appendChild(tooltip);
     
-    // Auto-hide after 3 seconds
     setTimeout(() => {
         if (tooltip.parentNode) {
             tooltip.remove();
@@ -420,7 +650,6 @@ document.addEventListener('touchstart', function(e) {
         }
     }
 });
-
 
 function formatComments(record) {
     const comments = [];
@@ -455,14 +684,26 @@ function formatDate(dateStr) {
 }
 
 function updateAdminStats() {
+    // **FIXED: Always show total counts from full dataset**
+    let dataToUse;
+    
+    if (selectedEmployee) {
+        dataToUse = attendanceData.filter(record => record.Employee === selectedEmployee);
+    } else {
+        dataToUse = attendanceData;
+    }
+    
+    // Always calculate totals from the full dataset
     const totalEmployees = [...new Set(attendanceData.map(record => record.Employee))].length;
-    const totalRecords = attendanceData.length;
+    const totalRecords = attendanceData.length; // Show total records from full dataset
     const dateUntil = document.getElementById('date-picker').value;
     
     document.getElementById('total-employees').textContent = totalEmployees;
     document.getElementById('total-records').textContent = totalRecords;
     document.getElementById('data-until').textContent = dateUntil ? new Date(dateUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '--';
 }
+
+
 
 function updateEmployeeStats() {
     const employeeData = attendanceData.filter(record => record.Employee === currentUser.name);
@@ -487,8 +728,11 @@ function updateEmployeeStats() {
     document.getElementById('performance-status').innerHTML = `${performanceEmoji} ${performanceStatus}`;
 }
 
+// **FIXED: Employee dropdown filter function**
 function updateEmployeeFilter() {
     const select = document.getElementById('employee-filter');
+    if (!select) return;
+    
     select.innerHTML = '<option value="">All Employees</option>';
     
     employees.forEach(employee => {
@@ -497,6 +741,19 @@ function updateEmployeeFilter() {
         option.textContent = employee;
         select.appendChild(option);
     });
+    
+    // **NEW: Add event listener for dropdown selection**
+    select.onchange = function() {
+        const selectedValue = this.value;
+        if (selectedValue) {
+            selectEmployee(selectedValue);
+        } else {
+            // If "All Employees" is selected, show first employee
+            if (employees.length > 0) {
+                selectEmployee(employees[0]);
+            }
+        }
+    };
 }
 
 function displayPasswordResetRequests(requests) {
@@ -545,7 +802,7 @@ async function resetUserPassword(email, index) {
         
         if (result.success) {
             showNotification(`Password reset successfully for ${email}`);
-            loadPasswordResetRequests(); // Reload to update the display
+            loadPasswordResetRequests();
         } else {
             showNotification(result.message, 'error');
         }
@@ -558,6 +815,12 @@ async function resetUserPassword(email, index) {
 // Filter and utility functions
 function applyFilters() {
     loadAttendanceData();
+    // Re-apply current employee selection after loading
+    if (selectedEmployee && currentUser.is_admin) {
+        setTimeout(() => {
+            selectEmployee(selectedEmployee);
+        }, 100);
+    }
 }
 
 function applyEmployeeFilters() {
@@ -566,16 +829,31 @@ function applyEmployeeFilters() {
 
 function updateDateRange() {
     loadAttendanceData();
+    // Re-apply current employee selection after loading
+    if (selectedEmployee && currentUser.is_admin) {
+        setTimeout(() => {
+            selectEmployee(selectedEmployee);
+        }, 100);
+    }
 }
 
 function exportData() {
-    if (attendanceData.length === 0) {
+    let dataToExport;
+    
+    if (selectedEmployee) {
+        dataToExport = attendanceData.filter(record => record.Employee === selectedEmployee);
+    } else {
+        dataToExport = attendanceData;
+    }
+    
+    if (dataToExport.length === 0) {
         showNotification('No data to export', 'warning');
         return;
     }
     
-    const csvContent = convertToCSV(attendanceData);
-    downloadCSV(csvContent, 'attendance_data.csv');
+    const csvContent = convertToCSV(dataToExport);
+    const filename = selectedEmployee ? `${selectedEmployee}_attendance.csv` : 'attendance_data.csv';
+    downloadCSV(csvContent, filename);
 }
 
 function exportEmployeeData() {
@@ -596,10 +874,8 @@ function convertToCSV(data) {
     const headers = ['Employee', 'Date', 'Punch-In', 'Punch-Out', 'Status', 'Comments'];
     const csvRows = [];
     
-    // Add headers
     csvRows.push(headers.join(','));
     
-    // Add data rows
     data.forEach(record => {
         const comments = formatComments(record);
         const row = [
@@ -673,6 +949,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitPasswordReset();
                 }
             }
+        }
+    });
+    
+    // **NEW: Handle clicks outside search dropdown to close it**
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('search-results-dropdown');
+        if (dropdown && !e.target.closest('.search-dropdown') && !e.target.closest('#employee-search')) {
+            dropdown.remove();
         }
     });
 });

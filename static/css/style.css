@@ -11,7 +11,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Enhanced gradient header with animated background */
+/* Enhanced gradient header with animated background - IMPROVED SIZE */
 .main-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
     background-size: 400% 400%;
@@ -22,6 +22,7 @@ body {
     justify-content: center;
     color: white;
     text-align: center;
+    padding: 2rem;
 }
 
 @keyframes gradientShift {
@@ -30,60 +31,64 @@ body {
     100% { background-position: 0% 50%; }
 }
 
+/* IMPROVED LOGIN CONTAINER SIZE */
 .login-container {
-    max-width: 500px;
-    width: 90%;
-    padding: 2rem;
+    max-width: 600px;
+    width: 95%;
+    padding: 3rem 2rem;
 }
 
 .login-container h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+    font-size: 3rem;
+    margin-bottom: 1rem;
     text-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 .login-container > p {
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
+    font-size: 1.3rem;
+    margin-bottom: 3rem;
     opacity: 0.9;
 }
 
+/* IMPROVED LOGIN FORM SIZE */
 .login-form {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(15px);
     border-radius: 20px;
-    padding: 2rem;
+    padding: 3rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .login-form h3 {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     font-weight: 500;
+    font-size: 1.4rem;
 }
 
 .input-group {
     position: relative;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .input-group i {
     position: absolute;
-    left: 15px;
+    left: 20px;
     top: 50%;
     transform: translateY(-50%);
     color: #667eea;
     z-index: 2;
+    font-size: 1.1rem;
 }
 
 .input-group input {
     width: 100%;
-    padding: 1rem 1rem 1rem 3rem;
+    padding: 1.3rem 1.5rem 1.3rem 3.5rem;
     border: none;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.9);
-    font-size: 1rem;
+    font-size: 1.1rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -101,11 +106,11 @@ body {
 }
 
 .btn-primary, .btn-secondary, .btn-logout, .export-btn {
-    padding: 1rem 2rem;
+    padding: 1.2rem 2rem;
     border: none;
     border-radius: 12px;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 1.1rem;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -138,12 +143,12 @@ body {
 }
 
 .info-text {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     opacity: 0.9;
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
-/* Demo Credentials */
+/* IMPROVED Demo Credentials */
 .demo-credentials {
     margin-top: 2rem;
 }
@@ -152,10 +157,10 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0.8rem 1.5rem;
+    padding: 1rem 2rem;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -171,8 +176,8 @@ body {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 15px;
-    padding: 1.5rem;
-    margin-top: 1rem;
+    padding: 2rem;
+    margin-top: 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
     text-align: left;
     display: none;
@@ -195,26 +200,26 @@ body {
 }
 
 .credentials-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .credentials-section h4 {
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
     color: #ffffff;
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
 .credentials-section p {
-    margin-bottom: 0.5rem;
-    font-size: 0.85rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
     opacity: 0.9;
 }
 
 .features-info {
     background: rgba(102, 126, 234, 0.2);
-    padding: 1rem;
+    padding: 1.5rem;
     border-radius: 10px;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
 }
 
 /* Dashboard Styles */
@@ -456,21 +461,55 @@ body {
     color: #f39c12;
 }
 
-/* Filters */
+/* ENHANCED Filters Section with Search */
 .filters-section, .employee-filters {
     background: white;
-    padding: 1.5rem;
+    padding: 2rem;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     margin-bottom: 2rem;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     align-items: center;
-    flex-wrap: wrap;
+}
+
+.search-group {
+    position: relative;
+    grid-column: span 2;
+}
+
+.search-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 1rem;
+}
+
+.search-group input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    border: 2px solid #ecf0f1;
+    border-radius: 10px;
+    background: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-group input::placeholder {
+    color: #bdc3c7;
 }
 
 .filters-section select, .employee-filters select {
-    padding: 0.8rem 1rem;
+    padding: 1rem;
     border: 2px solid #ecf0f1;
     border-radius: 10px;
     background: white;
@@ -489,13 +528,87 @@ body {
 .export-btn {
     background: linear-gradient(135deg, #27ae60, #2ecc71);
     color: white;
-    padding: 0.8rem 1.5rem;
-    margin-left: auto;
+    padding: 1rem 1.5rem;
+    justify-self: end;
 }
 
 .export-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+}
+
+/* Clear Search Button */
+.clear-search-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #bdc3c7;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clear-search-btn:hover {
+    color: #e74c3c;
+}
+
+/* Employee Profile Card */
+.employee-profile {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    border-left: 5px solid #667eea;
+    display: none;
+}
+
+.employee-profile.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+.employee-profile h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.employee-profile-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.employee-profile-stat {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.employee-profile-stat h4 {
+    color: #667eea;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.employee-profile-stat p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
 }
 
 /* Table Styles */
@@ -718,6 +831,19 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .login-container {
+        max-width: 100%;
+        padding: 2rem 1rem;
+    }
+    
+    .login-container h1 {
+        font-size: 2.5rem;
+    }
+    
+    .login-form {
+        padding: 2rem;
+    }
+    
     .control-panel {
         grid-template-columns: 1fr;
     }
@@ -731,18 +857,15 @@ body {
     }
     
     .filters-section, .employee-filters {
-        flex-direction: column;
-        align-items: stretch;
+        grid-template-columns: 1fr;
     }
     
-    .filters-section select, .employee-filters select {
-        min-width: auto;
-        width: 100%;
+    .search-group {
+        grid-column: span 1;
     }
     
     .export-btn {
-        margin-left: 0;
-        margin-top: 1rem;
+        justify-self: center;
     }
     
     .dashboard {
@@ -767,6 +890,10 @@ body {
     .attendance-table th, 
     .attendance-table td {
         padding: 0.5rem;
+    }
+    
+    .employee-profile-stats {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -819,6 +946,7 @@ body {
     opacity: 0.7;
     pointer-events: none;
 }
+
 
 /* Highlight cells with comments on touch devices */
 @media (hover: none) and (pointer: coarse) {

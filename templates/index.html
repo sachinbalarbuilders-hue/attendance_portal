@@ -52,30 +52,6 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Demo Credentials -->
-                <div class="demo-credentials">
-                    <button onclick="toggleDemoCredentials()" class="demo-toggle">
-                        <i class="fas fa-info-circle"></i> Demo Credentials
-                    </button>
-                    <div id="demo-content" class="demo-content">
-                        <div class="credentials-section">
-                            <h4><i class="fas fa-user-shield"></i> Admin Accounts (Full Access)</h4>
-                            <p><strong>Email:</strong> admin@company.com | <strong>Password:</strong> admin123</p>
-                            <p><strong>Email:</strong> bhavin.patel@company.com | <strong>Password:</strong> bhavin123</p>
-                        </div>
-                        <div class="credentials-section">
-                            <h4><i class="fas fa-users"></i> Employee Accounts (Personal View)</h4>
-                            <p><strong>Email:</strong> pramod.dubey@company.com | <strong>Password:</strong> pramod123</p>
-                            <p><strong>Email:</strong> shrikant.talekar@company.com | <strong>Password:</strong> shrikant123</p>
-                            <p><strong>Email:</strong> jitendra.patolia@company.com | <strong>Password:</strong> jitendra123</p>
-                            <p><strong>Email:</strong> lalit.dobariya@company.com | <strong>Password:</strong> lalit123</p>
-                        </div>
-                        <div class="features-info">
-                            <strong><i class="fas fa-lightbulb"></i> Features:</strong> File upload, password reset, persistent data storage
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -125,6 +101,33 @@
                         <div id="reset-requests-list"></div>
                     </div>
 
+                    <!-- Employee Profile Card -->
+                    <div id="employee-profile" class="employee-profile">
+                        <h3><i class="fas fa-user-circle"></i> <span id="profile-employee-name"></span> - Detailed View</h3>
+                        <div class="employee-profile-stats">
+                            <div class="employee-profile-stat">
+                                <h4 id="profile-total-days">0</h4>
+                                <p>Total Days</p>
+                            </div>
+                            <div class="employee-profile-stat">
+                                <h4 id="profile-present-days">0</h4>
+                                <p>Present Days</p>
+                            </div>
+                            <div class="employee-profile-stat">
+                                <h4 id="profile-absent-days">0</h4>
+                                <p>Absent Days</p>
+                            </div>
+                            <div class="employee-profile-stat">
+                                <h4 id="profile-leave-days">0</h4>
+                                <p>Leave Days</p>
+                            </div>
+                            <div class="employee-profile-stat">
+                                <h4 id="profile-attendance-rate">0%</h4>
+                                <p>Attendance Rate</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="stats-section">
                         <div class="stat-card">
                             <i class="fas fa-users"></i>
@@ -150,6 +153,21 @@
                     </div>
 
                     <div class="filters-section">
+                        <!-- Employee Search -->
+                        <div class="search-group">
+                            <i class="fas fa-search"></i>
+                            <input 
+                                type="text" 
+                                id="employee-search" 
+                                placeholder="Search employee by name..." 
+                                oninput="searchEmployees()"
+                                autocomplete="off"
+                            >
+                            <button class="clear-search-btn" onclick="clearEmployeeSearch()" title="Clear search">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
                         <select id="status-filter" onchange="applyFilters()">
                             <option value="All">All Statuses</option>
                             <option value="P">Present</option>
@@ -160,9 +178,11 @@
                             <option value="FL">Festival Leave</option>
                             <option value="HL">Half Leave</option>
                         </select>
+                        
                         <select id="employee-filter" onchange="applyFilters()">
                             <option value="">All Employees</option>
                         </select>
+                        
                         <button onclick="exportData()" class="export-btn">
                             <i class="fas fa-download"></i> Export CSV
                         </button>
