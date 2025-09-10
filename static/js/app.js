@@ -5,6 +5,112 @@ let employees = [];
 let filteredData = [];
 let selectedEmployee = null;
 
+// Force desktop view on all devices
+function forceDesktopView() {
+    // Set minimum width for all devices
+    document.documentElement.style.minWidth = '1200px';
+    document.body.style.minWidth = '1200px';
+    document.body.style.overflowX = 'auto';
+    
+    // Remove any mobile-specific classes
+    document.body.classList.remove('mobile', 'touch-device');
+    document.documentElement.classList.remove('mobile', 'touch-device');
+    
+    // Force desktop tooltip behavior
+    handleDesktopComments();
+}
+
+// Enhanced desktop comment handling
+function handleDesktopComments() {
+    const commentCells = document.querySelectorAll('[data-comment]:not([data-comment=""])');
+    
+    commentCells.forEach(cell => {
+        // Remove any existing event listeners
+        cell.removeEventListener('touchstart', showMobileTooltip);
+        cell.removeEventListener('touchend', hideMobileTooltip);
+        
+        // Add desktop hover events
+        cell.addEventListener('mouseenter', showDesktopTooltip);
+        cell.addEventListener('mouseleave', hideDesktopTooltip);
+        cell.addEventListener('mousemove', moveDesktopTooltip);
+    });
+}
+
+function showDesktopTooltip(event) {
+    const cell = event.currentTarget;
+    const comment = cell.getAttribute('data-comment');
+    
+    if (!comment) return;
+    
+    // Remove any existing tooltips
+    const existingTooltip = document.querySelector('.desktop-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'desktop-tooltip';
+    tooltip.textContent = comment;
+    
+    document.body.appendChild(tooltip);
+    
+    // Position tooltip
+    const rect = cell.getBoundingClientRect();
+    tooltip.style.left = (rect.left + window.scrollX + rect.width/2 - tooltip.offsetWidth/2) + 'px';
+    tooltip.style.top = (rect.top + window.scrollY - tooltip.offsetHeight - 10) + 'px';
+    
+    // Ensure tooltip stays within viewport
+    if (tooltip.offsetLeft < 10) {
+        tooltip.style.left = '10px';
+    }
+    if (tooltip.offsetLeft + tooltip.offsetWidth > window.innerWidth - 10) {
+        tooltip.style.left = (window.innerWidth - tooltip.offsetWidth - 10) + 'px';
+    }
+}
+
+function moveDesktopTooltip(event) {
+    const tooltip = document.querySelector('.desktop-tooltip');
+    if (!tooltip) return;
+    
+    const cell = event.currentTarget;
+    const rect = cell.getBoundingClientRect();
+    
+    tooltip.style.left = (rect.left + window.scrollX + rect.width/2 - tooltip.offsetWidth/2) + 'px';
+    tooltip.style.top = (rect.top + window.scrollY - tooltip.offsetHeight - 10) + 'px';
+}
+
+function hideDesktopTooltip() {
+    const tooltip = document.querySelector('.desktop-tooltip');
+    if (tooltip) {
+        tooltip.remove();
+    }
+}
+
+// Initialize desktop view on page load
+document.addEventListener('DOMContentLoaded', function() {
+    forceDesktopView();
+    
+    // Re-apply desktop view on window resize
+    window.addEventListener('resize', forceDesktopView);
+    
+    // Observer to handle dynamically loaded content
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                handleDesktopComments();
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
+
+// Keep all your existing JavaScript functions below this point
+// (login, logout, uploadFile, searchEmployees, etc.)
+
 // Utility functions
 function showLoading(text = 'Processing...') {
     const overlay = document.getElementById('loading-overlay');

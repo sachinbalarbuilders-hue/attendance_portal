@@ -5,10 +5,17 @@
     font-family: 'Poppins', sans-serif;
 }
 
+/* FORCE DESKTOP VIEW ON ALL DEVICES */
+html {
+    min-width: 1200px !important;
+    overflow-x: auto !important;
+}
+
 body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    overflow-x: hidden;
+    min-width: 1200px !important;
+    overflow-x: auto !important;
 }
 
 /* Enhanced gradient header with animated background - IMPROVED SIZE */
@@ -611,17 +618,19 @@ body {
     font-size: 0.9rem;
 }
 
-/* Table Styles */
+/* Table Styles - Enhanced for Desktop */
 .table-container {
     background: white;
     border-radius: 15px;
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    width: 100%;
 }
 
 .attendance-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 800px; /* Ensure minimum width */
 }
 
 .attendance-table th {
@@ -632,12 +641,14 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .attendance-table td {
     padding: 0.8rem;
     text-align: center;
     border-bottom: 1px solid #ecf0f1;
+    white-space: nowrap;
 }
 
 .attendance-table tr:hover {
@@ -829,106 +840,33 @@ body {
     }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .login-container {
-        max-width: 100%;
-        padding: 2rem 1rem;
-    }
-    
-    .login-container h1 {
-        font-size: 2.5rem;
-    }
-    
-    .login-form {
-        padding: 2rem;
-    }
-    
-    .control-panel {
-        grid-template-columns: 1fr;
-    }
-    
-    .stats-section {
-        grid-template-columns: 1fr;
-    }
-    
-    .employee-stats {
-        grid-template-columns: 1fr;
-    }
-    
-    .filters-section, .employee-filters {
-        grid-template-columns: 1fr;
-    }
-    
-    .search-group {
-        grid-column: span 1;
-    }
-    
-    .export-btn {
-        justify-self: center;
-    }
-    
-    .dashboard {
-        padding: 1rem;
-    }
-    
-    .navbar {
-        padding: 1rem;
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-    
-    .button-group {
-        flex-direction: column;
-    }
-    
-    .attendance-table {
-        font-size: 0.8rem;
-    }
-    
-    .attendance-table th, 
-    .attendance-table td {
-        padding: 0.5rem;
-    }
-    
-    .employee-profile-stats {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-    .login-container {
-        padding: 1rem;
-    }
-    
-    .login-container h1 {
-        font-size: 2rem;
-    }
-    
-    .login-form {
-        padding: 1.5rem;
-    }
-}
-
-/* Mobile tooltip styling */
-.mobile-tooltip {
+/* Desktop Tooltip for Comments */
+.desktop-tooltip {
+    position: absolute;
     background: rgba(0, 0, 0, 0.9);
     color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    max-width: 250px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    max-width: 300px;
     word-wrap: break-word;
     z-index: 10000;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     pointer-events: none;
-    animation: fadeIn 0.3s ease;
+    animation: fadeInDesktop 0.3s ease;
+    line-height: 1.4;
+    white-space: normal;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(-100%) scale(0.8); }
-    to { opacity: 1; transform: translateX(-50%) translateY(-100%) scale(1); }
+@keyframes fadeInDesktop {
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px) scale(0.9); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
 }
 
 /* Visual indicator for cells with comments */
@@ -940,17 +878,149 @@ body {
 .attendance-table td[data-comment]:not([data-comment=""]):after {
     content: '💬';
     position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 8px;
-    opacity: 0.7;
+    top: 4px;
+    right: 4px;
+    font-size: 12px;
+    opacity: 0.8;
     pointer-events: none;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* COMPLETELY DISABLE ALL MOBILE RESPONSIVENESS */
+/* All media queries are now disabled to force desktop view */
 
-/* Highlight cells with comments on touch devices */
-@media (hover: none) and (pointer: coarse) {
-    .attendance-table td[data-comment]:not([data-comment=""]) {
-        background: linear-gradient(45deg, transparent 92%, #4CAF50 92%) !important;
+/* Force desktop view for ALL screen sizes */
+@media screen and (max-width: 768px) {
+    /* Override all mobile styles to maintain desktop layout */
+    html, body {
+        min-width: 1200px !important;
+        overflow-x: auto !important;
+    }
+    
+    .login-container {
+        max-width: 600px !important;
+        width: 95% !important;
+        padding: 3rem 2rem !important;
+    }
+    
+    .login-container h1 {
+        font-size: 3rem !important;
+    }
+    
+    .login-form {
+        padding: 3rem !important;
+    }
+    
+    .dashboard {
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        padding: 2rem !important;
+    }
+    
+    .control-panel {
+        display: grid !important;
+        grid-template-columns: 2fr 1fr !important;
+        gap: 2rem !important;
+    }
+    
+    .stats-section {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        gap: 1.5rem !important;
+    }
+    
+    .employee-stats {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+        gap: 1.5rem !important;
+    }
+    
+    .filters-section, .employee-filters {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+        gap: 1rem !important;
+        padding: 2rem !important;
+    }
+    
+    .search-group {
+        grid-column: span 2 !important;
+    }
+    
+    .export-btn {
+        justify-self: end !important;
+    }
+    
+    .navbar {
+        padding: 1rem 2rem !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: left !important;
+    }
+    
+    .nav-user {
+        flex-direction: row !important;
+        gap: 1rem !important;
+    }
+    
+    .attendance-table {
+        font-size: 1rem !important;
+        min-width: 800px !important;
+    }
+    
+    .attendance-table th,
+    .attendance-table td {
+        padding: 0.8rem !important;
+    }
+    
+    .employee-profile-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+    }
+    
+    .button-group {
+        flex-direction: column !important;
+    }
+    
+    .metric-card {
+        padding: 2rem !important;
+        flex-direction: row !important;
+        text-align: left !important;
+        gap: 1rem !important;
+    }
+    
+    .metric-card i {
+        font-size: 2rem !important;
+    }
+    
+    .metric-content h3 {
+        font-size: 1.8rem !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    /* Force desktop layout even on very small screens */
+    html, body {
+        min-width: 1200px !important;
+        overflow-x: auto !important;
+    }
+    
+    .login-container {
+        max-width: 600px !important;
+        padding: 3rem 2rem !important;
+    }
+    
+    .login-container h1 {
+        font-size: 3rem !important;
+    }
+    
+    .login-form {
+        padding: 3rem !important;
     }
 }
