@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Section -->
+        <div id="login-section" class="main-header">
+            <div class="login-container">
+                <h1><i class="fas fa-building"></i> Employee Attendance Portal</h1>
+                <p>Professional attendance management system</p>
+                
+                <div id="login-form" class="login-form">
+                    <h3><i class="fas fa-lock"></i> Welcome Back</h3>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="Email Address" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" placeholder="Password" required>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="login()" class="btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                        <button onclick="showForgotPassword()" class="btn-secondary">
+                            <i class="fas fa-key"></i> Forgot Password?
+                        </button>
+                    </div>
+                </div>
+
+                <div id="forgot-password-form" class="login-form" style="display: none;">
+                    <h3><i class="fas fa-key"></i> Password Reset Request</h3>
+                    <p class="info-text">Enter your email address to request a password reset.</p>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="reset-email" placeholder="Enter your registered email" required>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="submitPasswordReset()" class="btn-primary">
+                            <i class="fas fa-paper-plane"></i> Submit Request
+                        </button>
+                        <button onclick="backToLogin()" class="btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Login
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Demo Credentials -->
+                <div class="demo-credentials">
+                    <button onclick="toggleDemoCredentials()" class="demo-toggle">
+                        <i class="fas fa-info-circle"></i> Demo Credentials
+                    </button>
+                    <div id="demo-content" class="demo-content">
+                        <div class="credentials-section">
+                            <h4><i class="fas fa-user-shield"></i> Admin Accounts (Full Access)</h4>
+                            <p><strong>Email:</strong> admin@company.com | <strong>Password:</strong> admin123</p>
+                            <p><strong>Email:</strong> bhavin.patel@company.com | <strong>Password:</strong> bhavin123</p>
+                        </div>
+                        <div class="credentials-section">
+                            <h4><i class="fas fa-users"></i> Employee Accounts (Personal View)</h4>
+                            <p><strong>Email:</strong> pramod.dubey@company.com | <strong>Password:</strong> pramod123</p>
+                            <p><strong>Email:</strong> shrikant.talekar@company.com | <strong>Password:</strong> shrikant123</p>
+                            <p><strong>Email:</strong> jitendra.patolia@company.com | <strong>Password:</strong> jitendra123</p>
+                            <p><strong>Email:</strong> lalit.dobariya@company.com | <strong>Password:</strong> lalit123</p>
+                        </div>
+                        <div class="features-info">
+                            <strong><i class="fas fa-lightbulb"></i> Features:</strong> File upload, password reset, persistent data storage
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" style="display: none;">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <i class="fas fa-building"></i> Employee Portal
+                </div>
+                <div class="nav-user">
+                    <span id="user-info"><i class="fas fa-user"></i> <span id="user-name"></span></span>
+                    <button onclick="logout()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </nav>
+
+            <main class="dashboard">
+                <!-- Admin Panel -->
+                <div id="admin-panel" style="display: none;">
+                    <div class="dashboard-header">
+                        <h1><i class="fas fa-tools"></i> Admin Dashboard</h1>
+                        <p>Complete System Management</p>
+                    </div>
+
+                    <div class="control-panel">
+                        <div class="upload-section">
+                            <h3><i class="fas fa-upload"></i> Upload Attendance File</h3>
+                            <div class="file-upload-area" onclick="document.getElementById('file-upload').click()">
+                                <input type="file" id="file-upload" accept=".xlsx" onchange="uploadFile()" style="display: none;">
+                                <div class="upload-content">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Click to upload Excel file or drag and drop</p>
+                                    <small>Supported format: .xlsx</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="date-picker-section">
+                            <h3><i class="fas fa-calendar"></i> Select Date Range</h3>
+                            <input type="date" id="date-picker" onchange="updateDateRange()">
+                        </div>
+                    </div>
+
+                    <div id="password-reset-section" class="reset-section" style="display: none;">
+                        <h3><i class="fas fa-key"></i> Password Reset Requests</h3>
+                        <div id="reset-requests-list"></div>
+                    </div>
+
+                    <div class="stats-section">
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <div class="stat-content">
+                                <h3 id="total-employees">0</h3>
+                                <p>Total Employees</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-file-alt"></i>
+                            <div class="stat-content">
+                                <h3 id="total-records">0</h3>
+                                <p>Total Records</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-calendar-check"></i>
+                            <div class="stat-content">
+                                <h3 id="data-until">--</h3>
+                                <p>Data Until</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filters-section">
+                        <select id="status-filter" onchange="applyFilters()">
+                            <option value="All">All Statuses</option>
+                            <option value="P">Present</option>
+                            <option value="A">Absent</option>
+                            <option value="W/O">Week Off</option>
+                            <option value="PL">Paid Leave</option>
+                            <option value="SL">Sick Leave</option>
+                            <option value="FL">Festival Leave</option>
+                            <option value="HL">Half Leave</option>
+                        </select>
+                        <select id="employee-filter" onchange="applyFilters()">
+                            <option value="">All Employees</option>
+                        </select>
+                        <button onclick="exportData()" class="export-btn">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+
+                    <div id="attendance-table-container" class="table-container">
+                        <div class="no-data">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No Data Available</h3>
+                            <p>Upload an Excel file to get started</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Panel -->
+                <div id="employee-panel" style="display: none;">
+                    <div class="dashboard-header">
+                        <h1><i class="fas fa-user"></i> Welcome, <span id="employee-name"></span>!</h1>
+                        <p>Your Personal Attendance Dashboard</p>
+                    </div>
+
+                    <div class="employee-stats">
+                        <div class="metric-card metric-present">
+                            <i class="fas fa-percentage"></i>
+                            <div class="metric-content">
+                                <h3 id="attendance-rate">--</h3>
+                                <p>Attendance Rate</p>
+                            </div>
+                        </div>
+                        <div class="metric-card metric-total">
+                            <i class="fas fa-calendar-day"></i>
+                            <div class="metric-content">
+                                <h3 id="present-days">--</h3>
+                                <p>Present Days</p>
+                            </div>
+                        </div>
+                        <div class="metric-card metric-leave">
+                            <i class="fas fa-chart-line"></i>
+                            <div class="metric-content">
+                                <h3 id="performance-status">--</h3>
+                                <p>Performance</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="employee-filters">
+                        <select id="employee-status-filter" onchange="applyEmployeeFilters()">
+                            <option value="All">All Statuses</option>
+                            <option value="P">Present</option>
+                            <option value="A">Absent</option>
+                            <option value="W/O">Week Off</option>
+                            <option value="PL">Paid Leave</option>
+                            <option value="SL">Sick Leave</option>
+                            <option value="FL">Festival Leave</option>
+                            <option value="HL">Half Leave</option>
+                        </select>
+                        <button onclick="exportEmployeeData()" class="export-btn">
+                            <i class="fas fa-download"></i> Export My Data
+                        </button>
+                    </div>
+
+                    <div id="employee-attendance-table" class="table-container">
+                        <div class="no-data">
+                            <i class="fas fa-user-clock"></i>
+                            <h3>No Personal Records Found</h3>
+                            <p>Your attendance records are not available in the current dataset.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-text">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
