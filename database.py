@@ -172,7 +172,7 @@ class AttendanceDatabase:
                 query += ' AND status LIKE ?'
                 params.append(f'{status_filter}%')
             
-            query += ' ORDER BY date DESC, employee_name'
+            query += ' ORDER BY date ASC, employee_name'
             
             cursor.execute(query, params)
             rows = cursor.fetchall()

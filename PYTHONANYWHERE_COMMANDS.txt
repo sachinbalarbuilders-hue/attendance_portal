@@ -8,8 +8,7 @@ STEP 1: Open PythonAnywhere Console
 - Click "Bash" or "Python 3.x" console
 
 STEP 2: Navigate to Your Project
-cd /home/yourusername/attendance_portal
-(Replace 'yourusername' with your actual username)
+cd /home/checkattendance/attendance_portal
 
 STEP 3: Load Maintenance Commands
 exec(open('maintenance_config.py').read())
