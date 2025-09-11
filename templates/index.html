@@ -80,13 +80,13 @@
 
                     <div class="control-panel">
                         <div class="upload-section">
-                            <h3><i class="fas fa-upload"></i> Upload Attendance File</h3>
+                            <h3><i class="fas fa-upload"></i> Upload Attendance Files</h3>
                             <div class="file-upload-area" onclick="document.getElementById('file-upload').click()">
-                                <input type="file" id="file-upload" accept=".xlsx" onchange="uploadFile()" style="display: none;">
+                                <input type="file" id="file-upload" accept=".xlsx" multiple onchange="uploadFile()" style="display: none;">
                                 <div class="upload-content">
                                     <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Click to upload Excel file or drag and drop</p>
-                                    <small>Supported format: .xlsx</small>
+                                    <p>Click to upload one or more Excel files or drag and drop</p>
+                                    <small>Supported format: .xlsx | Multiple files allowed</small>
                                 </div>
                             </div>
                         </div>
