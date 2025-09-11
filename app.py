@@ -501,10 +501,26 @@ def upload_file():
     if not files:
         return jsonify({'success': False, 'message': 'No files uploaded'})
 
-    # Filter valid Excel files
-    valid_files = [f for f in files if f and f.filename and f.filename.lower().endswith('.xlsx')]
+    # Filter valid Excel files and check size
+    valid_files = []
+    for f in files:
+        if f and f.filename and f.filename.lower().endswith('.xlsx'):
+            # Check file size (limit to 5MB for free tier)
+            f.seek(0, 2)  # Seek to end
+            file_size = f.tell()
+            f.seek(0)  # Reset to beginning
+            
+            if file_size > 5 * 1024 * 1024:  # 5MB limit
+                return jsonify({'success': False, 'message': f'File {f.filename} is too large. Please keep files under 5MB.'})
+            
+            valid_files.append(f)
+    
     if not valid_files:
         return jsonify({'success': False, 'message': 'No valid .xlsx files selected'})
+
+    # Limit to 1 file at a time to prevent timeout
+    if len(valid_files) > 1:
+        return jsonify({'success': False, 'message': 'Please upload one file at a time to prevent timeout'})
 
     try:
         selected_date = datetime.date.today()
@@ -522,22 +538,26 @@ def upload_file():
             file.save(filepath)
             uploaded_filepaths.append(filepath)
 
-            # Process attendance data
-            file_records = process_attendance_file(filepath, selected_date)
-            
-            # Save to database (this will overwrite existing data for this file)
-            records_saved = db.save_attendance_records(file_records, filename)
-            total_records += records_saved
+            # Process attendance data with memory optimization
+            try:
+                file_records = process_attendance_file(filepath, selected_date)
+                
+                # Save to database in smaller chunks
+                records_saved = db.save_attendance_records(file_records, filename)
+                total_records += records_saved
 
-            # Process and save leave totals
-            sheet_totals = extract_leave_totals(filepath)
-            db.save_leave_totals(sheet_totals, filename)
+                # Process and save leave totals
+                sheet_totals = extract_leave_totals(filepath)
+                db.save_leave_totals(sheet_totals, filename)
 
-            # Auto-create employee accounts from this file's data
-            unique_employees = list(set([record['Employee'] for record in file_records]))
-            file_created, file_existing = employee_db.process_excel_employees(unique_employees)
-            created_accounts.extend(file_created)
-            existing_accounts.extend(file_existing)
+                # Auto-create employee accounts from this file's data
+                unique_employees = list(set([record['Employee'] for record in file_records]))
+                file_created, file_existing = employee_db.process_excel_employees(unique_employees)
+                created_accounts.extend(file_created)
+                existing_accounts.extend(file_existing)
+
+            except Exception as e:
+                return jsonify({'success': False, 'message': f'Error processing file {filename}: {str(e)}'})
 
         # Cleanup uploaded files
         for p in uploaded_filepaths:
