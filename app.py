@@ -7,16 +7,9 @@ import os
 from werkzeug.utils import secure_filename
 import tempfile
 from database import db
-try:
-    from dotenv import load_dotenv
-    # Load environment variables
-    load_dotenv()
-except ImportError:
-    # dotenv not available (e.g., on PythonAnywhere)
-    pass
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
+app.secret_key = 'your-secret-key-change-this'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -155,12 +148,11 @@ def is_font_red(cell):
     return False
 
 def process_attendance_file(file_path, selected_date=None):
-    """Process attendance data from Excel file - optimized for Render"""
+    """Process attendance data from Excel file"""
     if selected_date is None:
         selected_date = datetime.date.today()
     
-    # Use read_only mode to save memory
-    wb = load_workbook(file_path, data_only=False, read_only=True)
+    wb = load_workbook(file_path, data_only=False)
     visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == "visible"]
     
     month_abbr = selected_date.strftime("%b").upper()
@@ -502,26 +494,10 @@ def upload_file():
     if not files:
         return jsonify({'success': False, 'message': 'No files uploaded'})
 
-    # Filter valid Excel files and check size
-    valid_files = []
-    for f in files:
-        if f and f.filename and f.filename.lower().endswith('.xlsx'):
-            # Check file size (limit to 5MB for free tier)
-            f.seek(0, 2)  # Seek to end
-            file_size = f.tell()
-            f.seek(0)  # Reset to beginning
-            
-            if file_size > 2 * 1024 * 1024:  # 2MB limit for Render free tier
-                return jsonify({'success': False, 'message': f'File {f.filename} is too large. Please keep files under 2MB for Render free tier.'})
-            
-            valid_files.append(f)
-    
+    # Filter valid Excel files
+    valid_files = [f for f in files if f and f.filename and f.filename.lower().endswith('.xlsx')]
     if not valid_files:
         return jsonify({'success': False, 'message': 'No valid .xlsx files selected'})
-
-    # Limit to 1 file at a time to prevent timeout
-    if len(valid_files) > 1:
-        return jsonify({'success': False, 'message': 'Please upload one file at a time to prevent timeout'})
 
     try:
         selected_date = datetime.date.today()
@@ -539,35 +515,22 @@ def upload_file():
             file.save(filepath)
             uploaded_filepaths.append(filepath)
 
-            # Process attendance data with memory optimization
-            try:
-                # Process in smaller chunks to avoid memory issues
-                file_records = process_attendance_file(filepath, selected_date)
-                
-                # Limit records to prevent memory overflow on Render
-                if len(file_records) > 1000:
-                    file_records = file_records[:1000]  # Limit to 1000 records max
-                
-                # Save to database
-                records_saved = db.save_attendance_records(file_records, filename)
-                total_records += records_saved
+            # Process attendance data
+            file_records = process_attendance_file(filepath, selected_date)
+            
+            # Save to database (this will overwrite existing data for this file)
+            records_saved = db.save_attendance_records(file_records, filename)
+            total_records += records_saved
 
-                # Process leave totals (simplified for memory)
-                try:
-                    sheet_totals = extract_leave_totals(filepath)
-                    db.save_leave_totals(sheet_totals, filename)
-                except Exception as e:
-                    # If leave totals fail, continue without them
-                    print(f"Warning: Could not process leave totals: {e}")
+            # Process and save leave totals
+            sheet_totals = extract_leave_totals(filepath)
+            db.save_leave_totals(sheet_totals, filename)
 
-                # Auto-create employee accounts (limit to prevent memory issues)
-                unique_employees = list(set([record['Employee'] for record in file_records[:100]]))  # Limit to 100 employees
-                file_created, file_existing = employee_db.process_excel_employees(unique_employees)
-                created_accounts.extend(file_created)
-                existing_accounts.extend(file_existing)
-
-            except Exception as e:
-                return jsonify({'success': False, 'message': f'Error processing file {filename}: {str(e)}'})
+            # Auto-create employee accounts from this file's data
+            unique_employees = list(set([record['Employee'] for record in file_records]))
+            file_created, file_existing = employee_db.process_excel_employees(unique_employees)
+            created_accounts.extend(file_created)
+            existing_accounts.extend(file_existing)
 
         # Cleanup uploaded files
         for p in uploaded_filepaths:
@@ -676,34 +639,6 @@ def clear_database():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error clearing database: {str(e)}'})
 
-@app.route('/api/test-upload', methods=['POST'])
-def test_upload():
-    """Simple test endpoint to check if basic upload works"""
-    if 'user_data' not in session or not session['user_data'].get('is_admin'):
-        return jsonify({'success': False, 'message': 'Admin access required'})
-    
-    try:
-        files = request.files.getlist('files')
-        if not files:
-            return jsonify({'success': False, 'message': 'No files uploaded'})
-        
-        file = files[0]
-        if file and file.filename and file.filename.lower().endswith('.xlsx'):
-            # Just check file size and return success
-            file.seek(0, 2)
-            file_size = file.tell()
-            file.seek(0)
-            
-            return jsonify({
-                'success': True, 
-                'message': f'File {file.filename} received successfully. Size: {file_size} bytes',
-                'file_size': file_size
-            })
-        else:
-            return jsonify({'success': False, 'message': 'Invalid file type'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Test upload error: {str(e)}'})
-
 @app.route('/api/password-reset', methods=['POST'])
 def request_password_reset():
     global password_reset_requests
@@ -759,13 +694,4 @@ def reset_password():
     return jsonify({'success': False, 'message': 'Invalid email or password'})
 
 if __name__ == '__main__':
-    # For production, use gunicorn instead of Flask's built-in server
-    # Check if running on PythonAnywhere (has specific environment)
-    if 'PYTHONANYWHERE_DOMAIN' in os.environ:
-        # PythonAnywhere - use their default settings
-        app.run(debug=False)
-    else:
-        # Other platforms (Render, local, etc.)
-        port = int(os.environ.get('PORT', 5000))
-        debug = os.environ.get('FLASK_ENV') == 'development'
-        app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(debug=True)
