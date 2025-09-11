@@ -406,52 +406,68 @@ def upload_file():
     if 'user_data' not in session or not session['user_data'].get('is_admin'):
         return jsonify({'success': False, 'message': 'Admin access required'})
 
-    if 'file' not in request.files:
-        return jsonify({'success': False, 'message': 'No file uploaded'})
+    # Support multiple files under key 'files'
+    files = request.files.getlist('files')
+    if not files:
+        return jsonify({'success': False, 'message': 'No files uploaded'})
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'success': False, 'message': 'No file selected'})
+    # Filter valid Excel files
+    valid_files = [f for f in files if f and f.filename and f.filename.lower().endswith('.xlsx')]
+    if not valid_files:
+        return jsonify({'success': False, 'message': 'No valid .xlsx files selected'})
 
-    if file and file.filename.lower().endswith('.xlsx'):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+    try:
+        selected_date = datetime.date.today()
+        if 'selected_date' in request.form:
+            selected_date = datetime.datetime.strptime(request.form['selected_date'], '%Y-%m-%d').date()
 
-        try:
-            selected_date = datetime.date.today()
-            if 'selected_date' in request.form:
-                selected_date = datetime.datetime.strptime(request.form['selected_date'], '%Y-%m-%d').date()
+        combined_records = []
+        uploaded_filepaths = []
 
-            records = process_attendance_file(filepath, selected_date)
-            attendance_data = records
+        for file in valid_files:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            uploaded_filepaths.append(filepath)
 
-            # **AUTO-CREATE employee accounts**
-            unique_employees = list(set([record['Employee'] for record in records]))
-            created_accounts, existing_accounts = employee_db.process_excel_employees(unique_employees)
+            # Process and accumulate
+            file_records = process_attendance_file(filepath, selected_date)
+            combined_records.extend(file_records)
 
-            # Clean up uploaded file
-            os.remove(filepath)
+        # Update global attendance data with combined results
+        attendance_data = combined_records
 
-            message = f'Successfully processed {len(records)} records. '
-            if created_accounts:
-                message += f'{len(created_accounts)} new employee accounts created.'
+        # Auto-create employee accounts from combined data
+        unique_employees = list(set([record['Employee'] for record in combined_records]))
+        created_accounts, existing_accounts = employee_db.process_excel_employees(unique_employees)
 
-            return jsonify({
-                'success': True,
-                'message': message,
-                'record_count': len(records),
-                'created_accounts': created_accounts,
-                'total_employees': len(unique_employees),
-                'new_accounts': len(created_accounts)
-            })
+        # Cleanup uploaded files
+        for p in uploaded_filepaths:
+            if os.path.exists(p):
+                os.remove(p)
 
-        except Exception as e:
-            if os.path.exists(filepath):
-                os.remove(filepath)
-            return jsonify({'success': False, 'message': f'Error processing file: {str(e)}'})
+        message = f"Processed {len(valid_files)} file(s), {len(combined_records)} total records. "
+        if created_accounts:
+            message += f"{len(created_accounts)} new employee accounts created."
 
-    return jsonify({'success': False, 'message': 'Invalid file type. Please upload .xlsx files only'})
+        return jsonify({
+            'success': True,
+            'message': message,
+            'record_count': len(combined_records),
+            'files_processed': len(valid_files),
+            'created_accounts': created_accounts,
+            'total_employees': len(unique_employees),
+            'new_accounts': len(created_accounts)
+        })
+
+    except Exception as e:
+        # Cleanup on error
+        for p in uploaded_filepaths:
+            if os.path.exists(p):
+                os.remove(p)
+        return jsonify({'success': False, 'message': f'Error processing files: {str(e)}'})
+
+    
 
 @app.route('/api/attendance')
 def get_attendance():

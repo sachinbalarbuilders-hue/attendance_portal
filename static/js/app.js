@@ -291,49 +291,48 @@ function showEmployeeDashboard() {
 // File upload functions
 async function uploadFile() {
     const fileInput = document.getElementById('file-upload');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        showNotification('Please select a file', 'error');
+    const files = Array.from(fileInput.files || []);
+
+    if (!files.length) {
+        showNotification('Please select at least one file', 'error');
         return;
     }
-    
-    if (!file.name.toLowerCase().endsWith('.xlsx')) {
-        showNotification('Please select a .xlsx file', 'error');
+
+    const xlsxFiles = files.filter(f => f.name.toLowerCase().endsWith('.xlsx'));
+    if (!xlsxFiles.length) {
+        showNotification('Please select .xlsx files only', 'error');
         return;
     }
-    
+
     const formData = new FormData();
-    formData.append('file', file);
-    
+    xlsxFiles.forEach(f => formData.append('files', f));
+
     const selectedDate = document.getElementById('date-picker').value;
     if (selectedDate) {
         formData.append('selected_date', selectedDate);
     }
-    
+
     try {
-        showLoading('Processing attendance file...');
-        
+        showLoading('Processing attendance files...');
+
         const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             showNotification(result.message);
-            
-            // Load data first
+
             await loadAttendanceData();
             await loadEmployees();
-            
-            // Auto-select first employee after upload
+
             if (currentUser.is_admin && employees.length > 0 && attendanceData.length > 0) {
                 const firstEmployee = employees[0];
                 selectEmployee(firstEmployee);
             }
-            
+
         } else {
             showNotification(result.message, 'error');
         }
@@ -342,7 +341,7 @@ async function uploadFile() {
         console.error('Upload error:', error);
     } finally {
         hideLoading();
-        fileInput.value = ''; // Clear the file input
+        fileInput.value = '';
     }
 }
 
