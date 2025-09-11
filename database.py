@@ -10,8 +10,15 @@ import datetime
 from typing import List, Dict, Any, Optional
 
 class AttendanceDatabase:
-    def __init__(self, db_path: str = 'attendance.db'):
+    def __init__(self, db_path: str = None):
         """Initialize database connection"""
+        if db_path is None:
+            # Use environment variable or default to local file
+            db_path = os.environ.get('DATABASE_URL', 'attendance.db')
+            # Handle SQLite URL format
+            if db_path.startswith('sqlite:///'):
+                db_path = db_path[10:]  # Remove 'sqlite:///' prefix
+        
         self.db_path = db_path
         self.init_database()
     

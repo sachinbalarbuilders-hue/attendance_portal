@@ -7,9 +7,16 @@ import os
 from werkzeug.utils import secure_filename
 import tempfile
 from database import db
+try:
+    from dotenv import load_dotenv
+    # Load environment variables
+    load_dotenv()
+except ImportError:
+    # dotenv not available (e.g., on PythonAnywhere)
+    pass
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-this'
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -694,4 +701,13 @@ def reset_password():
     return jsonify({'success': False, 'message': 'Invalid email or password'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # For production, use gunicorn instead of Flask's built-in server
+    # Check if running on PythonAnywhere (has specific environment)
+    if 'PYTHONANYWHERE_DOMAIN' in os.environ:
+        # PythonAnywhere - use their default settings
+        app.run(debug=False)
+    else:
+        # Other platforms (Render, local, etc.)
+        port = int(os.environ.get('PORT', 5000))
+        debug = os.environ.get('FLASK_ENV') == 'development'
+        app.run(host='0.0.0.0', port=port, debug=debug)
