@@ -5,7 +5,7 @@ let employees = [];
 let filteredData = [];
 let selectedEmployee = null;
 
-// Force desktop view on all devices
+// Force desktop view
 function forceDesktopView() {
     // Set minimum width for all devices
     document.documentElement.style.minWidth = '1200px';
@@ -18,6 +18,15 @@ function forceDesktopView() {
     
     // Force desktop tooltip behavior
     handleDesktopComments();
+}
+
+// Enable responsive (mobile-friendly) mode
+function enableResponsiveMode() {
+    document.documentElement.style.minWidth = '';
+    document.body.style.minWidth = '';
+    document.body.style.overflowX = '';
+    document.body.classList.add('mobile');
+    document.documentElement.classList.add('mobile');
 }
 
 // Enhanced desktop comment handling
@@ -88,7 +97,8 @@ function hideDesktopTooltip() {
 
 // Initialize desktop view on page load
 document.addEventListener('DOMContentLoaded', function() {
-    forceDesktopView();
+    // On initial load show responsive login
+    enableResponsiveMode();
     
     // Re-apply desktop view on window resize
     window.addEventListener('resize', forceDesktopView);
@@ -163,6 +173,8 @@ async function login() {
             currentUser = result.user;
             showDashboard();
             showNotification(`Welcome back, ${currentUser.name}!`);
+            // After login, force desktop view
+            forceDesktopView();
         } else {
             showNotification(result.message, 'error');
         }
@@ -235,6 +247,8 @@ async function logout() {
 function showLoginPage() {
     document.getElementById('dashboard-section').style.display = 'none';
     document.getElementById('login-section').style.display = 'flex';
+    // When returning to login, make it responsive again
+    enableResponsiveMode();
     
     // Clear form fields
     document.getElementById('email').value = '';
@@ -286,6 +300,8 @@ function showEmployeeDashboard() {
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('employee-panel').style.display = 'block';
     document.getElementById('employee-name').textContent = currentUser.name;
+    // Populate personal cumulative leave totals
+    fetchAndRenderLeaveTotals(currentUser.name, true);
 }
 
 // File upload functions
@@ -478,6 +494,8 @@ function selectEmployee(employeeName) {
     
     // Show employee profile and data
     showEmployeeProfile(employeeName);
+    // Also fetch cumulative leave totals from Excel and render breakdown
+    fetchAndRenderLeaveTotals(employeeName, false);
     displayAdminAttendanceData();
     updateAdminStats();
     
@@ -530,7 +548,29 @@ function showEmployeeProfile(employeeName) {
     const leaveDays = employeeData.filter(record => 
         ['W/O', 'PL', 'SL', 'FL', 'HL'].some(leave => record.Status.startsWith(leave))
     ).length;
+    const wo = employeeData.filter(record => record.Status.startsWith('W/O')).length;
+    const pl = employeeData.filter(record => record.Status.startsWith('PL')).length;
+    const sl = employeeData.filter(record => record.Status.startsWith('SL')).length;
+    const fl = employeeData.filter(record => record.Status.startsWith('FL')).length;
     const attendanceRate = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0;
+    const weightByStatus = {
+        'P': 1,
+        'PL': 1,
+        'SL': 1,
+        'FL': 1,
+        'PAT': 1,
+        'MAT': 1,
+        'W/O': 1,
+        'HL': 1,
+        'HF': 0.5,
+        'PHF': 1,
+        'SHF': 1,
+    };
+    const payableDays = employeeData.reduce((sum, r) => {
+        const s = (r.Status || '').toUpperCase();
+        const key = Object.keys(weightByStatus).find(k => s.startsWith(k));
+        return sum + (key ? weightByStatus[key] : 0);
+    }, 0);
     
     // Update profile card content
     document.getElementById('profile-employee-name').textContent = employeeName;
@@ -539,6 +579,17 @@ function showEmployeeProfile(employeeName) {
     document.getElementById('profile-absent-days').textContent = absentDays;
     document.getElementById('profile-leave-days').textContent = leaveDays;
     document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
+    const payableEl = document.getElementById('profile-payable-days');
+    if (payableEl) payableEl.textContent = payableDays;
+    // Leave breakdown
+    const woEl = document.getElementById('profile-wo');
+    const plEl = document.getElementById('profile-pl');
+    const slEl = document.getElementById('profile-sl');
+    const flEl = document.getElementById('profile-fl');
+    if (woEl) woEl.textContent = wo;
+    if (plEl) plEl.textContent = pl;
+    if (slEl) slEl.textContent = sl;
+    if (flEl) flEl.textContent = fl;
     
     // Show the profile card
     profileCard.classList.add('show');
@@ -565,7 +616,23 @@ async function loadAttendanceData() {
         const result = await response.json();
         
         if (result.success) {
-            attendanceData = result.data;
+            // Base dataset from server
+            let data = result.data;
+            // Apply client-side date filter (month/year) if a date is selected
+            const dp = document.getElementById('date-picker');
+            const selectedDateStr = dp ? dp.value : '';
+            if (selectedDateStr) {
+                const selected = new Date(selectedDateStr);
+                const selYear = selected.getFullYear();
+                const selMonth = selected.getMonth();
+                const selDay = selected.getDate();
+                data = data.filter(r => {
+                    const d = new Date(r.Date);
+                    const sameMonth = d.getFullYear() === selYear && d.getMonth() === selMonth;
+                    return sameMonth && d.getDate() <= selDay;
+                });
+            }
+            attendanceData = data;
             
             if (currentUser.is_admin) {
                 displayAdminAttendanceData();
@@ -718,6 +785,8 @@ function createAttendanceTable(data) {
     return html;
 }
 
+// application submission flow removed
+
 // Mobile tooltip function
 function showMobileTooltip(element, comment) {
     if (!comment.trim()) return;
@@ -771,10 +840,21 @@ function formatComments(record) {
 }
 
 function getStatusClass(status) {
-    if (status.startsWith('P')) return 'status-present';
-    if (status.startsWith('A')) return 'status-absent';
-    if (status.startsWith('W/O') || status.startsWith('PL') || status.startsWith('SL') || 
-        status.startsWith('FL') || status.startsWith('HL')) return 'status-leave';
+    if (!status) return '';
+    const s = status.toUpperCase();
+    // Granular classes so entire row can be styled differently
+    if (s.startsWith('P')) return 'status-P';
+    if (s.startsWith('A')) return 'status-A';
+    if (s.startsWith('W/O')) return 'status-WO';
+    if (s.startsWith('PL')) return 'status-PL';
+    if (s.startsWith('SL')) return 'status-SL';
+    if (s.startsWith('FL')) return 'status-FL';
+    if (s.startsWith('HL')) return 'status-HL';
+    if (s.startsWith('PHF')) return 'status-PHF';
+    if (s.startsWith('SHF')) return 'status-SHF';
+    if (s.startsWith('PAT')) return 'status-PAT';
+    if (s.startsWith('MAT')) return 'status-MAT';
+    if (s.startsWith('HF')) return 'status-HF';
     return '';
 }
 
@@ -815,6 +895,24 @@ function updateEmployeeStats() {
     const totalDays = employeeData.length;
     const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;
     const attendanceRate = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0;
+    const weightByStatus = {
+        'P': 1,
+        'PL': 1,
+        'SL': 1,
+        'FL': 1,
+        'PAT': 1,
+        'MAT': 1,
+        'W/O': 1,
+        'HL': 1,
+        'HF': 0.5,
+        'PHF': 1,
+        'SHF': 1,
+    };
+    const payableDays = employeeData.reduce((sum, r) => {
+        const s = (r.Status || '').toUpperCase();
+        const key = Object.keys(weightByStatus).find(k => s.startsWith(k));
+        return sum + (key ? weightByStatus[key] : 0);
+    }, 0);
     
     let performanceStatus, performanceEmoji;
     if (attendanceRate >= 90) {
@@ -831,6 +929,43 @@ function updateEmployeeStats() {
     document.getElementById('attendance-rate').textContent = `${attendanceRate}%`;
     document.getElementById('present-days').textContent = presentDays;
     document.getElementById('performance-status').innerHTML = `${performanceEmoji} ${performanceStatus}`;
+    const payableDaysEl = document.getElementById('payable-days');
+    if (payableDaysEl) payableDaysEl.textContent = payableDays;
+}
+
+// Fetch cumulative leave totals from backend and render
+async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
+    try {
+        const url = new URL('/api/leave-totals', window.location.origin);
+        url.searchParams.append('employee', employeeName);
+        const res = await fetch(url);
+        const result = await res.json();
+        if (!result.success) return;
+        const data = result.data && result.data[employeeName] ? result.data[employeeName] : { 'W/O': 0, 'PL': 0, 'SL': 0, 'FL': 0 };
+
+        if (!isSelf) {
+            const woEl = document.getElementById('profile-wo');
+            const plEl = document.getElementById('profile-pl');
+            const slEl = document.getElementById('profile-sl');
+            const flEl = document.getElementById('profile-fl');
+            if (woEl) woEl.textContent = data['W/O'] ?? 0;
+            if (plEl) plEl.textContent = data['PL'] ?? 0;
+            if (slEl) slEl.textContent = data['SL'] ?? 0;
+            if (flEl) flEl.textContent = data['FL'] ?? 0;
+        } else {
+            const myWOEl = document.getElementById('my-wo');
+            const myPLEl = document.getElementById('my-pl');
+            const mySLEl = document.getElementById('my-sl');
+            const myFLEl = document.getElementById('my-fl');
+            if (myWOEl) myWOEl.textContent = data['W/O'] ?? 0;
+            if (myPLEl) myPLEl.textContent = data['PL'] ?? 0;
+            if (mySLEl) mySLEl.textContent = data['SL'] ?? 0;
+            if (myFLEl) myFLEl.textContent = data['FL'] ?? 0;
+        }
+    } catch (e) {
+        // Silent fail; UI will keep previously computed values
+        console.error('Failed to load leave totals', e);
+    }
 }
 
 // **FIXED: Employee dropdown filter function**

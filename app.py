@@ -110,6 +110,8 @@ employee_db = EmployeeDatabase()
 # Global variables for session-like behavior
 password_reset_requests = []
 attendance_data = []
+# Stores per-employee cumulative totals parsed directly from Excel sheets
+leave_totals = {}
 
 def authenticate_user(email, password):
     """Use the centralized authentication"""
@@ -171,6 +173,8 @@ def process_attendance_file(file_path, selected_date=None):
     
     records = []
     
+    ignore_statuses = {"P", "A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT"}
+
     for sheet in visible_sheets:
         df = pd.read_excel(file_path, sheet_name=sheet.title, header=None)
         
@@ -223,9 +227,10 @@ def process_attendance_file(file_path, selected_date=None):
             pout_highlight = is_font_red(pout_cell) if pout_cell else False
             status_highlight = is_font_red(status_cell) if status_cell else False
             
-            # **UPDATED: Beautiful missing indicators**
-            if status in ["A", "W/O", "PL", "SL", "FL", "HL"]:
-                pin, pout = "--", "--"
+            # **Rules for special statuses**
+            if status in ["A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT", "HF", "PHF", "SHF"]:
+                # Show no punches for off/leave/paid statuses
+                pin, pout = "", ""
             elif sheet.title.strip() in blank_employees:
                 pin, pout = "", ""  # Keep blank for exception employees
             else:
@@ -237,18 +242,30 @@ def process_attendance_file(file_path, selected_date=None):
                 if pd.notna(t1) and pd.notna(t2):
                     pin, pout = t1.strftime("%H:%M"), t2.strftime("%H:%M")
                 elif pd.notna(t1) and pd.isna(t2):
-                    if t1.hour >= 12:
-                        pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
+                    # Missing-check only when status not in ignore set
+                    if status not in ignore_statuses:
+                        if t1.hour >= 12:
+                            pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
+                        else:
+                            pin, pout = t1.strftime("%H:%M"), "⚠️ MISSING"
                     else:
-                        pin, pout = t1.strftime("%H:%M"), "⚠️ MISSING"
+                        # Ignore missing, hide punches for leave/off
+                        pin, pout = "", ""
                 elif pd.isna(t1) and pd.notna(t2):
-                    if t2.hour >= 12:
-                        pin, pout = "⚠️ MISSING", t2.strftime("%H:%M")
+                    if status not in ignore_statuses:
+                        if t2.hour >= 12:
+                            pin, pout = "⚠️ MISSING", t2.strftime("%H:%M")
+                        else:
+                            pin, pout = t2.strftime("%H:%M"), "⚠️ MISSING"
                     else:
-                        pin, pout = t2.strftime("%H:%M"), "⚠️ MISSING"
+                        pin, pout = "", ""
                 else:
-                    pin, pout = "⚠️ MISSING", "⚠️ MISSING"
-            
+                    # Both punches missing
+                    if status not in ignore_statuses:
+                        pin, pout = "⚠️ MISSING", "⚠️ MISSING"
+                    else:
+                        pin, pout = "", ""
+
             records.append({
                 "Employee": sheet.title,
                 "Date": date_val,
@@ -371,6 +388,63 @@ def process_attendance_file(file_path, selected_date=None):
     
     return records
 
+
+def extract_leave_totals(file_path):
+    """Parse cumulative W/O, PL, SL, FL totals per employee sheet from the Excel.
+    Strategy: find header row containing these labels, then take the last numeric value
+    in each corresponding column as the sheet's cumulative total.
+    """
+    wb = load_workbook(file_path, data_only=True)
+    visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == "visible"]
+
+    per_employee = {}
+
+    target_labels = {
+        "W/O": ["W/O", "W O", "W-0", "W-O"],
+        "PL": ["PL"],
+        "SL": ["SL"],
+        "FL": ["FL"],
+    }
+
+    for sheet in visible_sheets:
+        ws = wb[sheet.title]
+
+        # Search header rows (first 10 rows) for our labels
+        label_to_col = {}
+        max_header_rows = min(10, ws.max_row)
+        for r in range(1, max_header_rows + 1):
+            for c in range(1, ws.max_column + 1):
+                val = ws.cell(row=r, column=c).value
+                if not isinstance(val, str):
+                    continue
+                text = val.strip().upper()
+                for key, variants in target_labels.items():
+                    if text in [v.upper() for v in variants]:
+                        label_to_col[key] = c
+            # Small optimization: if all found, stop searching
+            if len(label_to_col) == len(target_labels):
+                break
+
+        if not label_to_col:
+            continue
+
+        # Walk from bottom up to locate last numeric value for each label
+        totals = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}
+        for key, col in label_to_col.items():
+            for r in range(ws.max_row, 0, -1):
+                cell = ws.cell(row=r, column=col)
+                val = cell.value
+                if isinstance(val, (int, float)):
+                    try:
+                        totals[key] = float(val)
+                    except Exception:
+                        totals[key] = 0
+                    break
+
+        per_employee[sheet.title] = totals
+
+    return per_employee
+
 # Routes
 @app.route('/')
 def index():
@@ -422,6 +496,7 @@ def upload_file():
             selected_date = datetime.datetime.strptime(request.form['selected_date'], '%Y-%m-%d').date()
 
         combined_records = []
+        combined_leave_totals = {}
         uploaded_filepaths = []
 
         for file in valid_files:
@@ -434,8 +509,16 @@ def upload_file():
             file_records = process_attendance_file(filepath, selected_date)
             combined_records.extend(file_records)
 
+            # Parse and accumulate leave totals
+            sheet_totals = extract_leave_totals(filepath)
+            for emp, totals in sheet_totals.items():
+                combined_leave_totals[emp] = totals
+
         # Update global attendance data with combined results
         attendance_data = combined_records
+        # Update global leave totals
+        global leave_totals
+        leave_totals = combined_leave_totals
 
         # Auto-create employee accounts from combined data
         unique_employees = list(set([record['Employee'] for record in combined_records]))
@@ -493,6 +576,9 @@ def get_attendance():
 
     return jsonify({'success': True, 'data': filtered_data})
 
+
+    
+
 @app.route('/api/employees')
 def get_employees():
     global attendance_data
@@ -502,6 +588,28 @@ def get_employees():
 
     employees = list(set([record['Employee'] for record in attendance_data]))
     return jsonify({'success': True, 'employees': sorted(employees)})
+
+
+@app.route('/api/leave-totals')
+def get_leave_totals():
+    global leave_totals
+
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+
+    user_data = session['user_data']
+    employee = request.args.get('employee')
+
+    # Non-admins can only view their own totals
+    if not user_data.get('is_admin'):
+        employee = user_data['name']
+
+    if employee:
+        totals = leave_totals.get(employee, {"W/O": 0, "PL": 0, "SL": 0, "FL": 0})
+        return jsonify({'success': True, 'data': {employee: totals}})
+
+    # Admin without employee param gets all
+    return jsonify({'success': True, 'data': leave_totals})
 
 @app.route('/api/password-reset', methods=['POST'])
 def request_password_reset():

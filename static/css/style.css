@@ -5,17 +5,14 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* FORCE DESKTOP VIEW ON ALL DEVICES */
+/* Default: allow responsive; desktop mode re-applied via JS after login */
 html {
-    min-width: 1200px !important;
     overflow-x: auto !important;
 }
 
 body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    min-width: 1200px !important;
-    overflow-x: auto !important;
 }
 
 /* Enhanced gradient header with animated background - IMPROVED SIZE */
@@ -659,18 +656,19 @@ body {
     border-bottom: none;
 }
 
-/* Status specific styling */
-.status-present {
-    background-color: #d4edda !important;
-}
-
-.status-absent {
-    background-color: #f8d7da !important;
-}
-
-.status-leave {
-    background-color: #e2e3ea !important;
-}
+/* Status specific styling - entire row color coding */
+.status-P { background-color: #d4edda !important; }        /* Present - green */
+.status-A { background-color: #f8d7da !important; }        /* Absent - red */
+.status-WO { background-color: #eaf4ff !important; }       /* Week Off - light blue */
+.status-PL { background-color: #fff3cd !important; }       /* Paid Leave - yellow */
+.status-SL { background-color: #fde2e4 !important; }       /* Sick Leave - light pink */
+.status-FL { background-color: #fcefe3 !important; }       /* Festival Leave - peach */
+.status-HL { background-color: #e8eaf6 !important; }       /* Half Leave - indigo tint */
+.status-PHF { background-color: #e2f0cb !important; }      /* PHF - light green */
+.status-SHF { background-color: #e0f7fa !important; }      /* SHF - cyan tint */
+.status-PAT { background-color: #ffe0b2 !important; }      /* Paternity - orange tint */
+.status-MAT { background-color: #f3e5f5 !important; }      /* Maternity - purple tint */
+.status-HF { background-color: #e1f5fe !important; }       /* Half Day - light sky */
 
 .red-text {
     color: #e74c3c !important;
@@ -892,15 +890,11 @@ body {
     justify-content: center;
 }
 
-/* COMPLETELY DISABLE ALL MOBILE RESPONSIVENESS */
-/* All media queries are now disabled to force desktop view */
-
-/* Force desktop view for ALL screen sizes */
+/* Mobile-friendly login when body has .mobile */
 @media screen and (max-width: 768px) {
-    /* Override all mobile styles to maintain desktop layout */
-    html, body {
-        min-width: 1200px !important;
-        overflow-x: auto !important;
+    body.mobile {
+        min-width: 0 !important;
+        overflow-x: hidden !important;
     }
     
     .login-container {
@@ -917,11 +911,7 @@ body {
         padding: 3rem !important;
     }
     
-    .dashboard {
-        max-width: 1400px !important;
-        margin: 0 auto !important;
-        padding: 2rem !important;
-    }
+    body.mobile .dashboard { display: none; }
     
     .control-panel {
         display: grid !important;
@@ -970,10 +960,7 @@ body {
         gap: 1rem !important;
     }
     
-    .attendance-table {
-        font-size: 1rem !important;
-        min-width: 800px !important;
-    }
+    body.mobile .attendance-table { font-size: 0.95rem !important; min-width: 600px !important; }
     
     .attendance-table th,
     .attendance-table td {
@@ -1005,10 +992,9 @@ body {
 }
 
 @media screen and (max-width: 480px) {
-    /* Force desktop layout even on very small screens */
-    html, body {
-        min-width: 1200px !important;
-        overflow-x: auto !important;
+    body.mobile {
+        min-width: 0 !important;
+        overflow-x: hidden !important;
     }
     
     .login-container {
