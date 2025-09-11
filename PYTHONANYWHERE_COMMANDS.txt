@@ -1,0 +1,108 @@
+==================================================
+PYTHONANYWHERE MAINTENANCE COMMANDS
+==================================================
+
+STEP 1: Open PythonAnywhere Console
+- Go to your PythonAnywhere dashboard
+- Click "Consoles" tab
+- Click "Bash" or "Python 3.x" console
+
+STEP 2: Navigate to Your Project
+cd /home/yourusername/attendance_portal
+(Replace 'yourusername' with your actual username)
+
+STEP 3: Load Maintenance Commands
+exec(open('maintenance_config.py').read())
+
+STEP 4: Use These Commands
+
+ENABLE MAINTENANCE MODE:
+enable()
+
+DISABLE MAINTENANCE MODE:
+disable()
+
+CHECK STATUS:
+status()
+
+DATABASE STATISTICS:
+db_stats()
+
+CLEAR DATABASE:
+db_clear()
+
+SHOW HELP:
+help()
+
+==================================================
+QUICK ONE-LINER COMMANDS
+==================================================
+
+Enable maintenance:
+exec(open('maintenance_config.py').read()); enable()
+
+Disable maintenance:
+exec(open('maintenance_config.py').read()); disable()
+
+Check status:
+exec(open('maintenance_config.py').read()); status()
+
+Database stats:
+exec(open('maintenance_config.py').read()); db_stats()
+
+Clear database:
+exec(open('maintenance_config.py').read()); db_clear()
+
+==================================================
+COMPLETE WORKFLOW EXAMPLE
+==================================================
+
+# 1. Load commands
+exec(open('maintenance_config.py').read())
+
+# 2. Check current status
+status()
+
+# 3. Enable maintenance (users see maintenance page)
+enable()
+
+# 4. Do your updates/maintenance work...
+
+# 5. Disable maintenance (users can access app again)
+disable()
+
+# 6. Verify it's off
+status()
+
+==================================================
+WHAT HAPPENS
+==================================================
+
+When you run enable():
+- Creates a small flag file
+- Your app shows maintenance page
+- Users cannot access the normal app
+
+When you run disable():
+- Removes the flag file
+- Your app works normally
+- Users can access the app again
+
+Changes take effect immediately - no restart needed!
+
+==================================================
+TROUBLESHOOTING
+==================================================
+
+If commands don't work:
+1. Make sure you're in the right directory
+2. Check that maintenance_config.py exists
+3. Try: ls -la (to see files)
+4. Try: pwd (to see current directory)
+
+If maintenance page doesn't show:
+1. Check status() to see if enabled
+2. Try disable() then enable() again
+3. Check your app URL in browser
+
+==================================================

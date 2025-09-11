@@ -6,11 +6,19 @@ import datetime
 import os
 from werkzeug.utils import secure_filename
 import tempfile
+from database import db
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Maintenance mode configuration
+MAINTENANCE_FLAG_FILE = 'maintenance_mode.flag'
+
+def is_maintenance_mode():
+    """Check if maintenance mode is enabled by looking for flag file"""
+    return os.path.exists(MAINTENANCE_FLAG_FILE)
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -109,9 +117,6 @@ employee_db = EmployeeDatabase()
 
 # Global variables for session-like behavior
 password_reset_requests = []
-attendance_data = []
-# Stores per-employee cumulative totals parsed directly from Excel sheets
-leave_totals = {}
 
 def authenticate_user(email, password):
     """Use the centralized authentication"""
@@ -448,7 +453,13 @@ def extract_leave_totals(file_path):
 # Routes
 @app.route('/')
 def index():
+    if is_maintenance_mode():
+        return render_template('maintenance.html')
     return render_template('index.html')
+
+@app.route('/maintenance')
+def maintenance():
+    return render_template('maintenance.html')
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -475,8 +486,6 @@ def logout():
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-    global attendance_data
-
     if 'user_data' not in session or not session['user_data'].get('is_admin'):
         return jsonify({'success': False, 'message': 'Admin access required'})
 
@@ -495,9 +504,10 @@ def upload_file():
         if 'selected_date' in request.form:
             selected_date = datetime.datetime.strptime(request.form['selected_date'], '%Y-%m-%d').date()
 
-        combined_records = []
-        combined_leave_totals = {}
+        total_records = 0
         uploaded_filepaths = []
+        created_accounts = []
+        existing_accounts = []
 
         for file in valid_files:
             filename = secure_filename(file.filename)
@@ -505,41 +515,39 @@ def upload_file():
             file.save(filepath)
             uploaded_filepaths.append(filepath)
 
-            # Process and accumulate
+            # Process attendance data
             file_records = process_attendance_file(filepath, selected_date)
-            combined_records.extend(file_records)
+            
+            # Save to database (this will overwrite existing data for this file)
+            records_saved = db.save_attendance_records(file_records, filename)
+            total_records += records_saved
 
-            # Parse and accumulate leave totals
+            # Process and save leave totals
             sheet_totals = extract_leave_totals(filepath)
-            for emp, totals in sheet_totals.items():
-                combined_leave_totals[emp] = totals
+            db.save_leave_totals(sheet_totals, filename)
 
-        # Update global attendance data with combined results
-        attendance_data = combined_records
-        # Update global leave totals
-        global leave_totals
-        leave_totals = combined_leave_totals
-
-        # Auto-create employee accounts from combined data
-        unique_employees = list(set([record['Employee'] for record in combined_records]))
-        created_accounts, existing_accounts = employee_db.process_excel_employees(unique_employees)
+            # Auto-create employee accounts from this file's data
+            unique_employees = list(set([record['Employee'] for record in file_records]))
+            file_created, file_existing = employee_db.process_excel_employees(unique_employees)
+            created_accounts.extend(file_created)
+            existing_accounts.extend(file_existing)
 
         # Cleanup uploaded files
         for p in uploaded_filepaths:
             if os.path.exists(p):
                 os.remove(p)
 
-        message = f"Processed {len(valid_files)} file(s), {len(combined_records)} total records. "
+        message = f"Processed {len(valid_files)} file(s), {total_records} total records saved to database. "
         if created_accounts:
             message += f"{len(created_accounts)} new employee accounts created."
 
         return jsonify({
             'success': True,
             'message': message,
-            'record_count': len(combined_records),
+            'record_count': total_records,
             'files_processed': len(valid_files),
             'created_accounts': created_accounts,
-            'total_employees': len(unique_employees),
+            'total_employees': len(set([acc['name'] for acc in created_accounts + existing_accounts])),
             'new_accounts': len(created_accounts)
         })
 
@@ -554,8 +562,6 @@ def upload_file():
 
 @app.route('/api/attendance')
 def get_attendance():
-    global attendance_data
-
     if 'user_data' not in session:
         return jsonify({'success': False, 'message': 'Not authenticated'})
 
@@ -563,16 +569,14 @@ def get_attendance():
     filter_status = request.args.get('status', 'All')
     employee_filter = request.args.get('employee')
 
-    filtered_data = attendance_data.copy()
-
-    # Filter by employee if not admin
+    # Determine which employee to filter by
     if not user_data.get('is_admin') or employee_filter:
         target_employee = employee_filter if employee_filter else user_data['name']
-        filtered_data = [record for record in filtered_data if record['Employee'] == target_employee]
+    else:
+        target_employee = None
 
-    # Filter by status
-    if filter_status != 'All':
-        filtered_data = [record for record in filtered_data if record['Status'].startswith(filter_status)]
+    # Get data from database
+    filtered_data = db.get_attendance_records(target_employee, filter_status)
 
     return jsonify({'success': True, 'data': filtered_data})
 
@@ -581,19 +585,15 @@ def get_attendance():
 
 @app.route('/api/employees')
 def get_employees():
-    global attendance_data
-
     if 'user_data' not in session or not session['user_data'].get('is_admin'):
         return jsonify({'success': False, 'message': 'Admin access required'})
 
-    employees = list(set([record['Employee'] for record in attendance_data]))
+    employees = db.get_employees()
     return jsonify({'success': True, 'employees': sorted(employees)})
 
 
 @app.route('/api/leave-totals')
 def get_leave_totals():
-    global leave_totals
-
     if 'user_data' not in session:
         return jsonify({'success': False, 'message': 'Not authenticated'})
 
@@ -604,12 +604,40 @@ def get_leave_totals():
     if not user_data.get('is_admin'):
         employee = user_data['name']
 
-    if employee:
-        totals = leave_totals.get(employee, {"W/O": 0, "PL": 0, "SL": 0, "FL": 0})
-        return jsonify({'success': True, 'data': {employee: totals}})
+    # Get data from database
+    totals = db.get_leave_totals(employee)
+    
+    if employee and employee not in totals:
+        totals[employee] = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}
 
-    # Admin without employee param gets all
-    return jsonify({'success': True, 'data': leave_totals})
+    return jsonify({'success': True, 'data': totals})
+
+@app.route('/api/database-stats')
+def get_database_stats():
+    if 'user_data' not in session or not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+
+    stats = db.get_database_stats()
+    return jsonify({'success': True, 'stats': stats})
+
+@app.route('/api/upload-history')
+def get_upload_history():
+    if 'user_data' not in session or not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+
+    history = db.get_upload_history()
+    return jsonify({'success': True, 'history': history})
+
+@app.route('/api/clear-database', methods=['POST'])
+def clear_database():
+    if 'user_data' not in session or not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+
+    try:
+        db.clear_existing_data()
+        return jsonify({'success': True, 'message': 'Database cleared successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error clearing database: {str(e)}'})
 
 @app.route('/api/password-reset', methods=['POST'])
 def request_password_reset():
