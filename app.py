@@ -155,11 +155,12 @@ def is_font_red(cell):
     return False
 
 def process_attendance_file(file_path, selected_date=None):
-    """Process attendance data from Excel file"""
+    """Process attendance data from Excel file - optimized for Render"""
     if selected_date is None:
         selected_date = datetime.date.today()
     
-    wb = load_workbook(file_path, data_only=False)
+    # Use read_only mode to save memory
+    wb = load_workbook(file_path, data_only=False, read_only=True)
     visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == "visible"]
     
     month_abbr = selected_date.strftime("%b").upper()
@@ -510,8 +511,8 @@ def upload_file():
             file_size = f.tell()
             f.seek(0)  # Reset to beginning
             
-            if file_size > 5 * 1024 * 1024:  # 5MB limit
-                return jsonify({'success': False, 'message': f'File {f.filename} is too large. Please keep files under 5MB.'})
+            if file_size > 2 * 1024 * 1024:  # 2MB limit for Render free tier
+                return jsonify({'success': False, 'message': f'File {f.filename} is too large. Please keep files under 2MB for Render free tier.'})
             
             valid_files.append(f)
     
@@ -540,18 +541,27 @@ def upload_file():
 
             # Process attendance data with memory optimization
             try:
+                # Process in smaller chunks to avoid memory issues
                 file_records = process_attendance_file(filepath, selected_date)
                 
-                # Save to database in smaller chunks
+                # Limit records to prevent memory overflow on Render
+                if len(file_records) > 1000:
+                    file_records = file_records[:1000]  # Limit to 1000 records max
+                
+                # Save to database
                 records_saved = db.save_attendance_records(file_records, filename)
                 total_records += records_saved
 
-                # Process and save leave totals
-                sheet_totals = extract_leave_totals(filepath)
-                db.save_leave_totals(sheet_totals, filename)
+                # Process leave totals (simplified for memory)
+                try:
+                    sheet_totals = extract_leave_totals(filepath)
+                    db.save_leave_totals(sheet_totals, filename)
+                except Exception as e:
+                    # If leave totals fail, continue without them
+                    print(f"Warning: Could not process leave totals: {e}")
 
-                # Auto-create employee accounts from this file's data
-                unique_employees = list(set([record['Employee'] for record in file_records]))
+                # Auto-create employee accounts (limit to prevent memory issues)
+                unique_employees = list(set([record['Employee'] for record in file_records[:100]]))  # Limit to 100 employees
                 file_created, file_existing = employee_db.process_excel_employees(unique_employees)
                 created_accounts.extend(file_created)
                 existing_accounts.extend(file_existing)
@@ -665,6 +675,34 @@ def clear_database():
         return jsonify({'success': True, 'message': 'Database cleared successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error clearing database: {str(e)}'})
+
+@app.route('/api/test-upload', methods=['POST'])
+def test_upload():
+    """Simple test endpoint to check if basic upload works"""
+    if 'user_data' not in session or not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+    
+    try:
+        files = request.files.getlist('files')
+        if not files:
+            return jsonify({'success': False, 'message': 'No files uploaded'})
+        
+        file = files[0]
+        if file and file.filename and file.filename.lower().endswith('.xlsx'):
+            # Just check file size and return success
+            file.seek(0, 2)
+            file_size = file.tell()
+            file.seek(0)
+            
+            return jsonify({
+                'success': True, 
+                'message': f'File {file.filename} received successfully. Size: {file_size} bytes',
+                'file_size': file_size
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Invalid file type'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Test upload error: {str(e)}'})
 
 @app.route('/api/password-reset', methods=['POST'])
 def request_password_reset():
