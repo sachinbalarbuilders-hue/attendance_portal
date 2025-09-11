@@ -1,9 +1,5 @@
-# NumPy version compatible with Python 3.13
-numpy==1.26.4
-
-# Core project dependencies
-Flask==3.0.3
-pandas==2.2.3
-openpyxl==3.1.5
-Werkzeug==3.0.4
-python-dotenv==1.0.1
+Flask==2.3.3 
+pandas==2.1.0 
+openpyxl==3.1.2 
+Werkzeug==2.3.7 
+python-dotenv==1.0.0 
