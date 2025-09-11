@@ -2,8 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- FORCE DESKTOP VIEW ON ALL DEVICES -->
-    <meta name="viewport" content="width=1200, initial-scale=0.5, user-scalable=yes">
+    <!-- PWA Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Employee attendance management system for Balar Builders">
+    <meta name="keywords" content="attendance, employee, management, balar builders">
+    <meta name="author" content="Balar Builders">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-72x72.png') }}">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#2563eb">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='icons/icon-144x144.png') }}">
+    
     <title>Employee Attendance Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
