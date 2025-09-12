@@ -65,10 +65,30 @@ class EmployeeDatabase:
 
     def authenticate_user(self, email, password):
         """Authenticate user credentials"""
+        # First check hardcoded admin accounts
         if email in self.EMPLOYEE_DB:
             hashed_password = hashlib.sha256(password.encode()).hexdigest()
             if self.EMPLOYEE_DB[email]["password"] == hashed_password:
                 return True, self.EMPLOYEE_DB[email]
+        
+        # Then check database for employee accounts
+        # Extract employee name from email (reverse of create_employee_email)
+        if email.endswith('.balarbuilders@gmail.com'):
+            email_name = email.replace('.balarbuilders@gmail.com', '')
+            # Try to find employee in database
+            employees = db.get_employees()
+            for emp_name in employees:
+                if email_name == emp_name.lower().replace(' ', '').replace('.', ''):
+                    # Check if password matches default employee password
+                    hashed_password = hashlib.sha256("Balar123".encode()).hexdigest()
+                    if hashlib.sha256(password.encode()).hexdigest() == hashed_password:
+                        return True, {
+                            "password": hashed_password,
+                            "name": emp_name,
+                            "role": "Employee",
+                            "is_admin": False
+                        }
+        
         return False, None
 
     def get_all_employees(self):
@@ -78,7 +98,19 @@ class EmployeeDatabase:
 
     def user_exists(self, email):
         """Check if user already exists"""
-        return email in self.EMPLOYEE_DB
+        # Check hardcoded admin accounts
+        if email in self.EMPLOYEE_DB:
+            return True
+        
+        # Check database for employee accounts
+        if email.endswith('.balarbuilders@gmail.com'):
+            email_name = email.replace('.balarbuilders@gmail.com', '')
+            employees = db.get_employees()
+            for emp_name in employees:
+                if email_name == emp_name.lower().replace(' ', '').replace('.', ''):
+                    return True
+        
+        return False
 
     def process_excel_employees(self, unique_employees):
         """Process employee list from Excel and create accounts"""
