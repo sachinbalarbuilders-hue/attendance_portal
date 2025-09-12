@@ -319,9 +319,277 @@ async function showDashboard() {
     loadPasswordResetRequests();
 }
 
+async function loadLateStatistics() {
+    try {
+        console.log('Loading late statistics...');
+        const response = await fetch('/api/late-statistics');
+        const result = await response.json();
+        
+        console.log('Late statistics response:', result);
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update the statistics display
+            document.getElementById('late-count').textContent = data.total_late_count;
+            document.getElementById('total-late-minutes').textContent = data.total_late_minutes;
+            document.getElementById('start-time').textContent = data.start_time;
+            
+            console.log('Updated late statistics display:', data);
+            
+            // Show/hide late records list
+            const lateRecordsList = document.getElementById('late-records-list');
+            const lateRecordsContent = document.getElementById('late-records-content');
+            
+            if (data.late_records && data.late_records.length > 0) {
+                lateRecordsList.style.display = 'block';
+                
+                // Create HTML for late records with toggle button
+                let recordsHtml = `
+                    <div class="late-records-toggle">
+                        <button class="show-records-btn" onclick="toggleLateRecords()">
+                            <span class="show-records-text">Show Records</span>
+                            <span class="show-records-icon">▼</span>
+                        </button>
+                    </div>
+                    <div class="late-records-details" style="display: none;">
+                `;
+                
+                data.late_records.forEach((record, index) => {
+                    recordsHtml += `
+                        <div class="late-record-item">
+                            <div class="late-record-main">
+                                <div class="late-record-header">
+                                    <div class="late-record-sequence">${record.sequence_text || (record.sequence + ' late')}</div>
+                                    <div class="late-record-date-time">
+                                        <span class="late-record-date">${formatDate(record.date)}</span>
+                                        <span class="late-record-day">${getDayOfWeek(record.date)}</span>
+                                    </div>
+                                </div>
+                                <div class="late-record-times">
+                                    <span class="late-record-expected">Expected: ${record.expected_punch_in || 'N/A'}</span>
+                                    <span class="late-record-actual">Actual: ${record.punch_in}</span>
+                                </div>
+                                <div class="late-record-status">
+                                    <span class="status-badge status-${record.status.toLowerCase()}">${record.status}</span>
+                                </div>
+                            </div>
+                            <div class="late-record-late-info">
+                                <span class="late-record-minutes">${record.late_minutes} min</span>
+                                ${record.late_hours > 0 ? `<span class="late-record-hours">(${record.late_hours}h)</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                recordsHtml += '</div>';
+                
+                lateRecordsContent.innerHTML = recordsHtml;
+            } else {
+                lateRecordsList.style.display = 'none';
+            }
+        } else {
+            console.error('Failed to load late statistics:', result.message);
+        }
+    } catch (error) {
+        console.error('Error loading late statistics:', error);
+    }
+}
+
+async function loadAdminLateStatistics() {
+    try {
+        console.log('Loading admin late statistics...');
+        
+        const response = await fetch('/api/admin/late-statistics');
+        const result = await response.json();
+        
+        console.log('Admin late statistics response:', result);
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Calculate summary statistics
+            let totalLateCount = 0;
+            let totalLateMinutes = 0;
+            let employeesWithLate = 0;
+            
+            data.forEach(employee => {
+                totalLateCount += employee.total_late_count;
+                totalLateMinutes += employee.total_late_minutes;
+                if (employee.total_late_count > 0) {
+                    employeesWithLate++;
+                }
+            });
+            
+            // Update summary cards (both compact and modal)
+            document.getElementById('admin-total-late-count').textContent = totalLateCount;
+            document.getElementById('admin-total-late-minutes').textContent = totalLateMinutes;
+            document.getElementById('admin-late-employees').textContent = employeesWithLate;
+            
+            // Update modal summary cards
+            document.getElementById('modal-total-late-count').textContent = totalLateCount;
+            document.getElementById('modal-total-late-minutes').textContent = totalLateMinutes;
+            document.getElementById('modal-late-employees').textContent = employeesWithLate;
+            
+            // Update detailed employee list (modal only)
+            const modalEmployeesList = document.getElementById('modal-late-employees-content');
+            
+            console.log('Processing employees data:', data);
+            
+            if (data.length > 0) {
+                let employeesHtml = '';
+                
+                let employeesWithLateCount = 0;
+                data.forEach(employee => {
+                    if (employee.total_late_count > 0) {
+                        employeesWithLateCount++;
+                        console.log(`Adding employee ${employeesWithLateCount}: ${employee.employee_name} with ${employee.total_late_count} late records`);
+                        employeesHtml += `
+                            <div class="admin-late-employee-item">
+                                <div class="admin-late-employee-header">
+                                    <div class="admin-late-employee-name">${cleanEmployeeName(employee.employee_name)}</div>
+                                    <div class="admin-late-employee-stats">
+                                        <div class="admin-late-employee-stat">
+                                            <span class="stat-value">${employee.total_late_count}</span>
+                                            <span class="stat-label">Times Late</span>
+                                        </div>
+                                        <div class="admin-late-employee-stat">
+                                            <span class="stat-value">${employee.total_late_minutes}</span>
+                                            <span class="stat-label">Total Minutes</span>
+                                        </div>
+                                        <div class="admin-late-employee-stat">
+                                            <span class="stat-value">${employee.start_time}</span>
+                                            <span class="stat-label">Start Time</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="admin-late-employee-records">
+                                    <h5>Late Arrival Records:</h5>
+                                    ${employee.late_records.map(record => `
+                                        <div class="admin-late-record-item">
+                                            <div class="admin-late-record-main">
+                                                <div class="admin-late-record-header">
+                                                    <div class="admin-late-record-sequence">${record.sequence_text || (record.sequence + ' late')}</div>
+                                                    <div class="admin-late-record-date-time">
+                                                        <span class="admin-late-record-date">${formatDate(record.date)}</span>
+                                                        <span class="admin-late-record-day">${getDayOfWeek(record.date)}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="admin-late-record-times">
+                                                    <span class="admin-late-record-expected">Expected: ${record.expected_punch_in || 'N/A'}</span>
+                                                    <span class="admin-late-record-actual">Actual: ${record.punch_in}</span>
+                                                </div>
+                                                <div class="admin-late-record-status">
+                                                    <span class="status-badge status-${record.status.toLowerCase()}">${record.status}</span>
+                                                </div>
+                                            </div>
+                                            <div class="admin-late-record-late-info">
+                                                <span class="admin-late-record-minutes">${record.late_minutes} min</span>
+                                                ${record.late_hours > 0 ? `<span class="admin-late-record-hours">(${record.late_hours}h)</span>` : ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                console.log(`Generated employees HTML for modal - Total employees with late records: ${employeesWithLateCount}`);
+                console.log(`HTML length: ${employeesHtml.length} characters`);
+                console.log(`HTML preview (first 1000 chars): ${employeesHtml.substring(0, 1000)}`);
+                
+                if (employeesHtml) {
+                    modalEmployeesList.innerHTML = employeesHtml;
+                    console.log('Updated modal employee list with HTML');
+                    console.log(`Modal content after update: ${modalEmployeesList.innerHTML.length} characters`);
+                } else {
+                    const noDataMessage = '<p style="text-align: center; color: #666; padding: 20px;">No late arrivals found for any employees.</p>';
+                    modalEmployeesList.innerHTML = noDataMessage;
+                    console.log('No employees with late arrivals found');
+                }
+            } else {
+                const noDataMessage = '<p style="text-align: center; color: #666; padding: 20px;">No employee data available.</p>';
+                modalEmployeesList.innerHTML = noDataMessage;
+            }
+            
+            console.log('Updated admin late statistics display');
+            
+            // Force update modal content if modal is open
+            const modal = document.getElementById('late-statistics-modal');
+            if (modal && modal.style.display === 'flex') {
+                console.log('Modal is open, ensuring content is updated');
+                const modalContent = document.getElementById('modal-late-employees-content');
+                if (modalContent) {
+                    modalContent.innerHTML = employeesList.innerHTML;
+                    console.log('Updated modal content from main list');
+                }
+            }
+        } else {
+            console.error('Failed to load admin late statistics:', result.message);
+        }
+    } catch (error) {
+        console.error('Error loading admin late statistics:', error);
+    }
+}
+
+function toggleLateStatisticsModal() {
+    const modal = document.getElementById('late-statistics-modal');
+    const modalContent = document.getElementById('modal-late-employees-content');
+    
+    console.log('Opening late statistics modal');
+    console.log('Modal content element:', modalContent);
+    console.log('Modal content HTML length:', modalContent ? modalContent.innerHTML.length : 'Element not found');
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeLateStatisticsModal() {
+    const modal = document.getElementById('late-statistics-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+function toggleLateRecords() {
+    const details = document.querySelector('.late-records-details');
+    const button = document.querySelector('.show-records-btn');
+    const text = button.querySelector('.show-records-text');
+    const icon = button.querySelector('.show-records-icon');
+    
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        text.textContent = 'Hide Records';
+        icon.textContent = '▲';
+    } else {
+        details.style.display = 'none';
+        text.textContent = 'Show Records';
+        icon.textContent = '▼';
+    }
+}
+
+
+// Close modal when clicking outside of it
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('late-statistics-modal');
+    if (event.target === modal) {
+        closeLateStatisticsModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeLateStatisticsModal();
+    }
+});
+
 function showAdminDashboard() {
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('employee-panel').style.display = 'none';
+    
+    // Load admin late statistics
+    loadAdminLateStatistics();
 }
 
 function showEmployeeDashboard() {
@@ -331,6 +599,9 @@ function showEmployeeDashboard() {
     
     // Populate personal cumulative leave totals
     fetchAndRenderLeaveTotals(currentUser.name, true);
+    
+    // Load late statistics
+    loadLateStatistics();
 }
 
 // File upload functions
@@ -854,7 +1125,13 @@ function displayEmployeeAttendanceData(showUpdateNote = false) {
 }
 
 function createAttendanceTable(data) {
+    // Extract unique time ranges from the data
+    const timeRanges = [...new Set(data.map(record => record.time_range).filter(tr => tr))];
+    const timeRangeInfo = timeRanges.length > 0 ? 
+        `<div class="time-range-header">⏰ Work Hours: ${timeRanges.join(' | ')}</div>` : '';
+    
     let html = `
+        ${timeRangeInfo}
         <table class="attendance-table">
             <thead>
                 <tr>
@@ -872,11 +1149,10 @@ function createAttendanceTable(data) {
     data.forEach(record => {
         const statusClass = getStatusClass(record.Status);
         const comments = formatComments(record);
-        const timeRange = record.time_range ? `<div class="time-range">${record.time_range}</div>` : '';
         
        html += `
     <tr class="${statusClass}">
-        <td>${cleanEmployeeName(record.Employee)}${timeRange}</td>
+        <td>${cleanEmployeeName(record.Employee)}</td>
         <td>${formatDate(record.Date)}</td>
         <td class="${record.pin_highlight ? 'red-text' : ''}" 
             title="${record.pin_comment || ''}"
@@ -999,6 +1275,16 @@ function formatDate(dateStr) {
         month: 'short', 
         day: 'numeric' 
     });
+}
+
+function getDayOfWeek(dateString) {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { weekday: 'long' });
+    } catch (error) {
+        return '';
+    }
 }
 
 function updateAdminStats() {

@@ -245,6 +245,149 @@ def extract_employee_time_range(sheet):
     
     return None
 
+def get_ordinal_number(n):
+    """Convert number to ordinal (1st, 2nd, 3rd, etc.)"""
+    if 10 <= n % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+    return f"{n}{suffix}"
+
+def calculate_late_statistics(employee_name, time_range):
+    """Calculate late statistics for an employee based on their time range"""
+    try:
+        # Parse the time range to get start time
+        start_time = None
+        if time_range:
+            # Extract start time from time range (e.g., "08:30 AM to 07:00 PM" -> "08:30 AM")
+            time_parts = time_range.split(' to ')
+            if len(time_parts) >= 1:
+                start_time_str = time_parts[0].strip()
+                try:
+                    # Parse different time formats
+                    time_formats = [
+                        "%I:%M %p",      # 8:30 AM
+                        "%H:%M",         # 08:30
+                        "%I.%M %p",      # 8.30 AM
+                        "%H.%M",         # 08.30
+                    ]
+                    for fmt in time_formats:
+                        try:
+                            start_time = datetime.datetime.strptime(start_time_str, fmt).time()
+                            break
+                        except ValueError:
+                            continue
+                except Exception:
+                    pass
+        
+        # Default to 9:00 AM if no time range found
+        if not start_time:
+            start_time = datetime.time(9, 0)
+        
+        # Get attendance records for this employee
+        records = db.get_attendance_records(employee_filter=employee_name)
+        
+        late_count = 0
+        total_late_minutes = 0
+        late_records = []
+        
+        for record in records:
+            if record.get('Punch-In') and record.get('Date'):
+                try:
+                    # Parse punch-in time
+                    punch_in_str = record['Punch-In']
+                    if isinstance(punch_in_str, str):
+                        # Handle different time formats
+                        time_formats = [
+                            "%H:%M:%S",     # 09:30:00
+                            "%H:%M",        # 09:30
+                            "%I:%M:%S %p",  # 9:30:00 AM
+                            "%I:%M %p",     # 9:30 AM
+                        ]
+                        punch_in_time = None
+                        for fmt in time_formats:
+                            try:
+                                punch_in_time = datetime.datetime.strptime(punch_in_str, fmt).time()
+                                break
+                            except ValueError:
+                                continue
+                        
+                        if punch_in_time:
+                            # Parse the record date
+                            record_date = None
+                            if isinstance(record['Date'], str):
+                                try:
+                                    record_date = datetime.datetime.strptime(record['Date'], '%Y-%m-%d').date()
+                                except ValueError:
+                                    try:
+                                        record_date = datetime.datetime.strptime(record['Date'], '%d/%m/%Y').date()
+                                    except ValueError:
+                                        continue
+                            elif hasattr(record['Date'], 'date'):
+                                record_date = record['Date'].date()
+                            
+                            if record_date:
+                                # Calculate late minutes (allowing 2 minutes grace period)
+                                grace_period = datetime.timedelta(minutes=2)
+                                start_datetime = datetime.datetime.combine(record_date, start_time)
+                                punch_in_datetime = datetime.datetime.combine(record_date, punch_in_time)
+                                
+                                late_datetime = punch_in_datetime - start_datetime - grace_period
+                                
+                                if late_datetime.total_seconds() > 0:
+                                    late_minutes = int(late_datetime.total_seconds() / 60)
+                                    late_count += 1
+                                    total_late_minutes += late_minutes
+                                    
+                                    # Calculate expected punch-in time
+                                    expected_punch_in = start_datetime + grace_period
+                                    
+                                    late_records.append({
+                                        'date': record['Date'],
+                                        'punch_in': punch_in_str,
+                                        'expected_punch_in': expected_punch_in.strftime("%I:%M %p"),
+                                        'late_minutes': late_minutes,
+                                        'late_hours': round(late_minutes / 60, 2),
+                                        'record_id': f"{employee_name}_{record['Date']}_{punch_in_str}",
+                                        'status': record.get('Status', 'P'),
+                                        'punch_out': record.get('Punch-Out', ''),
+                                        'is_weekend': record_date.weekday() >= 5  # Saturday = 5, Sunday = 6
+                                    })
+                except Exception as e:
+                    print(f"Error processing record for {employee_name}: {e}")
+                    continue
+        
+        # Sort late records by date (oldest first)
+        late_records.sort(key=lambda x: x['date'], reverse=False)
+        
+        # Add sequence numbers to late records
+        for i, record in enumerate(late_records):
+            record['sequence'] = i + 1
+            record['sequence_text'] = get_ordinal_number(i + 1) + " late"
+        
+        print(f"Late statistics for {employee_name}:")
+        print(f"  Total late count: {late_count}")
+        print(f"  Total late minutes: {total_late_minutes}")
+        print(f"  Late records: {len(late_records)}")
+        for i, record in enumerate(late_records[:3]):  # Show first 3 records
+            print(f"    Record {i+1}: {record}")
+        
+        return {
+            'total_late_count': late_count,
+            'total_late_minutes': total_late_minutes,
+            'late_records': late_records,
+            'start_time': start_time.strftime("%I:%M %p"),
+            'average_late_minutes': round(total_late_minutes / late_count, 2) if late_count > 0 else 0
+        }
+    except Exception as e:
+        print(f"Error calculating late statistics for {employee_name}: {e}")
+        return {
+            'total_late_count': 0,
+            'total_late_minutes': 0,
+            'late_records': [],
+            'start_time': '09:00 AM'
+        }
+
 def process_attendance_file(file_path, selected_date=None):
     """Process attendance data from Excel file"""
     if selected_date is None:
@@ -903,6 +1046,97 @@ def reset_password():
             return jsonify({'success': True, 'message': 'Password reset successfully'})
 
     return jsonify({'success': False, 'message': 'Invalid email or password'})
+
+@app.route('/api/late-statistics')
+def get_late_statistics():
+    """Get late statistics for the current user"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    user_data = session['user_data']
+    employee_name = user_data['name']
+    
+    print(f"Calculating late statistics for: {employee_name}")
+    
+    # Get the time range for this employee from their records
+    records = db.get_attendance_records(employee_filter=employee_name)
+    print(f"Found {len(records)} records for {employee_name}")
+    
+    time_range = None
+    if records:
+        # Get the most recent time range from records
+        for record in records:
+            if record.get('time_range'):
+                time_range = record['time_range']
+                print(f"Found time range: {time_range}")
+                break
+    
+    if not time_range:
+        print("No time range found, using default 9:00 AM")
+    
+    # Calculate late statistics
+    late_stats = calculate_late_statistics(employee_name, time_range)
+    print(f"Late stats result: {late_stats}")
+    
+    return jsonify({
+        'success': True,
+        'data': late_stats
+    })
+
+@app.route('/api/admin/late-statistics')
+def get_admin_late_statistics():
+    """Get late statistics for all employees (admin only)"""
+    print(f"Admin late statistics request - User: {session.get('user_data', {}).get('name', 'Unknown')}")
+    
+    if 'user_data' not in session or not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+    
+    try:
+        # Get all attendance records
+        all_records = db.get_attendance_records()
+        
+        # Group records by employee
+        employee_records = {}
+        for record in all_records:
+            employee_name = record['Employee']
+            if employee_name not in employee_records:
+                employee_records[employee_name] = []
+            employee_records[employee_name].append(record)
+        
+        # Calculate late statistics for each employee
+        all_employee_stats = []
+        
+        for employee_name, records in employee_records.items():
+            # Get time range for this employee
+            time_range = None
+            for record in records:
+                if record.get('time_range'):
+                    time_range = record['time_range']
+                    break
+            
+            # Calculate late statistics
+            late_stats = calculate_late_statistics(employee_name, time_range)
+            
+            # Add employee name to the stats
+            late_stats['employee_name'] = employee_name
+            all_employee_stats.append(late_stats)
+        
+        # Sort by total late count (descending)
+        all_employee_stats.sort(key=lambda x: x['total_late_count'], reverse=True)
+        
+        print(f"Admin late statistics - Total employees: {len(all_employee_stats)}, Employees with late arrivals: {len([e for e in all_employee_stats if e['total_late_count'] > 0])}")
+        
+        return jsonify({
+            'success': True,
+            'data': all_employee_stats
+        })
+        
+    except Exception as e:
+        print(f"Error calculating admin late statistics: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to calculate late statistics'
+        })
 
 if __name__ == '__main__':
     app.run(debug=True)

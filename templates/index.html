@@ -229,6 +229,28 @@
                         <span id="update-note-text">Your current data is being updated. It will reflect shortly.</span>
                     </div>
 
+                    <!-- Admin Late Statistics Compact Section -->
+                    <div class="admin-late-statistics-compact">
+                        <div class="admin-late-compact-header" onclick="toggleLateStatisticsModal()">
+                            <div class="admin-late-compact-title">
+                                <i class="fas fa-clock"></i>
+                                <h3>Employee Late Arrival Statistics</h3>
+                            </div>
+                            <div class="admin-late-compact-summary">
+                                <span class="admin-late-compact-stat">
+                                    <strong id="admin-total-late-count">--</strong> Late Arrivals
+                                </span>
+                                <span class="admin-late-compact-stat">
+                                    <strong id="admin-total-late-minutes">--</strong> Total Minutes
+                                </span>
+                                <span class="admin-late-compact-stat">
+                                    <strong id="admin-late-employees">--</strong> Employees
+                                </span>
+                            </div>
+                            <i class="fas fa-chevron-right admin-late-expand-icon"></i>
+                        </div>
+                    </div>
+
                     <div id="attendance-table-container" class="table-container">
                         <div class="no-data">
                             <i class="fas fa-inbox"></i>
@@ -308,6 +330,38 @@
                         </div>
                     </div>
 
+                    <!-- Late Statistics Section -->
+                    <div class="late-statistics-section">
+                        <h3><i class="fas fa-clock"></i> Late Arrival Statistics</h3>
+                        <div class="late-stats-grid">
+                            <div class="late-stat-card">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div class="late-stat-content">
+                                    <h4 id="late-count">--</h4>
+                                    <p>Times Late</p>
+                                </div>
+                            </div>
+                            <div class="late-stat-card">
+                                <i class="fas fa-hourglass-half"></i>
+                                <div class="late-stat-content">
+                                    <h4 id="total-late-minutes">--</h4>
+                                    <p>Total Late Minutes</p>
+                                </div>
+                            </div>
+                            <div class="late-stat-card">
+                                <i class="fas fa-clock"></i>
+                                <div class="late-stat-content">
+                                    <h4 id="start-time">--</h4>
+                                    <p>Expected Start Time</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="late-records-list" class="late-records-list" style="display: none;">
+                            <h4>Late Arrival Records</h4>
+                            <div id="late-records-content"></div>
+                        </div>
+                    </div>
+
                     <div class="employee-filters">
                         <select id="employee-status-filter" onchange="applyEmployeeFilters()">
                             <option value="All">All Statuses</option>
@@ -352,6 +406,47 @@
 
     <!-- Notification Container -->
     <div id="notification-container" class="notification-container"></div>
+
+    <!-- Late Statistics Modal -->
+    <div id="late-statistics-modal" class="late-statistics-modal" style="display: none;">
+        <div class="late-statistics-modal-content">
+            <div class="late-statistics-modal-header">
+                <h2><i class="fas fa-clock"></i> Employee Late Arrival Statistics</h2>
+                <button class="late-statistics-close-btn" onclick="closeLateStatisticsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="late-statistics-modal-body">
+                <div class="admin-late-stats-summary">
+                    <div class="admin-late-summary-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="admin-late-summary-content">
+                            <h4 id="modal-total-late-count">--</h4>
+                            <p>Total Late Arrivals</p>
+                        </div>
+                    </div>
+                    <div class="admin-late-summary-card">
+                        <i class="fas fa-hourglass-half"></i>
+                        <div class="admin-late-summary-content">
+                            <h4 id="modal-total-late-minutes">--</h4>
+                            <p>Total Late Minutes</p>
+                        </div>
+                    </div>
+                    <div class="admin-late-summary-card">
+                        <i class="fas fa-users"></i>
+                        <div class="admin-late-summary-content">
+                            <h4 id="modal-late-employees">--</h4>
+                            <p>Employees with Late Arrivals</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="modal-late-employees-list" class="admin-late-employees-list">
+                    <h4>Late Arrival Details by Employee</h4>
+                    <div id="modal-late-employees-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
