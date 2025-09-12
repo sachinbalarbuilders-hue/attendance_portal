@@ -34,6 +34,24 @@ function enableResponsiveMode() {
     document.body.style.overflowX = '';
     document.body.classList.add('mobile');
     document.documentElement.classList.add('mobile');
+    
+    // Disable heavy animations on mobile for better performance
+    const style = document.createElement('style');
+    style.textContent = `
+        .desktop-tooltip, .mobile-tooltip {
+            animation: none !important;
+            transform: none !important;
+            will-change: auto !important;
+        }
+        .attendance-table td[data-comment]:not([data-comment=""]):hover {
+            transform: none !important;
+        }
+        .attendance-table td[data-comment]:not([data-comment=""]):hover:after {
+            transform: none !important;
+            animation: none !important;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // Enhanced desktop comment handling
@@ -554,11 +572,11 @@ function showEmployeeProfile(employeeName) {
     }
     
     // Calculate stats for this employee
-    const totalDays = employeeData.length;
     const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;
     const halfDays = employeeData.filter(record => record.Status.startsWith('HF')).length;
-    const presentDaysWeighted = presentDays + (halfDays * 0.5);
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
+    const totalWorkingDays = presentDays + halfDays + absentDays; // P + HF + A (excludes planned leaves: SL, PL, W/O, FL, HL)
+    const presentDaysWeighted = presentDays + (halfDays * 0.5);
     const leaveDays = employeeData.filter(record => 
         ['W/O', 'PL', 'SL', 'FL', 'HL'].some(leave => record.Status.startsWith(leave))
     ).length;
@@ -566,7 +584,7 @@ function showEmployeeProfile(employeeName) {
     const pl = employeeData.filter(record => record.Status.startsWith('PL')).length;
     const sl = employeeData.filter(record => record.Status.startsWith('SL')).length;
     const fl = employeeData.filter(record => record.Status.startsWith('FL')).length;
-    const attendanceRate = totalDays > 0 ? ((presentDaysWeighted / totalDays) * 100).toFixed(1) : 0;
+    const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -588,8 +606,8 @@ function showEmployeeProfile(employeeName) {
     
     // Update profile card content
     document.getElementById('profile-employee-name').textContent = cleanEmployeeName(employeeName);
-    document.getElementById('profile-total-days').textContent = totalDays;
-    document.getElementById('profile-present-days').textContent = `${presentDays} (${halfDays} HF)`;
+    document.getElementById('profile-total-days').textContent = totalWorkingDays;
+    document.getElementById('profile-present-days').textContent = presentDaysWeighted;
     document.getElementById('profile-absent-days').textContent = absentDays;
     document.getElementById('profile-leave-days').textContent = leaveDays;
     document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
@@ -914,6 +932,12 @@ function showMobileTooltip(element, comment) {
     tooltip.style.left = (rect.left + rect.width/2) + 'px';
     tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
     
+    // Disable animations on mobile for better performance
+    if (document.body.classList.contains('mobile')) {
+        tooltip.style.animation = 'none';
+        tooltip.style.transition = 'none';
+    }
+    
     document.body.appendChild(tooltip);
     
     setTimeout(() => {
@@ -1000,11 +1024,12 @@ function updateAdminStats() {
 
 function updateEmployeeStats() {
     const employeeData = attendanceData.filter(record => record.Employee === currentUser.name);
-    const totalDays = employeeData.length;
     const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;
     const halfDays = employeeData.filter(record => record.Status.startsWith('HF')).length;
+    const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
+    const totalWorkingDays = presentDays + halfDays + absentDays; // P + HF + A (excludes planned leaves: SL, PL, W/O, FL, HL)
     const presentDaysWeighted = presentDays + (halfDays * 0.5);
-    const attendanceRate = totalDays > 0 ? ((presentDaysWeighted / totalDays) * 100).toFixed(1) : 0;
+    const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -1037,7 +1062,7 @@ function updateEmployeeStats() {
     }
     
     document.getElementById('attendance-rate').textContent = `${attendanceRate}%`;
-    document.getElementById('present-days').textContent = `${presentDays} (${halfDays} HF)`;
+    document.getElementById('present-days').textContent = presentDaysWeighted;
     document.getElementById('performance-status').innerHTML = `${performanceEmoji} ${performanceStatus}`;
     const payableDaysEl = document.getElementById('payable-days');
     if (payableDaysEl) payableDaysEl.textContent = payableDays;
