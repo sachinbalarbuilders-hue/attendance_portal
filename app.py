@@ -35,18 +35,25 @@ class EmployeeDatabase:
                 "role": "Admin",
                 "is_admin": True
             },
-            "bhavin.balarbuilders@gmail.com": {
+            "bhavin@gmail.com": {
                 "password": hashlib.sha256("bhavin123".encode()).hexdigest(),
                 "name": "Bhavin Patel",
                 "role": "Manager",
                 "is_admin": True
             }
         }
+    
+    def clean_employee_name(self, full_name):
+        """Clean employee name by removing suffixes like (T), (TC), etc."""
+        import re
+        cleaned_name = full_name.strip()
+        cleaned_name = re.sub(r'\s*\([^)]*\)$', '', cleaned_name)
+        return cleaned_name.lower().replace(' ', '').replace('.', '').replace('-', '')
 
     def create_employee_email(self, full_name):
-        """Convert 'Pramod Dubey' to 'pramoddubey.balarbuilders@gmail.com'"""
-        email_name = full_name.lower().replace(' ', '').replace('.', '')
-        return f"{email_name}.balarbuilders@gmail.com"
+        """Convert 'Sachin Mandal (T)' to 'sachinmandal@gmail.com'"""
+        email_name = self.clean_employee_name(full_name)
+        return f"{email_name}@gmail.com"
 
     def add_employee(self, employee_name):
         """Add new employee to database"""
@@ -73,12 +80,15 @@ class EmployeeDatabase:
         
         # Then check database for employee accounts
         # Extract employee name from email (reverse of create_employee_email)
-        if email.endswith('.balarbuilders@gmail.com'):
-            email_name = email.replace('.balarbuilders@gmail.com', '')
+        if email.endswith('@gmail.com'):
+            email_name = email.replace('@gmail.com', '')
             # Try to find employee in database
             employees = db.get_employees()
             for emp_name in employees:
-                if email_name == emp_name.lower().replace(' ', '').replace('.', ''):
+                # Clean the employee name the same way as in create_employee_email
+                cleaned_emp_name = self.clean_employee_name(emp_name)
+                
+                if email_name == cleaned_emp_name:
                     # Check if password matches default employee password
                     hashed_password = hashlib.sha256("Balar123".encode()).hexdigest()
                     if hashlib.sha256(password.encode()).hexdigest() == hashed_password:
@@ -103,11 +113,14 @@ class EmployeeDatabase:
             return True
         
         # Check database for employee accounts
-        if email.endswith('.balarbuilders@gmail.com'):
-            email_name = email.replace('.balarbuilders@gmail.com', '')
+        if email.endswith('@gmail.com'):
+            email_name = email.replace('@gmail.com', '')
             employees = db.get_employees()
             for emp_name in employees:
-                if email_name == emp_name.lower().replace(' ', '').replace('.', ''):
+                # Clean the employee name the same way as in create_employee_email
+                cleaned_emp_name = self.clean_employee_name(emp_name)
+                
+                if email_name == cleaned_emp_name:
                     return True
         
         return False
@@ -146,6 +159,32 @@ class EmployeeDatabase:
 
 # **FIXED: Single global instance**
 employee_db = EmployeeDatabase()
+
+# Test function to demonstrate name cleaning
+def test_name_cleaning():
+    """Test the name cleaning functionality"""
+    test_cases = [
+        "Sachin Mandal (T)",
+        "Priya Sharma (TC)", 
+        "Raj Kumar (M)",
+        "Anita Singh (T)",
+        "Vikram Patel (TC)",
+        "Normal Name",
+        "Name With (Multiple) (Suffixes)"
+    ]
+    
+    print("Testing Employee Name Cleaning:")
+    print("=" * 50)
+    for name in test_cases:
+        cleaned = employee_db.clean_employee_name(name)
+        email = employee_db.create_employee_email(name)
+        print(f"Original: {name}")
+        print(f"Cleaned:  {cleaned}")
+        print(f"Email:    {email}")
+        print("-" * 30)
+
+# Uncomment the line below to test the name cleaning
+test_name_cleaning()
 
 # Global variables for session-like behavior
 password_reset_requests = []

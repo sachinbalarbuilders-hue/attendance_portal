@@ -19,10 +19,17 @@ class EmployeeDatabase:
             }
         }
     
+    def clean_employee_name(self, full_name):
+        """Clean employee name by removing suffixes like (T), (TC), etc."""
+        import re
+        cleaned_name = full_name.strip()
+        cleaned_name = re.sub(r'\s*\([^)]*\)$', '', cleaned_name)
+        return cleaned_name.lower().replace(' ', '').replace('.', '').replace('-', '')
+    
     def create_employee_email(self, full_name):
-        """Convert 'Pramod Dubey' to 'pramoddubey.balarbuilders@gmail.com'"""
-        email_name = full_name.lower().replace(' ', '').replace('.', '')
-        return f"{email_name}.balarbuilders@gmail.com"
+        """Convert 'Sachin Mandal (T)' to 'sachinmandal@gmail.com'"""
+        email_name = self.clean_employee_name(full_name)
+        return f"{email_name}@gmail.com"
     
     def add_employee(self, employee_name):
         """Add new employee to database"""

@@ -4,7 +4,13 @@ let attendanceData = [];
 let employees = [];
 let filteredData = [];
 let selectedEmployee = null;
-let globalShowUpdateNote = false; // Global flag for update note
+let globalShowUpdateNote = false;
+
+// Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
+function cleanEmployeeName(fullName) {
+    if (!fullName) return '';
+    return fullName.replace(/\s*\([^)]*\)$/, '').trim();
+}
 
 // Force desktop view
 function forceDesktopView() {
@@ -265,7 +271,7 @@ async function showDashboard() {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('dashboard-section').style.display = 'block';
     
-    document.getElementById('user-name').textContent = currentUser.name;
+    document.getElementById('user-name').textContent = cleanEmployeeName(currentUser.name);
     
     if (currentUser.is_admin) {
         showAdminDashboard();
@@ -300,7 +306,7 @@ function showAdminDashboard() {
 function showEmployeeDashboard() {
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('employee-panel').style.display = 'block';
-    document.getElementById('employee-name').textContent = currentUser.name;
+    document.getElementById('employee-name').textContent = cleanEmployeeName(currentUser.name);
     
     // Populate personal cumulative leave totals
     fetchAndRenderLeaveTotals(currentUser.name, true);
@@ -454,7 +460,7 @@ function showMultipleMatchesSelection(matchingEmployees) {
     matchingEmployees.forEach(employee => {
         dropdownHTML += `
             <div class="search-result-item" onclick="selectEmployeeFromSearch('${employee}')">
-                ${employee}
+                ${cleanEmployeeName(employee)}
             </div>
         `;
     });
@@ -483,7 +489,7 @@ function selectEmployeeFromSearch(employeeName) {
 
 function selectEmployee(employeeName) {
     selectedEmployee = employeeName;
-    document.getElementById('employee-search').value = employeeName;
+    document.getElementById('employee-search').value = cleanEmployeeName(employeeName);
     
     // Remove search dropdown if exists
     const dropdown = document.getElementById('search-results-dropdown');
@@ -502,7 +508,7 @@ function selectEmployee(employeeName) {
     displayAdminAttendanceData(globalShowUpdateNote);
     updateAdminStats();
     
-    showNotification(`Viewing data for ${employeeName}`, 'success');
+    showNotification(`Viewing data for ${cleanEmployeeName(employeeName)}`, 'success');
 }
 
 function clearEmployeeSearch() {
@@ -576,7 +582,7 @@ function showEmployeeProfile(employeeName) {
     }, 0);
     
     // Update profile card content
-    document.getElementById('profile-employee-name').textContent = employeeName;
+    document.getElementById('profile-employee-name').textContent = cleanEmployeeName(employeeName);
     document.getElementById('profile-total-days').textContent = totalDays;
     document.getElementById('profile-present-days').textContent = presentDays;
     document.getElementById('profile-absent-days').textContent = absentDays;
@@ -846,7 +852,7 @@ function createAttendanceTable(data) {
         
        html += `
     <tr class="${statusClass}">
-        <td>${record.Employee}</td>
+        <td>${cleanEmployeeName(record.Employee)}</td>
         <td>${formatDate(record.Date)}</td>
         <td class="${record.pin_highlight ? 'red-text' : ''}" 
             title="${record.pin_comment || ''}"
@@ -1072,7 +1078,7 @@ function updateEmployeeFilter() {
     employees.forEach(employee => {
         const option = document.createElement('option');
         option.value = employee;
-        option.textContent = employee;
+        option.textContent = cleanEmployeeName(employee);
         select.appendChild(option);
     });
     
