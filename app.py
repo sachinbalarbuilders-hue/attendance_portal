@@ -644,6 +644,39 @@ def get_leave_totals():
 
     return jsonify({'success': True, 'data': totals})
 
+@app.route('/api/admin/set-date', methods=['POST'])
+def set_admin_date():
+    """Set admin's selected date"""
+    if 'user_data' not in session or not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+    
+    data = request.get_json()
+    selected_date = data.get('date')
+    
+    if not selected_date:
+        return jsonify({'success': False, 'message': 'Date is required'})
+    
+    success = db.set_admin_setting('selected_date', selected_date)
+    
+    if success:
+        return jsonify({'success': True, 'message': 'Date updated successfully'})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to update date'})
+
+@app.route('/api/admin/get-date')
+def get_admin_date():
+    """Get admin's selected date"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    selected_date = db.get_admin_setting('selected_date')
+    
+    return jsonify({
+        'success': True, 
+        'date': selected_date,
+        'has_date': selected_date is not None
+    })
+
 @app.route('/api/database-stats')
 def get_database_stats():
     if 'user_data' not in session or not session['user_data'].get('is_admin'):

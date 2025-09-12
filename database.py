@@ -67,6 +67,16 @@ class AttendanceDatabase:
                 )
             ''')
             
+            # Create admin settings table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS admin_settings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    setting_key TEXT UNIQUE NOT NULL,
+                    setting_value TEXT,
+                    updated_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
             conn.commit()
     
     def clear_existing_data(self, file_name: str = None):
@@ -274,6 +284,33 @@ class AttendanceDatabase:
                 'unique_employees': unique_employees,
                 'latest_upload': latest_upload
             }
+    
+    def set_admin_setting(self, key: str, value: str) -> bool:
+        """Set an admin setting"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT OR REPLACE INTO admin_settings (setting_key, setting_value, updated_timestamp)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                ''', (key, value))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error setting admin setting: {e}")
+            return False
+    
+    def get_admin_setting(self, key: str) -> Optional[str]:
+        """Get an admin setting value"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT setting_value FROM admin_settings WHERE setting_key = ?', (key,))
+                result = cursor.fetchone()
+                return result[0] if result else None
+        except Exception as e:
+            print(f"Error getting admin setting: {e}")
+            return None
 
 # Global database instance
 db = AttendanceDatabase()

@@ -4,6 +4,7 @@ let attendanceData = [];
 let employees = [];
 let filteredData = [];
 let selectedEmployee = null;
+let globalShowUpdateNote = false; // Global flag for update note
 
 // Force desktop view
 function forceDesktopView() {
@@ -300,6 +301,7 @@ function showEmployeeDashboard() {
     document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('employee-panel').style.display = 'block';
     document.getElementById('employee-name').textContent = currentUser.name;
+    
     // Populate personal cumulative leave totals
     fetchAndRenderLeaveTotals(currentUser.name, true);
 }
@@ -496,7 +498,8 @@ function selectEmployee(employeeName) {
     showEmployeeProfile(employeeName);
     // Also fetch cumulative leave totals from Excel and render breakdown
     fetchAndRenderLeaveTotals(employeeName, false);
-    displayAdminAttendanceData();
+    
+    displayAdminAttendanceData(globalShowUpdateNote);
     updateAdminStats();
     
     showNotification(`Viewing data for ${employeeName}`, 'success');
@@ -600,6 +603,45 @@ function hideEmployeeProfile() {
     profileCard.classList.remove('show');
 }
 
+// Server-side date management functions
+async function saveAdminDate(date) {
+    if (!currentUser.is_admin) return;
+    
+    try {
+        const response = await fetch('/api/admin/set-date', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ date: date })
+        });
+        
+        const result = await response.json();
+        if (!result.success) {
+            console.error('Failed to save admin date:', result.message);
+        }
+    } catch (error) {
+        console.error('Error saving admin date:', error);
+    }
+}
+
+async function getAdminDate() {
+    try {
+        const response = await fetch('/api/admin/get-date');
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.date;
+        } else {
+            console.error('Failed to get admin date:', result.message);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting admin date:', error);
+        return null;
+    }
+}
+
 // Data loading functions
 async function loadAttendanceData() {
     try {
@@ -619,26 +661,57 @@ async function loadAttendanceData() {
             // Base dataset from server
             let data = result.data;
             // Apply client-side date filter (month/year) if a date is selected
-            const dp = document.getElementById('date-picker');
-            const selectedDateStr = dp ? dp.value : '';
+            let selectedDateStr = '';
+            if (currentUser.is_admin) {
+                // For admin, use the date picker value
+                const dp = document.getElementById('date-picker');
+                selectedDateStr = dp ? dp.value : '';
+                // If no date selected, try to load from server
+                if (!selectedDateStr) {
+                    selectedDateStr = await getAdminDate() || '';
+                    // Update the date picker if we found a stored date
+                    if (selectedDateStr && dp) {
+                        dp.value = selectedDateStr;
+                    }
+                } else {
+                    // Save admin's selection to server
+                    await saveAdminDate(selectedDateStr);
+                }
+            } else {
+                // For employee, get admin's selection from server
+                selectedDateStr = await getAdminDate() || '';
+            }
+            
+            globalShowUpdateNote = false;
             if (selectedDateStr) {
                 const selected = new Date(selectedDateStr);
                 const selYear = selected.getFullYear();
                 const selMonth = selected.getMonth();
                 const selDay = selected.getDate();
+                
+                // Check if selected date is before current date
+                const today = new Date();
+                const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const selectedDate = new Date(selYear, selMonth, selDay);
+                
+                if (selectedDate < currentDate) {
+                    globalShowUpdateNote = true;
+                }
+                
                 data = data.filter(r => {
                     const d = new Date(r.Date);
                     const sameMonth = d.getFullYear() === selYear && d.getMonth() === selMonth;
-                    return sameMonth && d.getDate() <= selDay;
+                    const dayMatch = d.getDate() <= selDay;
+                    return sameMonth && dayMatch;
                 });
             }
             attendanceData = data;
             
             if (currentUser.is_admin) {
-                displayAdminAttendanceData();
+                displayAdminAttendanceData(globalShowUpdateNote);
                 updateAdminStats();
             } else {
-                displayEmployeeAttendanceData();
+                displayEmployeeAttendanceData(globalShowUpdateNote);
                 updateEmployeeStats();
             }
         } else {
@@ -682,8 +755,18 @@ async function loadPasswordResetRequests() {
 }
 
 // Display functions
-function displayAdminAttendanceData() {
+function displayAdminAttendanceData(showUpdateNote = false) {
     const container = document.getElementById('attendance-table-container');
+    const noteElement = document.getElementById('data-update-note');
+    
+    // Show/hide update note
+    if (noteElement) {
+        if (showUpdateNote) {
+            noteElement.style.display = 'flex';
+        } else {
+            noteElement.style.display = 'none';
+        }
+    }
     
     // **FIXED: Use correct data based on selection**
     let dataToDisplay;
@@ -711,8 +794,19 @@ function displayAdminAttendanceData() {
     container.innerHTML = table;
 }
 
-function displayEmployeeAttendanceData() {
+function displayEmployeeAttendanceData(showUpdateNote = false) {
     const container = document.getElementById('employee-attendance-table');
+    const noteElement = document.getElementById('employee-data-update-note');
+    
+    // Show/hide update note
+    if (noteElement) {
+        if (showUpdateNote) {
+            noteElement.style.display = 'flex';
+        } else {
+            noteElement.style.display = 'none';
+        }
+    }
+    
     const employeeData = attendanceData.filter(record => record.Employee === currentUser.name);
     
     if (employeeData.length === 0) {
@@ -1067,8 +1161,17 @@ function applyEmployeeFilters() {
     loadAttendanceData();
 }
 
-function updateDateRange() {
-    loadAttendanceData();
+async function updateDateRange() {
+    // Store admin's date selection before loading data
+    if (currentUser.is_admin) {
+        const dp = document.getElementById('date-picker');
+        const selectedDate = dp ? dp.value : null;
+        // Save to server
+        if (selectedDate) {
+            await saveAdminDate(selectedDate);
+        }
+    }
+    await loadAttendanceData();
     // Re-apply current employee selection after loading
     if (selectedEmployee && currentUser.is_admin) {
         setTimeout(() => {
@@ -1076,6 +1179,7 @@ function updateDateRange() {
         }, 100);
     }
 }
+
 
 function exportData() {
     let dataToExport;
