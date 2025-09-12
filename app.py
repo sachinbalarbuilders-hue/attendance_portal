@@ -186,6 +186,7 @@ def test_name_cleaning():
 # Uncomment the line below to test the name cleaning
 test_name_cleaning()
 
+
 # Global variables for session-like behavior
 password_reset_requests = []
 
