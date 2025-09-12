@@ -872,10 +872,11 @@ function createAttendanceTable(data) {
     data.forEach(record => {
         const statusClass = getStatusClass(record.Status);
         const comments = formatComments(record);
+        const timeRange = record.time_range ? `<div class="time-range">${record.time_range}</div>` : '';
         
        html += `
     <tr class="${statusClass}">
-        <td>${cleanEmployeeName(record.Employee)}</td>
+        <td>${cleanEmployeeName(record.Employee)}${timeRange}</td>
         <td>${formatDate(record.Date)}</td>
         <td class="${record.pin_highlight ? 'red-text' : ''}" 
             title="${record.pin_comment || ''}"

@@ -219,6 +219,32 @@ def is_font_red(cell):
     
     return False
 
+def extract_employee_time_range(sheet):
+    """Extract time range from employee sheet (e.g., '08:30 AM to 07:00 PM')"""
+    try:
+        # Look for time range in cell A2 (common location for time range)
+        time_cell = sheet.cell(2, 1)  # Row 2, Column A
+        if time_cell.value and isinstance(time_cell.value, str):
+            time_value = str(time_cell.value).strip()
+            # Check if it contains time pattern (AM/PM or 24-hour format)
+            if ('AM' in time_value.upper() or 'PM' in time_value.upper() or 
+                ':' in time_value or 'to' in time_value.lower()):
+                return time_value
+        
+        # Also check other common locations
+        for row in range(1, 6):  # Check first 5 rows
+            for col in range(1, 4):  # Check first 3 columns
+                cell = sheet.cell(row, col)
+                if cell.value and isinstance(cell.value, str):
+                    time_value = str(cell.value).strip()
+                    if ('AM' in time_value.upper() or 'PM' in time_value.upper() or 
+                        ':' in time_value or 'to' in time_value.lower()):
+                        return time_value
+    except Exception:
+        pass
+    
+    return None
+
 def process_attendance_file(file_path, selected_date=None):
     """Process attendance data from Excel file"""
     if selected_date is None:
@@ -278,6 +304,13 @@ def process_attendance_file(file_path, selected_date=None):
     records = []
     
     ignore_statuses = {"P", "A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT"}
+
+    # Extract time ranges for each employee
+    employee_time_ranges = {}
+    for sheet in visible_sheets:
+        time_range = extract_employee_time_range(sheet)
+        if time_range:
+            employee_time_ranges[sheet.title] = time_range
 
     for sheet in visible_sheets:
         df = pd.read_excel(file_path, sheet_name=sheet.title, header=None)
@@ -389,7 +422,8 @@ def process_attendance_file(file_path, selected_date=None):
                 "status_comment": status_comment,
                 "pin_highlight": pin_highlight,
                 "pout_highlight": pout_highlight,
-                "status_highlight": status_highlight
+                "status_highlight": status_highlight,
+                "time_range": employee_time_ranges.get(sheet.title, "")
             })
     
     return records
@@ -530,7 +564,8 @@ def process_attendance_file(file_path, selected_date=None):
                 "status_comment": status_comment,
                 "pin_highlight": pin_highlight,
                 "pout_highlight": pout_highlight,
-                "status_highlight": status_highlight
+                "status_highlight": status_highlight,
+                "time_range": employee_time_ranges.get(sheet.title, "")
             })
     
     return records

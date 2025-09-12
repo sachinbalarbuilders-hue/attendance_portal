@@ -35,11 +35,19 @@ class AttendanceDatabase:
                     pin_highlight BOOLEAN DEFAULT 0,
                     pout_highlight BOOLEAN DEFAULT 0,
                     status_highlight BOOLEAN DEFAULT 0,
+                    time_range TEXT,
                     upload_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                     file_name TEXT,
                     UNIQUE(employee_name, date, file_name)
                 )
             ''')
+            
+            # Add time_range column if it doesn't exist (for existing databases)
+            try:
+                cursor.execute('ALTER TABLE attendance_records ADD COLUMN time_range TEXT')
+            except sqlite3.OperationalError:
+                # Column already exists, ignore
+                pass
             
             # Create leave totals table
             cursor.execute('''
@@ -111,8 +119,8 @@ class AttendanceDatabase:
                     INSERT OR REPLACE INTO attendance_records 
                     (employee_name, date, punch_in, punch_out, status, 
                      pin_comment, pout_comment, status_comment, 
-                     pin_highlight, pout_highlight, status_highlight, file_name)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     pin_highlight, pout_highlight, status_highlight, time_range, file_name)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     record.get('Employee', ''),
                     record.get('Date', ''),
@@ -125,6 +133,7 @@ class AttendanceDatabase:
                     record.get('pin_highlight', False),
                     record.get('pout_highlight', False),
                     record.get('status_highlight', False),
+                    record.get('time_range', ''),
                     file_name
                 ))
             
@@ -168,7 +177,7 @@ class AttendanceDatabase:
                 SELECT employee_name, date, punch_in, punch_out, status,
                        pin_comment, pout_comment, status_comment,
                        pin_highlight, pout_highlight, status_highlight,
-                       upload_timestamp, file_name
+                       time_range, upload_timestamp, file_name
                 FROM attendance_records
                 WHERE 1=1
             '''
@@ -201,6 +210,7 @@ class AttendanceDatabase:
                     'pin_highlight': bool(row['pin_highlight']),
                     'pout_highlight': bool(row['pout_highlight']),
                     'status_highlight': bool(row['status_highlight']),
+                    'time_range': row['time_range'],
                     'upload_timestamp': row['upload_timestamp'],
                     'file_name': row['file_name']
                 })
