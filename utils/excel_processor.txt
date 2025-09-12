@@ -65,6 +65,33 @@ def process_attendance_file(file_path, selected_date=None):
     def to_ts(x):
         if x is None or (isinstance(x, float) and pd.isna(x)):
             return pd.NaT
+        
+        # Handle datetime.time objects directly
+        if isinstance(x, datetime.time):
+            return datetime.datetime.combine(datetime.date.today(), x)
+        
+        # Handle string time formats that might be manually entered
+        if isinstance(x, str):
+            x = x.strip()
+            # Try common time formats first
+            time_formats = [
+                "%H:%M",      # 09:30
+                "%H:%M:%S",   # 09:30:00
+                "%I:%M %p",   # 9:30 AM
+                "%I:%M:%S %p", # 9:30:00 AM
+                "%H.%M",      # 09.30
+                "%I.%M %p",   # 9.30 AM
+            ]
+            
+            for fmt in time_formats:
+                try:
+                    # Parse as time and convert to datetime
+                    time_obj = datetime.datetime.strptime(x, fmt).time()
+                    # Create a datetime with today's date and the parsed time
+                    return datetime.datetime.combine(datetime.date.today(), time_obj)
+                except ValueError:
+                    continue
+        
         try:
             return pd.to_datetime(x, errors="coerce")
         except Exception:

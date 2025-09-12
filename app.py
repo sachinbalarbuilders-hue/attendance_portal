@@ -243,6 +243,33 @@ def process_attendance_file(file_path, selected_date=None):
     def to_ts(x):
         if x is None or (isinstance(x, float) and pd.isna(x)):
             return pd.NaT
+        
+        # Handle datetime.time objects directly
+        if isinstance(x, datetime.time):
+            return datetime.datetime.combine(datetime.date.today(), x)
+        
+        # Handle string time formats that might be manually entered
+        if isinstance(x, str):
+            x = x.strip()
+            # Try common time formats first
+            time_formats = [
+                "%H:%M",      # 09:30
+                "%H:%M:%S",   # 09:30:00
+                "%I:%M %p",   # 9:30 AM
+                "%I:%M:%S %p", # 9:30:00 AM
+                "%H.%M",      # 09.30
+                "%I.%M %p",   # 9.30 AM
+            ]
+            
+            for fmt in time_formats:
+                try:
+                    # Parse as time and convert to datetime
+                    time_obj = datetime.datetime.strptime(x, fmt).time()
+                    # Create a datetime with today's date and the parsed time
+                    return datetime.datetime.combine(datetime.date.today(), time_obj)
+                except ValueError:
+                    continue
+        
         try:
             return pd.to_datetime(x, errors="coerce")
         except Exception:
@@ -311,10 +338,17 @@ def process_attendance_file(file_path, selected_date=None):
             elif sheet.title.strip() in blank_employees:
                 pin, pout = "", ""  # Keep blank for exception employees
             else:
+                # Read timing data directly from openpyxl cells to preserve data types
+                pin_cell_value = pin_cell.value if pin_cell else None
+                pout_cell_value = pout_cell.value if pout_cell else None
+                
+                # Also try pandas data as fallback
                 raw1 = df.iloc[i, col] if pd.notna(df.iloc[i, col]) else None
                 raw2 = df.iloc[i + 1, col] if i + 1 < len(df) and pd.notna(df.iloc[i + 1, col]) else None
                 
-                t1, t2 = to_ts(raw1), to_ts(raw2)
+                # Use openpyxl values first, fallback to pandas
+                t1 = to_ts(pin_cell_value) if pin_cell_value is not None else to_ts(raw1)
+                t2 = to_ts(pout_cell_value) if pout_cell_value is not None else to_ts(raw2)
                 
                 if pd.notna(t1) and pd.notna(t2):
                     pin, pout = t1.strftime("%H:%M"), t2.strftime("%H:%M")
@@ -343,6 +377,7 @@ def process_attendance_file(file_path, selected_date=None):
                     else:
                         pin, pout = "", ""
 
+
             records.append({
                 "Employee": sheet.title,
                 "Date": date_val,
@@ -364,6 +399,33 @@ def process_attendance_file(file_path, selected_date=None):
     def to_ts(x):
         if x is None or (isinstance(x, float) and pd.isna(x)):
             return pd.NaT
+        
+        # Handle datetime.time objects directly
+        if isinstance(x, datetime.time):
+            return datetime.datetime.combine(datetime.date.today(), x)
+        
+        # Handle string time formats that might be manually entered
+        if isinstance(x, str):
+            x = x.strip()
+            # Try common time formats first
+            time_formats = [
+                "%H:%M",      # 09:30
+                "%H:%M:%S",   # 09:30:00
+                "%I:%M %p",   # 9:30 AM
+                "%I:%M:%S %p", # 9:30:00 AM
+                "%H.%M",      # 09.30
+                "%I.%M %p",   # 9.30 AM
+            ]
+            
+            for fmt in time_formats:
+                try:
+                    # Parse as time and convert to datetime
+                    time_obj = datetime.datetime.strptime(x, fmt).time()
+                    # Create a datetime with today's date and the parsed time
+                    return datetime.datetime.combine(datetime.date.today(), time_obj)
+                except ValueError:
+                    continue
+        
         try:
             return pd.to_datetime(x, errors="coerce")
         except Exception:
@@ -429,10 +491,17 @@ def process_attendance_file(file_path, selected_date=None):
             elif sheet.title.strip() in blank_employees:
                 pin, pout = "", ""
             else:
+                # Read timing data directly from openpyxl cells to preserve data types
+                pin_cell_value = pin_cell.value if pin_cell else None
+                pout_cell_value = pout_cell.value if pout_cell else None
+                
+                # Also try pandas data as fallback
                 raw1 = df.iloc[i, col] if pd.notna(df.iloc[i, col]) else None
                 raw2 = df.iloc[i + 1, col] if i + 1 < len(df) and pd.notna(df.iloc[i + 1, col]) else None
                 
-                t1, t2 = to_ts(raw1), to_ts(raw2)
+                # Use openpyxl values first, fallback to pandas
+                t1 = to_ts(pin_cell_value) if pin_cell_value is not None else to_ts(raw1)
+                t2 = to_ts(pout_cell_value) if pout_cell_value is not None else to_ts(raw2)
                 
                 if pd.notna(t1) and pd.notna(t2):
                     pin, pout = t1.strftime("%H:%M"), t2.strftime("%H:%M")
@@ -448,6 +517,7 @@ def process_attendance_file(file_path, selected_date=None):
                         pin, pout = t2.strftime("%H:%M"), "❌ Missing"
                 else:
                     pin, pout = "❌ Missing", "❌ Missing"
+            
             
             records.append({
                 "Employee": sheet.title,
@@ -649,6 +719,7 @@ def get_attendance():
 
     # Get data from database
     filtered_data = db.get_attendance_records(target_employee, filter_status)
+    
 
     return jsonify({'success': True, 'data': filtered_data})
 
