@@ -346,19 +346,270 @@ body {
     color: #7f8c8d;
 }
 
+/* Custom Date Picker Container */
+.date-picker-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 #date-picker {
     width: 100%;
-    padding: 1rem;
-    border: 2px solid #ecf0f1;
-    border-radius: 10px;
-    font-size: 1rem;
+    padding: 20px 60px 20px 20px;
+    border: 3px solid #e1e5e9;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 500;
     transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 64px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    position: relative;
+    color: #2c3e50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 #date-picker:focus {
     outline: none;
     border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.2);
+    transform: translateY(-3px);
+    background: white;
+}
+
+#date-picker:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+    background: white;
+}
+
+/* Make the entire input area clickable */
+#date-picker::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+    z-index: 1;
+}
+
+/* Custom Calendar Icon */
+.date-picker-wrapper::after {
+    content: "📅";
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 28px;
+    color: #667eea;
+    z-index: 2;
+}
+
+/* Enhanced Calendar Popup Styling */
+#date-picker::-webkit-datetime-edit {
+    padding: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+#date-picker::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+
+#date-picker::-webkit-datetime-edit-text {
+    color: #667eea;
+    font-weight: 600;
+    margin: 0 4px;
+}
+
+#date-picker::-webkit-datetime-edit-month-field,
+#date-picker::-webkit-datetime-edit-day-field,
+#date-picker::-webkit-datetime-edit-year-field {
+    color: #2c3e50;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+#date-picker::-webkit-datetime-edit-month-field:hover,
+#date-picker::-webkit-datetime-edit-day-field:hover,
+#date-picker::-webkit-datetime-edit-year-field:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+/* Placeholder text styling */
+#date-picker::before {
+    content: "Select a date...";
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #95a5a6;
+    font-size: 20px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 0;
+}
+
+#date-picker:not(:placeholder-shown)::before {
+    display: none;
+}
+
+/* Custom calendar popup styling (for browsers that support it) */
+#date-picker::-webkit-calendar-picker-indicator {
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'%3e%3cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3e%3c/svg%3e") no-repeat center;
+    background-size: 32px 32px;
+    width: 32px;
+    height: 32px;
+    margin-left: 8px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+#date-picker::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Quick date selection buttons */
+.quick-date-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.quick-date-btn {
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #667eea;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.quick-date-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.quick-date-btn.active {
+    background: #667eea;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Enhanced Calendar Popup Styling */
+/* This targets the calendar popup that appears when clicking the date input */
+#date-picker::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Custom styling for the calendar popup */
+#date-picker::-webkit-calendar-picker-indicator:focus {
+    outline: none;
+}
+
+/* Make the date input more prominent when focused */
+#date-picker:focus::-webkit-datetime-edit {
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+
+/* Enhanced date field styling */
+#date-picker::-webkit-datetime-edit-month-field,
+#date-picker::-webkit-datetime-edit-day-field,
+#date-picker::-webkit-datetime-edit-year-field {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    background: transparent;
+    border: 2px solid transparent;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+#date-picker::-webkit-datetime-edit-month-field:focus,
+#date-picker::-webkit-datetime-edit-day-field:focus,
+#date-picker::-webkit-datetime-edit-year-field:focus {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+    color: #667eea;
+    transform: scale(1.05);
+}
+
+/* Separator styling */
+#date-picker::-webkit-datetime-edit-text {
+    color: #667eea;
+    font-weight: 700;
+    font-size: 20px;
+    margin: 0 6px;
+    padding: 0 4px;
+}
+
+/* Placeholder improvements */
+#date-picker:invalid {
+    color: #95a5a6;
+}
+
+#date-picker:invalid::before {
+    content: "📅 Select a date...";
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #95a5a6;
+    font-size: 20px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Remove default placeholder when date is selected */
+#date-picker:valid::before {
+    display: none;
+}
+
+/* Enhanced hover effects for the entire date picker */
+.date-picker-wrapper:hover #date-picker {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+}
+
+.date-picker-wrapper:hover::after {
+    transform: translateY(-50%) scale(1.1);
+    color: #5a67d8;
 }
 
 /* Stats Section */

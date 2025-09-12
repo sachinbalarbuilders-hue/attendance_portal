@@ -1180,6 +1180,61 @@ async function updateDateRange() {
     }
 }
 
+// Quick date selection function
+async function setQuickDate(type) {
+    if (!currentUser.is_admin) return;
+    
+    const dp = document.getElementById('date-picker');
+    if (!dp) return;
+    
+    const today = new Date();
+    let selectedDate = '';
+    
+    switch (type) {
+        case 'today':
+            selectedDate = today.toISOString().split('T')[0];
+            break;
+        case 'yesterday':
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            selectedDate = yesterday.toISOString().split('T')[0];
+            break;
+        case 'week-ago':
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            selectedDate = weekAgo.toISOString().split('T')[0];
+            break;
+        case 'month-ago':
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(today.getMonth() - 1);
+            selectedDate = monthAgo.toISOString().split('T')[0];
+            break;
+        case 'clear':
+            selectedDate = '';
+            break;
+    }
+    
+    // Update the date picker
+    dp.value = selectedDate;
+    
+    // Update button states
+    updateQuickDateButtons(type);
+    
+    // Trigger date change
+    await updateDateRange();
+}
+
+// Update quick date button states
+function updateQuickDateButtons(activeType) {
+    const buttons = document.querySelectorAll('.quick-date-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.onclick.toString().includes(`'${activeType}'`)) {
+            btn.classList.add('active');
+        }
+    });
+}
+
 
 function exportData() {
     let dataToExport;

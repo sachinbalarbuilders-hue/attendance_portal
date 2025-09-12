@@ -93,7 +93,18 @@
 
                         <div class="date-picker-section">
                             <h3><i class="fas fa-calendar"></i> Select Date Range</h3>
-                            <input type="date" id="date-picker" onchange="updateDateRange()">
+                            <div class="date-picker-wrapper">
+                                <input type="date" id="date-picker" onchange="updateDateRange()" placeholder="Select a date...">
+                            </div>
+                            
+                            <!-- Quick Date Selection Buttons -->
+                            <div class="quick-date-buttons">
+                                <button class="quick-date-btn" onclick="setQuickDate('today')">Today</button>
+                                <button class="quick-date-btn" onclick="setQuickDate('yesterday')">Yesterday</button>
+                                <button class="quick-date-btn" onclick="setQuickDate('week-ago')">1 Week Ago</button>
+                                <button class="quick-date-btn" onclick="setQuickDate('month-ago')">1 Month Ago</button>
+                                <button class="quick-date-btn" onclick="setQuickDate('clear')">Clear</button>
+                            </div>
                         </div>
                     </div>
 
