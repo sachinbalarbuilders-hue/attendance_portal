@@ -406,6 +406,7 @@ def process_attendance_file(file_path, selected_date=None):
     day_limit = selected_date.day
     
     print(f"DEBUG: Processing for month '{month_abbr}' and year '{year}', day limit: {day_limit}")
+    print(f"DEBUG: Selected date: {selected_date}")
     
     # Your 5 blank employees
     blank_employees = [
@@ -463,10 +464,15 @@ def process_attendance_file(file_path, selected_date=None):
         if time_range:
             employee_time_ranges[sheet.title] = time_range
 
+    processed_sheets = 0
+    skipped_sheets = 0
+    
     for sheet in visible_sheets:
         df = pd.read_excel(file_path, sheet_name=sheet.title, header=None)
         
         if df.dropna(how="all").empty:
+            print(f"DEBUG: Skipping sheet '{sheet.title}' - empty data")
+            skipped_sheets += 1
             continue
         
         # Updated logic to handle both old format (JAN, MAY, etc.) and new format (NOV-24, DEC-24, JAN-25, etc.)
@@ -519,7 +525,11 @@ def process_attendance_file(file_path, selected_date=None):
         print(f"DEBUG: Found {len(month_rows)} matching month rows: {month_rows}")
         
         if not month_rows:
+            print(f"DEBUG: Skipping sheet '{sheet.title}' - no matching month rows found")
+            skipped_sheets += 1
             continue
+            
+        processed_sheets += 1
         
         i = month_rows[0]
         
@@ -631,6 +641,7 @@ def process_attendance_file(file_path, selected_date=None):
             })
     
     print(f"DEBUG: Generated {len(records)} total records from all sheets")
+    print(f"DEBUG: Processed {processed_sheets} sheets, skipped {skipped_sheets} sheets")
     return records
 
 

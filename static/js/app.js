@@ -309,10 +309,13 @@ async function showDashboard() {
     
     if (currentUser.is_admin) {
         await loadEmployees();
-        // Auto-select first employee if data is available
-        if (employees.length > 0 && attendanceData.length > 0) {
+        // Auto-select first employee if employees are available
+        if (employees.length > 0) {
             const firstEmployee = employees[0];
             selectEmployee(firstEmployee);
+            console.log('Admin: Auto-selected first employee:', firstEmployee);
+        } else {
+            console.log('Admin: No employees available to select');
         }
     }
     
@@ -636,7 +639,15 @@ async function uploadFile() {
             body: formData
         });
 
+        console.log('Upload response status:', response.status);
+        console.log('Upload response headers:', response.headers);
+        
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+
         const result = await response.json();
+        console.log('Upload result:', result);
 
         if (result.success) {
             showNotification(result.message);
@@ -653,8 +664,13 @@ async function uploadFile() {
             showNotification(result.message, 'error');
         }
     } catch (error) {
-        showNotification('Upload failed. Please try again.', 'error');
+        showNotification(`Upload failed: ${error.message}`, 'error');
         console.error('Upload error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
     } finally {
         hideLoading();
         fileInput.value = '';
@@ -780,8 +796,18 @@ function selectEmployeeFromSearch(employeeName) {
 }
 
 function selectEmployee(employeeName) {
+    console.log('selectEmployee() called with:', employeeName);
     selectedEmployee = employeeName;
     document.getElementById('employee-search').value = cleanEmployeeName(employeeName);
+    
+    // Update employee filter dropdown to reflect selection
+    const employeeFilter = document.getElementById('employee-filter');
+    if (employeeFilter) {
+        employeeFilter.value = employeeName;
+        console.log('Updated dropdown to show:', employeeName);
+    } else {
+        console.log('Employee filter dropdown not found');
+    }
     
     // Remove search dropdown if exists
     const dropdown = document.getElementById('search-results-dropdown');
@@ -791,6 +817,7 @@ function selectEmployee(employeeName) {
     
     // Filter data for selected employee
     filteredData = attendanceData.filter(record => record.Employee === employeeName);
+    console.log(`Filtered data for ${employeeName}: ${filteredData.length} records`);
     
     // Show employee profile and data
     showEmployeeProfile(employeeName);
@@ -800,6 +827,7 @@ function selectEmployee(employeeName) {
     displayAdminAttendanceData(globalShowUpdateNote);
     updateAdminStats();
     
+    console.log('Selected employee:', employeeName);
     showNotification(`Viewing data for ${cleanEmployeeName(employeeName)}`, 'success');
 }
 
@@ -845,9 +873,13 @@ function showEmployeeProfile(employeeName) {
     // Calculate stats for this employee
     const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;
     const halfDays = employeeData.filter(record => record.Status.startsWith('HF')).length;
+    const paidHalfDays = employeeData.filter(record => record.Status.startsWith('PHF')).length;
+    const sickHalfDays = employeeData.filter(record => record.Status.startsWith('SHF')).length;
+    const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
-    const totalWorkingDays = presentDays + halfDays + absentDays; // P + HF + A (excludes planned leaves: SL, PL, W/O, FL, HL)
-    const presentDaysWeighted = presentDays + (halfDays * 0.5);
+    // Use total days in the month for attendance rate calculation
+    const totalDaysInMonth = employeeData.length; // Total records = total days in month
+    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5) + weekOffDays; // P=1, HF/PHF/SHF=0.5, W/O=1
     const leaveDays = employeeData.filter(record => 
         ['W/O', 'PL', 'SL', 'FL', 'HL'].some(leave => record.Status.startsWith(leave))
     ).length;
@@ -855,7 +887,7 @@ function showEmployeeProfile(employeeName) {
     const pl = employeeData.filter(record => record.Status.startsWith('PL')).length;
     const sl = employeeData.filter(record => record.Status.startsWith('SL')).length;
     const fl = employeeData.filter(record => record.Status.startsWith('FL')).length;
-    const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
+    const attendanceRate = totalDaysInMonth > 0 ? ((presentDaysWeighted / totalDaysInMonth) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -877,7 +909,7 @@ function showEmployeeProfile(employeeName) {
     
     // Update profile card content
     document.getElementById('profile-employee-name').textContent = cleanEmployeeName(employeeName);
-    document.getElementById('profile-total-days').textContent = totalWorkingDays;
+    document.getElementById('profile-total-days').textContent = totalDaysInMonth;
     document.getElementById('profile-present-days').textContent = presentDaysWeighted;
     document.getElementById('profile-absent-days').textContent = absentDays;
     document.getElementById('profile-leave-days').textContent = leaveDays;
@@ -1068,15 +1100,15 @@ function displayAdminAttendanceData(showUpdateNote = false) {
         }
     }
     
-    // **FIXED: Use correct data based on selection**
+    // **ADMIN: Always show only one employee at a time**
     let dataToDisplay;
     
     if (selectedEmployee) {
         // Show selected employee's data
         dataToDisplay = attendanceData.filter(record => record.Employee === selectedEmployee);
     } else {
-        // Show all data (fallback)
-        dataToDisplay = attendanceData;
+        // For admin, don't show any data if no employee is selected
+        dataToDisplay = [];
     }
     
     if (dataToDisplay.length === 0) {
@@ -1084,7 +1116,7 @@ function displayAdminAttendanceData(showUpdateNote = false) {
             <div class="no-data">
                 <i class="fas fa-inbox"></i>
                 <h3>No Data Available</h3>
-                <p>${attendanceData.length === 0 ? 'Upload an Excel file to get started' : 'No records found for the selected employee'}</p>
+                <p>${attendanceData.length === 0 ? 'Upload an Excel file to get started' : 'Please select an employee from the dropdown to view their attendance data'}</p>
             </div>
         `;
         return;
@@ -1313,10 +1345,15 @@ function updateEmployeeStats() {
     const employeeData = attendanceData.filter(record => record.Employee === currentUser.name);
     const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;
     const halfDays = employeeData.filter(record => record.Status.startsWith('HF')).length;
+    const paidHalfDays = employeeData.filter(record => record.Status.startsWith('PHF')).length;
+    const sickHalfDays = employeeData.filter(record => record.Status.startsWith('SHF')).length;
+    const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
-    const totalWorkingDays = presentDays + halfDays + absentDays; // P + HF + A (excludes planned leaves: SL, PL, W/O, FL, HL)
-    const presentDaysWeighted = presentDays + (halfDays * 0.5);
-    const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
+    
+    // Use total days in the month for attendance rate calculation
+    const totalDaysInMonth = employeeData.length; // Total records = total days in month
+    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5) + weekOffDays; // P=1, HF/PHF/SHF=0.5, W/O=1
+    const attendanceRate = totalDaysInMonth > 0 ? ((presentDaysWeighted / totalDaysInMonth) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -1404,19 +1441,36 @@ function updateEmployeeFilter() {
         select.appendChild(option);
     });
     
-    // **NEW: Add event listener for dropdown selection**
-    select.onchange = function() {
-        const selectedValue = this.value;
-        if (selectedValue) {
-            selectEmployee(selectedValue);
-        } else {
-            // If "All Employees" is selected, show first employee
-            if (employees.length > 0) {
-                selectEmployee(employees[0]);
-            }
-        }
-    };
+    // Event listener is handled by HTML onchange attribute
 }
+
+// **NEW: Handle employee filter dropdown change**
+window.handleEmployeeFilterChange = function() {
+    console.log('handleEmployeeFilterChange() called');
+    const select = document.getElementById('employee-filter');
+    if (!select) {
+        console.log('Employee filter select element not found');
+        return;
+    }
+    
+    const selectedValue = select.value;
+    console.log('Employee filter changed to:', selectedValue);
+    
+    if (selectedValue) {
+        // Select specific employee
+        console.log('Calling selectEmployee with:', selectedValue);
+        selectEmployee(selectedValue);
+    } else {
+        // If "All Employees" is selected, show first employee by default
+        if (employees.length > 0) {
+            console.log('No employee selected, defaulting to first employee:', employees[0]);
+            selectEmployee(employees[0]);
+            // Update dropdown to show first employee as selected
+            select.value = employees[0];
+        }
+    }
+}
+
 
 function displayPasswordResetRequests(requests) {
     const section = document.getElementById('password-reset-section');

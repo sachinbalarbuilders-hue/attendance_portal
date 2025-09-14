@@ -119,7 +119,7 @@
                         <div class="employee-profile-stats">
                             <div class="employee-profile-stat">
                                 <h4 id="profile-total-days">0</h4>
-                                <p>Working Days (P+HF+A, excludes planned leaves & holidays)</p>
+                                <p>Working Days</p>
                             </div>
                             <div class="employee-profile-stat">
                                 <h4 id="profile-present-days">0</h4>
@@ -214,7 +214,7 @@
                             <option value="HL">Half Leave</option>
                         </select>
                         
-                        <select id="employee-filter" onchange="applyFilters()">
+                        <select id="employee-filter" onchange="handleEmployeeFilterChange()">
                             <option value="">All Employees</option>
                         </select>
                         
