@@ -396,9 +396,16 @@ def process_attendance_file(file_path, selected_date=None):
     wb = load_workbook(file_path, data_only=False)
     visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == "visible"]
     
+    print(f"DEBUG: Found {len(visible_sheets)} visible sheets in Excel file")
+    for sheet in visible_sheets:
+        print(f"DEBUG: Sheet name: '{sheet.title}'")
+    
     month_abbr = selected_date.strftime("%b").upper()
     year = selected_date.year
+    month_num = selected_date.month
     day_limit = selected_date.day
+    
+    print(f"DEBUG: Processing for month '{month_abbr}' and year '{year}', day limit: {day_limit}")
     
     # Your 5 blank employees
     blank_employees = [
@@ -447,6 +454,7 @@ def process_attendance_file(file_path, selected_date=None):
     records = []
     
     ignore_statuses = {"P", "A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT"}
+    # Note: "HF" (Half Day) is NOT in ignore_statuses, so it will be treated like regular attendance
 
     # Extract time ranges for each employee
     employee_time_ranges = {}
@@ -461,9 +469,54 @@ def process_attendance_file(file_path, selected_date=None):
         if df.dropna(how="all").empty:
             continue
         
-        month_rows = [
-            i for i in range(len(df)) if str(df.iloc[i, 0]).upper().startswith(month_abbr)
-        ]
+        # Updated logic to handle both old format (JAN, MAY, etc.) and new format (NOV-24, DEC-24, JAN-25, etc.)
+        month_rows = []
+        print(f"DEBUG: Looking for month '{month_abbr}' in sheet '{sheet.title}'")
+        
+        for i in range(len(df)):
+            cell_value = str(df.iloc[i, 0]).upper()
+            print(f"DEBUG: Row {i}: '{cell_value}'")
+            
+            # Check for old format (JAN, MAY, etc.)
+            if cell_value == month_abbr and len(cell_value) == 3:
+                print(f"DEBUG: Found old format match '{cell_value}' at row {i}")
+                month_rows.append(i)
+            # Check for new format (NOV-24, DEC-24, JAN-25, etc.)
+            elif cell_value.startswith(month_abbr) and len(cell_value) == 6 and '-' in cell_value and cell_value[3] == '-':
+                # Extract year from Excel (e.g., "24" from "NOV-24")
+                excel_year_str = cell_value[4:6]
+                try:
+                    excel_year = int(excel_year_str)
+                    # Convert to full year (24 -> 2024, 25 -> 2025, etc.)
+                    excel_full_year = 2000 + excel_year
+                    print(f"DEBUG: Found new format '{cell_value}', Excel year: {excel_full_year}, Selected year: {year}")
+                    
+                    # Check if the year matches the selected date year (allow ±1 year flexibility)
+                    if excel_full_year == year or excel_full_year == year - 1 or excel_full_year == year + 1:
+                        print(f"DEBUG: Year match (flexible)! Adding row {i}")
+                        month_rows.append(i)
+                    else:
+                        print(f"DEBUG: Year too far apart, skipping row {i}")
+                except ValueError:
+                    # If year parsing fails, skip this row
+                    print(f"DEBUG: Invalid year format in '{cell_value}', skipping row {i}")
+                    continue
+            # Check for date format (like "2025-09-01 00:00:00")
+            elif len(cell_value) >= 10 and cell_value.startswith(str(year)) and '-' in cell_value:
+                try:
+                    # Parse the date to extract month
+                    date_part = cell_value.split(' ')[0]  # Get "2025-09-01" part
+                    date_obj = datetime.datetime.strptime(date_part, '%Y-%m-%d')
+                    if date_obj.month == month_num:
+                        print(f"DEBUG: Found date format '{cell_value}', month matches! Adding row {i}")
+                        month_rows.append(i)
+                    else:
+                        print(f"DEBUG: Date format '{cell_value}' month {date_obj.month} doesn't match {month_num}, skipping row {i}")
+                except ValueError:
+                    print(f"DEBUG: Invalid date format '{cell_value}', skipping row {i}")
+                    continue
+        
+        print(f"DEBUG: Found {len(month_rows)} matching month rows: {month_rows}")
         
         if not month_rows:
             continue
@@ -508,7 +561,7 @@ def process_attendance_file(file_path, selected_date=None):
             status_highlight = is_font_red(status_cell) if status_cell else False
             
             # **Rules for special statuses**
-            if status in ["A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT", "HF", "PHF", "SHF"]:
+            if status in ["A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT"]:
                 # Show no punches for off/leave/paid statuses
                 pin, pout = "", ""
             elif sheet.title.strip() in blank_employees:
@@ -528,6 +581,8 @@ def process_attendance_file(file_path, selected_date=None):
                 
                 if pd.notna(t1) and pd.notna(t2):
                     pin, pout = t1.strftime("%H:%M"), t2.strftime("%H:%M")
+                    if status in ["HF", "PHF", "SHF"]:
+                        print(f"DEBUG: {status} status with both times: {sheet.title} on {date_val} - {pin} to {pout}")
                 elif pd.notna(t1) and pd.isna(t2):
                     # Missing-check only when status not in ignore set
                     if status not in ignore_statuses:
@@ -535,6 +590,8 @@ def process_attendance_file(file_path, selected_date=None):
                             pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
                         else:
                             pin, pout = t1.strftime("%H:%M"), "⚠️ MISSING"
+                        if status in ["HF", "PHF", "SHF"]:
+                            print(f"DEBUG: {status} status with missing time: {sheet.title} on {date_val} - {pin} to {pout}")
                     else:
                         # Ignore missing, hide punches for leave/off
                         pin, pout = "", ""
@@ -544,12 +601,16 @@ def process_attendance_file(file_path, selected_date=None):
                             pin, pout = "⚠️ MISSING", t2.strftime("%H:%M")
                         else:
                             pin, pout = t2.strftime("%H:%M"), "⚠️ MISSING"
+                        if status in ["HF", "PHF", "SHF"]:
+                            print(f"DEBUG: {status} status with missing time: {sheet.title} on {date_val} - {pin} to {pout}")
                     else:
                         pin, pout = "", ""
                 else:
                     # Both punches missing
                     if status not in ignore_statuses:
                         pin, pout = "⚠️ MISSING", "⚠️ MISSING"
+                        if status in ["HF", "PHF", "SHF"]:
+                            print(f"DEBUG: {status} status with both times missing: {sheet.title} on {date_val}")
                     else:
                         pin, pout = "", ""
 
@@ -569,148 +630,7 @@ def process_attendance_file(file_path, selected_date=None):
                 "time_range": employee_time_ranges.get(sheet.title, "")
             })
     
-    return records
-
-
-    
-    def to_ts(x):
-        if x is None or (isinstance(x, float) and pd.isna(x)):
-            return pd.NaT
-        
-        # Handle datetime.time objects directly
-        if isinstance(x, datetime.time):
-            return datetime.datetime.combine(datetime.date.today(), x)
-        
-        # Handle string time formats that might be manually entered
-        if isinstance(x, str):
-            x = x.strip()
-            # Try common time formats first
-            time_formats = [
-                "%H:%M",      # 09:30
-                "%H:%M:%S",   # 09:30:00
-                "%I:%M %p",   # 9:30 AM
-                "%I:%M:%S %p", # 9:30:00 AM
-                "%H.%M",      # 09.30
-                "%I.%M %p",   # 9.30 AM
-            ]
-            
-            for fmt in time_formats:
-                try:
-                    # Parse as time and convert to datetime
-                    time_obj = datetime.datetime.strptime(x, fmt).time()
-                    # Create a datetime with today's date and the parsed time
-                    return datetime.datetime.combine(datetime.date.today(), time_obj)
-                except ValueError:
-                    continue
-        
-        try:
-            return pd.to_datetime(x, errors="coerce")
-        except Exception:
-            return pd.NaT
-    
-    records = []
-    
-    for sheet in visible_sheets:
-        df = pd.read_excel(file_path, sheet_name=sheet.title, header=None)
-        
-        if df.dropna(how="all").empty:
-            continue
-        
-        month_rows = [
-            i for i in range(len(df)) if str(df.iloc[i, 0]).upper().startswith(month_abbr)
-        ]
-        
-        if not month_rows:
-            continue
-        
-        i = month_rows[0]
-        
-        for d in range(1, day_limit + 1):
-            col = d + 2
-            
-            if col >= df.shape[1]:
-                continue
-            
-            date_val = datetime.date(year, selected_date.month, d).strftime('%Y-%m-%d')
-            status_row = i + 2
-            status = ""
-            
-            if status_row < len(df):
-                s = df.iloc[status_row, col]
-                if pd.notna(s):
-                    status = str(s).upper().strip()
-            
-            # Get cells for formatting info
-            pin_cell = wb[sheet.title].cell(i + 1, col + 1)
-            pout_cell = wb[sheet.title].cell(i + 2, col + 1) if i + 1 < len(df) else None
-            status_cell = wb[sheet.title].cell(status_row + 1, col + 1) if status_row < len(df) else None
-            
-            # Comments logic
-            pin_comment, pout_comment, status_comment = "", "", ""
-            try:
-                if pin_cell and pin_cell.comment:
-                    pin_comment = pin_cell.comment.text
-                if pout_cell and pout_cell.comment:
-                    pout_comment = pout_cell.comment.text
-                if status_cell and status_cell.comment:
-                    status_comment = status_cell.comment.text
-            except:
-                pass
-            
-            # RED font color detection
-            pin_highlight = is_font_red(pin_cell) if pin_cell else False
-            pout_highlight = is_font_red(pout_cell) if pout_cell else False
-            status_highlight = is_font_red(status_cell) if status_cell else False
-            
-            # Punch logic
-            if status in ["A", "W/O", "PL", "SL", "FL", "HL"]:
-                pin, pout = "--", "--"
-            elif sheet.title.strip() in blank_employees:
-                pin, pout = "", ""
-            else:
-                # Read timing data directly from openpyxl cells to preserve data types
-                pin_cell_value = pin_cell.value if pin_cell else None
-                pout_cell_value = pout_cell.value if pout_cell else None
-                
-                # Also try pandas data as fallback
-                raw1 = df.iloc[i, col] if pd.notna(df.iloc[i, col]) else None
-                raw2 = df.iloc[i + 1, col] if i + 1 < len(df) and pd.notna(df.iloc[i + 1, col]) else None
-                
-                # Use openpyxl values first, fallback to pandas
-                t1 = to_ts(pin_cell_value) if pin_cell_value is not None else to_ts(raw1)
-                t2 = to_ts(pout_cell_value) if pout_cell_value is not None else to_ts(raw2)
-                
-                if pd.notna(t1) and pd.notna(t2):
-                    pin, pout = t1.strftime("%H:%M"), t2.strftime("%H:%M")
-                elif pd.notna(t1) and pd.isna(t2):
-                    if t1.hour >= 12:
-                        pin, pout = "❌ Missing", t1.strftime("%H:%M")
-                    else:
-                        pin, pout = t1.strftime("%H:%M"), "❌ Missing"
-                elif pd.isna(t1) and pd.notna(t2):
-                    if t2.hour >= 12:
-                        pin, pout = "❌ Missing", t2.strftime("%H:%M")
-                    else:
-                        pin, pout = t2.strftime("%H:%M"), "❌ Missing"
-                else:
-                    pin, pout = "❌ Missing", "❌ Missing"
-            
-            
-            records.append({
-                "Employee": sheet.title,
-                "Date": date_val,
-                "Punch-In": pin,
-                "Punch-Out": pout,
-                "Status": status,
-                "pin_comment": pin_comment,
-                "pout_comment": pout_comment,
-                "status_comment": status_comment,
-                "pin_highlight": pin_highlight,
-                "pout_highlight": pout_highlight,
-                "status_highlight": status_highlight,
-                "time_range": employee_time_ranges.get(sheet.title, "")
-            })
-    
+    print(f"DEBUG: Generated {len(records)} total records from all sheets")
     return records
 
 
@@ -837,9 +757,11 @@ def upload_file():
 
             # Process attendance data
             file_records = process_attendance_file(filepath, selected_date)
+            print(f"DEBUG: Generated {len(file_records)} records from file processing")
             
             # Save to database (this will overwrite existing data for this file)
             records_saved = db.save_attendance_records(file_records, filename)
+            print(f"DEBUG: Successfully saved {records_saved} records to database")
             total_records += records_saved
 
             # Process and save leave totals
@@ -848,7 +770,9 @@ def upload_file():
 
             # Auto-create employee accounts from this file's data
             unique_employees = list(set([record['Employee'] for record in file_records]))
+            print(f"DEBUG: Found {len(unique_employees)} unique employees in file: {unique_employees}")
             file_created, file_existing = employee_db.process_excel_employees(unique_employees)
+            print(f"DEBUG: Created {len(file_created)} new accounts, {len(file_existing)} existing accounts")
             created_accounts.extend(file_created)
             existing_accounts.extend(file_existing)
 
@@ -878,8 +802,6 @@ def upload_file():
                 os.remove(p)
         return jsonify({'success': False, 'message': f'Error processing files: {str(e)}'})
 
-    
-
 @app.route('/api/attendance')
 def get_attendance():
     if 'user_data' not in session:
@@ -898,11 +820,7 @@ def get_attendance():
     # Get data from database
     filtered_data = db.get_attendance_records(target_employee, filter_status)
     
-
     return jsonify({'success': True, 'data': filtered_data})
-
-
-    
 
 @app.route('/api/employees')
 def get_employees():
@@ -911,7 +829,6 @@ def get_employees():
 
     employees = db.get_employees()
     return jsonify({'success': True, 'employees': sorted(employees)})
-
 
 @app.route('/api/leave-totals')
 def get_leave_totals():

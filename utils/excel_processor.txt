@@ -104,9 +104,29 @@ def process_attendance_file(file_path, selected_date=None):
         if df.dropna(how="all").empty:
             continue
 
-        month_rows = [
-            i for i in range(len(df)) if str(df.iloc[i, 0]).upper().startswith(month_abbr)
-        ]
+        # Updated logic to handle both old format (JAN, MAY, etc.) and new format (NOV-24, DEC-24, JAN-25, etc.)
+        month_rows = []
+        for i in range(len(df)):
+            cell_value = str(df.iloc[i, 0]).upper()
+            
+            # Check for old format (JAN, MAY, etc.)
+            if cell_value == month_abbr and len(cell_value) == 3:
+                month_rows.append(i)
+            # Check for new format (NOV-24, DEC-24, JAN-25, etc.)
+            elif cell_value.startswith(month_abbr) and len(cell_value) == 6 and '-' in cell_value and cell_value[3] == '-':
+                # Extract year from Excel (e.g., "24" from "NOV-24")
+                excel_year_str = cell_value[4:6]
+                try:
+                    excel_year = int(excel_year_str)
+                    # Convert to full year (24 -> 2024, 25 -> 2025, etc.)
+                    excel_full_year = 2000 + excel_year
+                    
+                    # Check if the year matches the selected date year
+                    if excel_full_year == year:
+                        month_rows.append(i)
+                except ValueError:
+                    # If year parsing fails, skip this row
+                    continue
         if not month_rows:
             continue
         i = month_rows[0]
