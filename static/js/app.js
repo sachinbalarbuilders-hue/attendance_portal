@@ -74,7 +74,7 @@ function showDesktopTooltip(event) {
     const cell = event.currentTarget;
     const comment = cell.getAttribute('data-comment');
     
-    if (!comment) return;
+    if (!comment || !comment.trim()) return;
     
     // Remove any existing tooltips
     const existingTooltip = document.querySelector('.desktop-tooltip');
@@ -84,25 +84,48 @@ function showDesktopTooltip(event) {
     
     const tooltip = document.createElement('div');
     tooltip.className = 'desktop-tooltip';
-    tooltip.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 16px;">💬</span>
-        <span>${comment}</span>
-    </div>`;
+    tooltip.innerHTML = `
+        <div class="tooltip-header">
+            <span class="tooltip-icon">💬</span>
+            <span class="tooltip-title">Comment</span>
+        </div>
+        <div class="tooltip-content">${comment}</div>
+    `;
     
     document.body.appendChild(tooltip);
     
-    // Position tooltip
+    // Position tooltip with better logic
     const rect = cell.getBoundingClientRect();
-    tooltip.style.left = (rect.left + window.scrollX + rect.width/2 - tooltip.offsetWidth/2) + 'px';
-    tooltip.style.top = (rect.top + window.scrollY - tooltip.offsetHeight - 10) + 'px';
+    const tooltipRect = tooltip.getBoundingClientRect();
     
-    // Ensure tooltip stays within viewport
-    if (tooltip.offsetLeft < 10) {
-        tooltip.style.left = '10px';
+    // Calculate optimal position (prefer above, fallback to below)
+    let top = rect.top + window.scrollY - tooltipRect.height - 15;
+    let left = rect.left + window.scrollX + rect.width/2 - tooltipRect.width/2;
+    
+    // If tooltip would go above viewport, position below
+    if (top < window.scrollY + 10) {
+        top = rect.bottom + window.scrollY + 10;
     }
-    if (tooltip.offsetLeft + tooltip.offsetWidth > window.innerWidth - 10) {
-        tooltip.style.left = (window.innerWidth - tooltip.offsetWidth - 10) + 'px';
+    
+    // Keep tooltip within horizontal viewport bounds
+    if (left < 10) {
+        left = 10;
+    } else if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10;
     }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+    
+    // Add fade-in animation
+    tooltip.style.opacity = '0';
+    tooltip.style.transform = 'translateY(-5px) scale(0.95)';
+    
+    requestAnimationFrame(() => {
+        tooltip.style.transition = 'all 0.2s ease-out';
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'translateY(0) scale(1)';
+    });
 }
 
 function moveDesktopTooltip(event) {
@@ -879,7 +902,7 @@ function showEmployeeProfile(employeeName) {
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
     // Use total days in the month for attendance rate calculation
     const totalDaysInMonth = employeeData.length; // Total records = total days in month
-    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5) + weekOffDays; // P=1, HF/PHF/SHF=0.5, W/O=1
+    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
     const leaveDays = employeeData.filter(record => 
         ['W/O', 'PL', 'SL', 'FL', 'HL'].some(leave => record.Status.startsWith(leave))
     ).length;
@@ -898,8 +921,8 @@ function showEmployeeProfile(employeeName) {
         'W/O': 1,
         'HL': 1,
         'HF': 0.5,
-        'PHF': 1,
-        'SHF': 1,
+        'PHF': 0.5,
+        'SHF': 0.5,
     };
     const payableDays = employeeData.reduce((sum, r) => {
         const s = (r.Status || '').toUpperCase();
@@ -1228,40 +1251,107 @@ function showMobileTooltip(element, comment) {
         existingTooltip.remove();
     }
     
+    // Add visual feedback to the clicked cell
+    element.style.backgroundColor = 'rgba(102, 126, 234, 0.2)';
+    element.style.transform = 'scale(1.02)';
+    setTimeout(() => {
+        element.style.backgroundColor = '';
+        element.style.transform = '';
+    }, 200);
+    
     const tooltip = document.createElement('div');
     tooltip.className = 'mobile-tooltip';
-    tooltip.innerHTML = `<div style="display: flex; align-items: center; gap: 6px;">
-        <span style="font-size: 14px;">💬</span>
-        <span>${comment}</span>
-    </div>`;
-    
-    const rect = element.getBoundingClientRect();
-    tooltip.style.position = 'fixed';
-    tooltip.style.top = (rect.top - 10) + 'px';
-    tooltip.style.left = (rect.left + rect.width/2) + 'px';
-    tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
-    
-    // Disable animations on mobile for better performance
-    if (document.body.classList.contains('mobile')) {
-        tooltip.style.animation = 'none';
-        tooltip.style.transition = 'none';
-    }
+    tooltip.innerHTML = `
+        <div class="mobile-tooltip-header">
+            <span class="mobile-tooltip-icon">💬</span>
+            <span class="mobile-tooltip-title">Comment</span>
+            <button class="mobile-tooltip-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+        <div class="mobile-tooltip-content">${comment}</div>
+        <div class="mobile-tooltip-footer">Tap anywhere to close</div>
+    `;
     
     document.body.appendChild(tooltip);
     
+    // Better positioning logic
+    const rect = element.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Calculate optimal position
+    let top, left;
+    
+    // Try to position above the cell first
+    if (rect.top - tooltipRect.height - 20 > 0) {
+        top = rect.top - tooltipRect.height - 20;
+        left = Math.max(10, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - 10));
+    } else {
+        // Position below the cell
+        top = rect.bottom + 20;
+        left = Math.max(10, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - 10));
+    }
+    
+    tooltip.style.position = 'fixed';
+    tooltip.style.top = top + 'px';
+    tooltip.style.left = left + 'px';
+    tooltip.style.transform = 'none';
+    
+    // Add entrance animation
+    tooltip.style.opacity = '0';
+    tooltip.style.transform = 'scale(0.9) translateY(-10px)';
+    
+    requestAnimationFrame(() => {
+        tooltip.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'scale(1) translateY(0)';
+    });
+    
+    // Auto-remove after 8 seconds (longer for mobile)
     setTimeout(() => {
         if (tooltip.parentNode) {
-            tooltip.remove();
+            tooltip.style.transition = 'all 0.2s ease-out';
+            tooltip.style.opacity = '0';
+            tooltip.style.transform = 'scale(0.9) translateY(-10px)';
+            setTimeout(() => {
+                if (tooltip.parentNode) {
+                    tooltip.remove();
+                }
+            }, 200);
         }
-    }, 3000);
+    }, 8000);
 }
 
 // Close tooltip when tapping elsewhere
 document.addEventListener('touchstart', function(e) {
-    if (!e.target.closest('.attendance-table td[data-comment]')) {
+    if (!e.target.closest('.attendance-table td[data-comment]') && !e.target.closest('.mobile-tooltip')) {
         const tooltip = document.querySelector('.mobile-tooltip');
         if (tooltip) {
-            tooltip.remove();
+            tooltip.style.transition = 'all 0.2s ease-out';
+            tooltip.style.opacity = '0';
+            tooltip.style.transform = 'scale(0.9) translateY(-10px)';
+            setTimeout(() => {
+                if (tooltip.parentNode) {
+                    tooltip.remove();
+                }
+            }, 200);
+        }
+    }
+});
+
+// Also close on regular click for better compatibility
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.attendance-table td[data-comment]') && !e.target.closest('.mobile-tooltip')) {
+        const tooltip = document.querySelector('.mobile-tooltip');
+        if (tooltip) {
+            tooltip.style.transition = 'all 0.2s ease-out';
+            tooltip.style.opacity = '0';
+            tooltip.style.transform = 'scale(0.9) translateY(-10px)';
+            setTimeout(() => {
+                if (tooltip.parentNode) {
+                    tooltip.remove();
+                }
+            }, 200);
         }
     }
 });
@@ -1352,7 +1442,7 @@ function updateEmployeeStats() {
     
     // Use total days in the month for attendance rate calculation
     const totalDaysInMonth = employeeData.length; // Total records = total days in month
-    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5) + weekOffDays; // P=1, HF/PHF/SHF=0.5, W/O=1
+    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
     const attendanceRate = totalDaysInMonth > 0 ? ((presentDaysWeighted / totalDaysInMonth) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
@@ -1364,8 +1454,8 @@ function updateEmployeeStats() {
         'W/O': 1,
         'HL': 1,
         'HF': 0.5,
-        'PHF': 1,
-        'SHF': 1,
+        'PHF': 0.5,
+        'SHF': 0.5,
     };
     const payableDays = employeeData.reduce((sum, r) => {
         const s = (r.Status || '').toUpperCase();

@@ -454,8 +454,8 @@ def process_attendance_file(file_path, selected_date=None):
     
     records = []
     
-    ignore_statuses = {"P", "A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT"}
-    # Note: "HF" (Half Day) is NOT in ignore_statuses, so it will be treated like regular attendance
+    ignore_statuses = {"A", "W/O", "PL", "SL", "FL", "HL", "PAT", "MAT"}
+    # Note: "P", "HF", "PHF", "SHF" are NOT in ignore_statuses, so they will always show punches
 
     # Extract time ranges for each employee
     employee_time_ranges = {}
@@ -594,8 +594,15 @@ def process_attendance_file(file_path, selected_date=None):
                     if status in ["HF", "PHF", "SHF"]:
                         print(f"DEBUG: {status} status with both times: {sheet.title} on {date_val} - {pin} to {pout}")
                 elif pd.notna(t1) and pd.isna(t2):
-                    # Missing-check only when status not in ignore set
-                    if status not in ignore_statuses:
+                    # Show punches for P, HF, SHF, PHF statuses even when one is missing
+                    if status in ["P", "HF", "PHF", "SHF"]:
+                        if t1.hour >= 12:
+                            pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
+                        else:
+                            pin, pout = t1.strftime("%H:%M"), "⚠️ MISSING"
+                        if status in ["HF", "PHF", "SHF"]:
+                            print(f"DEBUG: {status} status with missing time: {sheet.title} on {date_val} - {pin} to {pout}")
+                    elif status not in ignore_statuses:
                         if t1.hour >= 12:
                             pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
                         else:
@@ -606,7 +613,15 @@ def process_attendance_file(file_path, selected_date=None):
                         # Ignore missing, hide punches for leave/off
                         pin, pout = "", ""
                 elif pd.isna(t1) and pd.notna(t2):
-                    if status not in ignore_statuses:
+                    # Show punches for P, HF, SHF, PHF statuses even when one is missing
+                    if status in ["P", "HF", "PHF", "SHF"]:
+                        if t2.hour >= 12:
+                            pin, pout = "⚠️ MISSING", t2.strftime("%H:%M")
+                        else:
+                            pin, pout = t2.strftime("%H:%M"), "⚠️ MISSING"
+                        if status in ["HF", "PHF", "SHF"]:
+                            print(f"DEBUG: {status} status with missing time: {sheet.title} on {date_val} - {pin} to {pout}")
+                    elif status not in ignore_statuses:
                         if t2.hour >= 12:
                             pin, pout = "⚠️ MISSING", t2.strftime("%H:%M")
                         else:
@@ -617,7 +632,12 @@ def process_attendance_file(file_path, selected_date=None):
                         pin, pout = "", ""
                 else:
                     # Both punches missing
-                    if status not in ignore_statuses:
+                    # Show punches for P, HF, SHF, PHF statuses even when both are missing
+                    if status in ["P", "HF", "PHF", "SHF"]:
+                        pin, pout = "⚠️ MISSING", "⚠️ MISSING"
+                        if status in ["HF", "PHF", "SHF"]:
+                            print(f"DEBUG: {status} status with both times missing: {sheet.title} on {date_val}")
+                    elif status not in ignore_statuses:
                         pin, pout = "⚠️ MISSING", "⚠️ MISSING"
                         if status in ["HF", "PHF", "SHF"]:
                             print(f"DEBUG: {status} status with both times missing: {sheet.title} on {date_val}")

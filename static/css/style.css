@@ -1094,22 +1094,51 @@ body {
     position: absolute;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 16px 20px;
-    border-radius: 16px;
-    font-size: 14px;
+    padding: 0;
+    border-radius: 12px;
+    font-size: 13px;
     font-weight: 500;
-    max-width: 350px;
+    max-width: 300px;
     word-wrap: break-word;
     z-index: 10000;
-    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3), 
-                0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4), 
+                0 4px 10px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
     pointer-events: none;
-    animation: fadeInDesktop 0.3s ease-out;
-    line-height: 1.5;
+    line-height: 1.4;
     white-space: normal;
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
     will-change: transform, opacity;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.desktop-tooltip .tooltip-header {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.desktop-tooltip .tooltip-icon {
+    font-size: 12px;
+}
+
+.desktop-tooltip .tooltip-title {
+    opacity: 0.9;
+}
+
+.desktop-tooltip .tooltip-content {
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .desktop-tooltip::before {
@@ -1158,22 +1187,82 @@ body {
     position: fixed;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 14px 18px;
-    border-radius: 12px;
+    padding: 0;
+    border-radius: 16px;
     font-size: 13px;
     font-weight: 500;
-    max-width: 280px;
+    max-width: 320px;
     word-wrap: break-word;
     z-index: 10000;
-    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4), 
-                0 3px 6px rgba(0, 0, 0, 0.3);
-    pointer-events: none;
-    animation: fadeInMobile 0.2s ease-out;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5), 
+                0 5px 15px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+    pointer-events: auto;
     line-height: 1.4;
     white-space: normal;
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
     will-change: transform, opacity;
+    backdrop-filter: blur(15px);
+    overflow: hidden;
+}
+
+.mobile-tooltip .mobile-tooltip-header {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-tooltip .mobile-tooltip-icon {
+    font-size: 14px;
+}
+
+.mobile-tooltip .mobile-tooltip-title {
+    opacity: 0.9;
+    flex: 1;
+}
+
+.mobile-tooltip .mobile-tooltip-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.mobile-tooltip .mobile-tooltip-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-tooltip .mobile-tooltip-content {
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.mobile-tooltip .mobile-tooltip-footer {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    font-size: 11px;
+    text-align: center;
+    opacity: 0.8;
+    font-style: italic;
 }
 
 .mobile-tooltip::before {
@@ -1221,38 +1310,65 @@ body {
 .attendance-table td[data-comment]:not([data-comment=""]) {
     position: relative;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 3px solid rgba(102, 126, 234, 0.3);
 }
 
 .attendance-table td[data-comment]:not([data-comment=""]):hover {
-    background-color: rgba(102, 126, 234, 0.1);
-    transform: scale(1.01);
+    background-color: rgba(102, 126, 234, 0.08);
+    transform: scale(1.02);
+    border-left-color: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.attendance-table td[data-comment]:not([data-comment=""]):active {
+    transform: scale(0.98);
+    background-color: rgba(102, 126, 234, 0.15);
 }
 
 .attendance-table td[data-comment]:not([data-comment=""]):after {
     content: '💬';
     position: absolute;
-    top: 4px;
-    right: 4px;
-    font-size: 12px;
-    opacity: 0.8;
-    transition: all 0.15s ease;
+    top: 2px;
+    right: 2px;
+    font-size: 11px;
+    opacity: 0.7;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
-    background: rgba(102, 126, 234, 0.15);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
     border-radius: 50%;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2);
     will-change: transform, opacity;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .attendance-table td[data-comment]:not([data-comment=""]):hover:after {
     opacity: 1;
-    transform: scale(1.05);
-    background: rgba(102, 126, 234, 0.25);
+    transform: scale(1.1) rotate(5deg);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4));
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Mobile-specific comment indicators */
+@media (hover: none) and (pointer: coarse) {
+    .attendance-table td[data-comment]:not([data-comment=""]) {
+        border-left: 4px solid rgba(102, 126, 234, 0.5);
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .attendance-table td[data-comment]:not([data-comment=""]):after {
+        opacity: 1;
+        transform: scale(1);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
 }
 
 /* Removed pulse animation for better mobile performance */
