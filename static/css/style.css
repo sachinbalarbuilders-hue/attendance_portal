@@ -1010,6 +1010,193 @@ body {
     box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
 }
 
+/* Password history table styling */
+.password-history-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 15px;
+}
+
+.history-header {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 1.5fr;
+    background: #f8f9fa;
+    font-weight: bold;
+    padding: 15px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.history-row {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 1.5fr;
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s;
+}
+
+.history-row:hover {
+    background-color: #f8f9fa;
+}
+
+.history-row:last-child {
+    border-bottom: none;
+}
+
+.history-cell {
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.password-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.password-display {
+    background: #e9ecef;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid #ced4da;
+}
+
+.password-display:hover {
+    background: #dee2e6;
+    border-color: #adb5bd;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-blue {
+    background: #007bff;
+    color: white;
+}
+
+.badge-green {
+    background: #28a745;
+    color: white;
+}
+
+.admin-controls {
+    margin-bottom: 15px;
+}
+
+.admin-controls button {
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.admin-controls button:hover {
+    background: #5a6268;
+}
+
+/* Password History Modal Styling */
+.password-history-modal-content {
+    max-width: 1200px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.password-history-modal-content .modal-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.password-history-modal-content .modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.password-history-modal-content .modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.password-history-modal-content .modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.password-history-modal-content .modal-body {
+    padding: 20px;
+    background: white;
+}
+
+.password-history-modal-content .admin-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.password-history-modal-content .admin-controls button {
+    padding: 10px 20px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.password-history-modal-content .admin-controls button:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.password-history-modal-content .admin-controls button:first-child {
+    background: #28a745;
+}
+
+.password-history-modal-content .admin-controls button:first-child:hover {
+    background: #218838;
+}
+
+.password-history-modal-content .admin-controls button:last-child {
+    background: #17a2b8;
+}
+
+.password-history-modal-content .admin-controls button:last-child:hover {
+    background: #138496;
+}
+
 /* Loading Overlay */
 .loading-overlay {
     position: fixed;

@@ -49,6 +49,35 @@ class AttendanceDatabase:
                 # Column already exists, ignore
                 pass
             
+            # Create password reset tokens table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    token TEXT NOT NULL UNIQUE,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    expires_at DATETIME NOT NULL,
+                    used BOOLEAN DEFAULT 0,
+                    used_at DATETIME
+                )
+            ''')
+            
+            # Create password reset history table (for admin visibility)
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS password_reset_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    employee_name TEXT NOT NULL,
+                    old_password_hash TEXT,
+                    new_password TEXT NOT NULL,
+                    reset_method TEXT NOT NULL,
+                    reset_by TEXT,
+                    reset_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    ip_address TEXT,
+                    user_agent TEXT
+                )
+            ''')
+            
             # Create leave totals table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS leave_totals (
@@ -321,6 +350,151 @@ class AttendanceDatabase:
         except Exception as e:
             print(f"Error getting admin setting: {e}")
             return None
+    
+    def create_password_reset_token(self, email: str, token: str, expires_at: str) -> bool:
+        """Create a password reset token"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                # Clean up old tokens for this email
+                cursor.execute('DELETE FROM password_reset_tokens WHERE email = ?', (email,))
+                # Insert new token
+                cursor.execute('''
+                    INSERT INTO password_reset_tokens (email, token, expires_at)
+                    VALUES (?, ?, ?)
+                ''', (email, token, expires_at))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error creating password reset token: {e}")
+            return False
+    
+    def validate_password_reset_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Validate a password reset token and return token info if valid"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT email, expires_at, used FROM password_reset_tokens 
+                    WHERE token = ? AND used = 0
+                ''', (token,))
+                result = cursor.fetchone()
+                
+                if not result:
+                    return None
+                
+                email, expires_at_str, used = result
+                
+                # Check if token is expired
+                expires_at = datetime.datetime.fromisoformat(expires_at_str)
+                if datetime.datetime.now() > expires_at:
+                    return None
+                
+                return {
+                    'email': email,
+                    'expires_at': expires_at_str,
+                    'used': used
+                }
+        except Exception as e:
+            print(f"Error validating password reset token: {e}")
+            return None
+    
+    def mark_token_as_used(self, token: str) -> bool:
+        """Mark a password reset token as used"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    UPDATE password_reset_tokens 
+                    SET used = 1, used_at = CURRENT_TIMESTAMP 
+                    WHERE token = ?
+                ''', (token,))
+                conn.commit()
+                return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error marking token as used: {e}")
+            return False
+    
+    def cleanup_expired_tokens(self) -> int:
+        """Clean up expired password reset tokens"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    DELETE FROM password_reset_tokens 
+                    WHERE expires_at < CURRENT_TIMESTAMP
+                ''')
+                deleted_count = cursor.rowcount
+                conn.commit()
+                return deleted_count
+        except Exception as e:
+            print(f"Error cleaning up expired tokens: {e}")
+            return 0
+    
+    def log_password_reset(self, email: str, employee_name: str, old_password_hash: str, 
+                          new_password: str, reset_method: str, reset_by: str = None, 
+                          ip_address: str = None, user_agent: str = None) -> bool:
+        """Log password reset for admin visibility"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO password_reset_history 
+                    (email, employee_name, old_password_hash, new_password, reset_method, 
+                     reset_by, ip_address, user_agent)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (email, employee_name, old_password_hash, new_password, reset_method, 
+                      reset_by, ip_address, user_agent))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error logging password reset: {e}")
+            return False
+    
+    def get_password_reset_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get password reset history for admin view"""
+        print(f"Getting password reset history with limit {limit}")
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # First check if table exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='password_reset_history'")
+                table_exists = cursor.fetchone()
+                print(f"Password reset history table exists: {table_exists is not None}")
+                
+                if not table_exists:
+                    print("Password reset history table does not exist")
+                    return []
+                
+                cursor.execute('''
+                    SELECT email, employee_name, old_password_hash, new_password, 
+                           reset_method, reset_by, reset_at, ip_address, user_agent
+                    FROM password_reset_history 
+                    ORDER BY reset_at DESC 
+                    LIMIT ?
+                ''', (limit,))
+                
+                results = cursor.fetchall()
+                print(f"Found {len(results)} password reset records")
+                
+                history = []
+                for row in results:
+                    history.append({
+                        'email': row[0],
+                        'employee_name': row[1],
+                        'old_password_hash': row[2],
+                        'new_password': row[3],
+                        'reset_method': row[4],
+                        'reset_by': row[5],
+                        'reset_at': row[6],
+                        'ip_address': row[7],
+                        'user_agent': row[8]
+                    })
+                return history
+        except Exception as e:
+            print(f"Error getting password reset history: {e}")
+            return []
 
 # Global database instance
 db = AttendanceDatabase()

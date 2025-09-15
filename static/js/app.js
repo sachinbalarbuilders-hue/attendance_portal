@@ -5,6 +5,7 @@ let employees = [];
 let filteredData = [];
 let selectedEmployee = null;
 let globalShowUpdateNote = false;
+let resetToken = null;
 
 // Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
 function cleanEmployeeName(fullName) {
@@ -245,36 +246,65 @@ function showForgotPassword() {
 function backToLogin() {
     document.getElementById('forgot-password-form').style.display = 'none';
     document.getElementById('login-form').style.display = 'block';
+    // Clear all form fields
+    document.getElementById('reset-email').value = '';
+    document.getElementById('current-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
 }
 
-async function submitPasswordReset() {
+// Simplified password change - no separate forms needed
+
+async function submitPasswordChange() {
     const email = document.getElementById('reset-email').value.trim();
+    const currentPassword = document.getElementById('current-password').value.trim();
+    const newPassword = document.getElementById('new-password').value.trim();
+    const confirmPassword = document.getElementById('confirm-password').value.trim();
     
-    if (!email) {
-        showNotification('Please enter your email address', 'error');
+    // Validation
+    if (!email || !currentPassword || !newPassword || !confirmPassword) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('New passwords do not match', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('New password must be at least 6 characters long', 'error');
+        return;
+    }
+    
+    if (currentPassword === newPassword) {
+        showNotification('New password must be different from current password', 'error');
         return;
     }
     
     try {
-        const response = await fetch('/api/password-reset', {
+        const response = await fetch('/api/change-password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ 
+                email, 
+                current_password: currentPassword, 
+                new_password: newPassword 
+            })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            showNotification('Password reset request submitted successfully!');
+            showNotification('Password changed successfully! You can now login with your new password.', 'success');
             backToLogin();
-            document.getElementById('reset-email').value = '';
         } else {
             showNotification(result.message, 'error');
         }
     } catch (error) {
-        showNotification('Failed to submit request. Please try again.', 'error');
+        showNotification('Failed to change password. Please try again.', 'error');
     }
 }
 
@@ -1152,6 +1182,32 @@ async function loadPasswordResetRequests() {
     }
 }
 
+async function loadPasswordResetHistory() {
+    if (!currentUser.is_admin) {
+        console.log('User is not admin, skipping password history load');
+        return;
+    }
+    
+    console.log('Loading password reset history...');
+    
+    try {
+        const response = await fetch('/api/password-reset-history');
+        const result = await response.json();
+        
+        console.log('Password history API response:', result);
+        
+        if (result.success) {
+            displayPasswordResetHistory(result.history);
+        } else {
+            console.error('Failed to load password history:', result.message);
+            showNotification('Failed to load password history: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error loading password reset history:', error);
+        showNotification('Error loading password history', 'error');
+    }
+}
+
 // Display functions
 function displayAdminAttendanceData(showUpdateNote = false) {
     const container = document.getElementById('attendance-table-container');
@@ -1682,6 +1738,132 @@ function displayPasswordResetRequests(requests) {
     section.style.display = 'block';
 }
 
+function displayPasswordResetHistory(history) {
+    console.log('Displaying password reset history:', history);
+    const listContainer = document.getElementById('password-history-list');
+    
+    if (!listContainer) {
+        console.error('Password history list container not found!');
+        return;
+    }
+    
+    if (history.length === 0) {
+        console.log('No password history found, showing no-data message');
+        listContainer.innerHTML = '<p class="no-data">No password reset history found.</p>';
+        return;
+    }
+    
+    let html = '<div class="password-history-table">';
+    html += `
+        <div class="history-header">
+            <div class="history-cell">Employee</div>
+            <div class="history-cell">Email</div>
+            <div class="history-cell">New Password</div>
+            <div class="history-cell">Method</div>
+            <div class="history-cell">Reset By</div>
+            <div class="history-cell">Date/Time</div>
+        </div>
+    `;
+    
+    history.forEach((entry, index) => {
+        const resetDate = new Date(entry.reset_at).toLocaleString();
+        const methodBadge = entry.reset_method === 'self_service' ? 
+            '<span class="badge badge-blue">Self-Service</span>' : 
+            '<span class="badge badge-green">Admin Reset</span>';
+        
+        html += `
+            <div class="history-row">
+                <div class="history-cell">${entry.employee_name}</div>
+                <div class="history-cell">${entry.email}</div>
+                <div class="history-cell password-cell">
+                    <span class="password-display" title="Click to copy" onclick="copyPassword('${entry.new_password}')">
+                        ${entry.new_password}
+                    </span>
+                </div>
+                <div class="history-cell">${methodBadge}</div>
+                <div class="history-cell">${entry.reset_by || 'System'}</div>
+                <div class="history-cell">${resetDate}</div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    listContainer.innerHTML = html;
+}
+
+function copyPassword(password) {
+    navigator.clipboard.writeText(password).then(() => {
+        showNotification('Password copied to clipboard!', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy password', 'error');
+    });
+}
+
+function openPasswordHistoryModal() {
+    console.log('Opening password history modal...');
+    const modal = document.getElementById('password-history-modal');
+    if (!modal) {
+        console.error('Password history modal not found!');
+        showNotification('Password history modal not found', 'error');
+        return;
+    }
+    
+    modal.style.display = 'flex';
+    console.log('Modal displayed, loading history...');
+    loadPasswordResetHistory();
+}
+
+function closePasswordHistoryModal() {
+    const modal = document.getElementById('password-history-modal');
+    modal.style.display = 'none';
+}
+
+function exportPasswordHistory() {
+    // Get the current history data
+    const listContainer = document.getElementById('password-history-list');
+    const table = listContainer.querySelector('.password-history-table');
+    
+    if (!table) {
+        showNotification('No data to export', 'error');
+        return;
+    }
+    
+    // Create CSV content
+    let csvContent = 'Employee,Email,New Password,Method,Reset By,Date/Time\n';
+    
+    const rows = table.querySelectorAll('.history-row');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('.history-cell');
+        const rowData = [];
+        
+        cells.forEach((cell, index) => {
+            let cellText = cell.textContent.trim();
+            // Handle password cell differently
+            if (index === 2) {
+                cellText = cell.querySelector('.password-display').textContent;
+            }
+            // Escape commas and quotes
+            cellText = cellText.replace(/"/g, '""');
+            rowData.push(`"${cellText}"`);
+        });
+        
+        csvContent += rowData.join(',') + '\n';
+    });
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `password_reset_history_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Password history exported successfully!', 'success');
+}
+
 async function resetUserPassword(email, index) {
     const newPassword = document.getElementById(`new-password-${index}`).value.trim();
     
@@ -1926,4 +2108,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Token-based reset removed - now using current password verification
+    
+    // **NEW: Handle modal click-outside-to-close**
+    document.addEventListener('click', function(e) {
+        const passwordModal = document.getElementById('password-history-modal');
+        if (passwordModal && passwordModal.style.display === 'flex') {
+            if (e.target === passwordModal) {
+                closePasswordHistoryModal();
+            }
+        }
+    });
+    
 });
+
+// Token validation function removed - now using current password verification

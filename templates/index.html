@@ -37,16 +37,34 @@
                     </div>
                 </div>
 
+                <!-- Simplified Password Change Form -->
                 <div id="forgot-password-form" class="login-form" style="display: none;">
-                    <h3><i class="fas fa-key"></i> Password Reset Request</h3>
-                    <p class="info-text">Enter your email address to request a password reset.</p>
+                    <h3><i class="fas fa-key"></i> Change Password</h3>
+                    <p class="info-text">Enter your email and current password to set a new password.</p>
+                    
                     <div class="input-group">
                         <i class="fas fa-envelope"></i>
                         <input type="email" id="reset-email" placeholder="Enter your registered email" required>
                     </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-key"></i>
+                        <input type="password" id="current-password" placeholder="Enter current password" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="new-password" placeholder="Enter new password" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirm-password" placeholder="Confirm new password" required>
+                    </div>
+                    
                     <div class="button-group">
-                        <button onclick="submitPasswordReset()" class="btn-primary">
-                            <i class="fas fa-paper-plane"></i> Submit Request
+                        <button onclick="submitPasswordChange()" class="btn-primary">
+                            <i class="fas fa-check"></i> Change Password
                         </button>
                         <button onclick="backToLogin()" class="btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back to Login
@@ -110,6 +128,11 @@
 
                     <div id="password-reset-section" class="reset-section" style="display: none;">
                         <h3><i class="fas fa-key"></i> Password Reset Requests</h3>
+                        <div class="admin-controls">
+                            <button onclick="openPasswordHistoryModal()" class="btn-secondary">
+                                <i class="fas fa-history"></i> View Password History
+                            </button>
+                        </div>
                         <div id="reset-requests-list"></div>
                     </div>
 
@@ -444,6 +467,29 @@
                     <h4>Late Arrival Details by Employee</h4>
                     <div id="modal-late-employees-content"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset History Modal -->
+    <div id="password-history-modal" class="modal" style="display: none;">
+        <div class="modal-content password-history-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-history"></i> Password Reset History</h3>
+                <button class="modal-close" onclick="closePasswordHistoryModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="admin-controls">
+                    <button onclick="loadPasswordResetHistory()" class="btn-secondary">
+                        <i class="fas fa-sync"></i> Refresh History
+                    </button>
+                    <button onclick="exportPasswordHistory()" class="btn-secondary">
+                        <i class="fas fa-download"></i> Export History
+                    </button>
+                </div>
+                <div id="password-history-list"></div>
             </div>
         </div>
     </div>
