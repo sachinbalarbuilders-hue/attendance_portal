@@ -913,7 +913,8 @@ async function showEmployeeProfile(employeeName) {
     const paidHalfDays = employeeData.filter(record => record.Status.startsWith('PHF')).length;
     const sickHalfDays = employeeData.filter(record => record.Status.startsWith('SHF')).length;
     const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
-    const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
+    const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length + 
+                      (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
     // Use total days in the month for attendance rate calculation
     const totalDaysInMonth = employeeData.length; // Total records = total days in month
     const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
@@ -964,25 +965,29 @@ async function showEmployeeProfile(employeeName) {
     const flEl = document.getElementById('profile-fl');
     if (woEl) woEl.textContent = wo;
     if (plEl) {
-        // For T employees, show "Not Eligible" instead of count
+        // For T employees, show "FL" instead of count
         if (isTEmployee) {
-            plEl.textContent = 'Not Eligible';
+            plEl.textContent = 'FL';
             plEl.style.color = '#ff6b6b';
             plEl.style.fontStyle = 'italic';
-            plEl.title = 'Not eligible for Personal Leave (T Employee)';
         } else {
             plEl.textContent = pl;
+            // Reset styling for normal employees
+            plEl.style.color = '';
+            plEl.style.fontStyle = '';
         }
     }
     if (slEl) {
-        // For T employees, show "Not Eligible" instead of count
+        // For T employees, show "FL" instead of count
         if (isTEmployee) {
-            slEl.textContent = 'Not Eligible';
+            slEl.textContent = 'FL';
             slEl.style.color = '#ff6b6b';
             slEl.style.fontStyle = 'italic';
-            slEl.title = 'Not eligible for Sick Leave (T Employee)';
         } else {
             slEl.textContent = sl;
+            // Reset styling for normal employees
+            slEl.style.color = '';
+            slEl.style.fontStyle = '';
         }
     }
     if (flEl) flEl.textContent = fl;
@@ -1476,7 +1481,8 @@ function updateEmployeeStats() {
     const paidHalfDays = employeeData.filter(record => record.Status.startsWith('PHF')).length;
     const sickHalfDays = employeeData.filter(record => record.Status.startsWith('SHF')).length;
     const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
-    const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length;
+    const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length + 
+                      (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
     
     // Use total days in the month for attendance rate calculation
     const totalDaysInMonth = employeeData.length; // Total records = total days in month
@@ -1545,20 +1551,26 @@ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
             if (woEl) woEl.textContent = data['W/O'] ?? 0;
             if (plEl) {
                 plEl.textContent = data['PL'] ?? 0;
-                // Handle "Not Eligible" text for T employees
-                if (data['PL'] === 'Not Eligible') {
+                // Handle "FL" text for T employees (red color)
+                if (data['PL'] === 'FL') {
                     plEl.style.color = '#ff6b6b';
                     plEl.style.fontStyle = 'italic';
-                    plEl.title = 'Not eligible for Personal Leave (T Employee)';
+                } else {
+                    // Reset styling for normal employees
+                    plEl.style.color = '';
+                    plEl.style.fontStyle = '';
                 }
             }
             if (slEl) {
                 slEl.textContent = data['SL'] ?? 0;
-                // Handle "Not Eligible" text for T employees
-                if (data['SL'] === 'Not Eligible') {
+                // Handle "FL" text for T employees (red color)
+                if (data['SL'] === 'FL') {
                     slEl.style.color = '#ff6b6b';
                     slEl.style.fontStyle = 'italic';
-                    slEl.title = 'Not eligible for Sick Leave (T Employee)';
+                } else {
+                    // Reset styling for normal employees
+                    slEl.style.color = '';
+                    slEl.style.fontStyle = '';
                 }
             }
             if (flEl) flEl.textContent = data['FL'] ?? 0;
@@ -1570,20 +1582,26 @@ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
             if (myWOEl) myWOEl.textContent = data['W/O'] ?? 0;
             if (myPLEl) {
                 myPLEl.textContent = data['PL'] ?? 0;
-                // Handle "Not Eligible" text for T employees
-                if (data['PL'] === 'Not Eligible') {
+                // Handle "FL" text for T employees (red color)
+                if (data['PL'] === 'FL') {
                     myPLEl.style.color = '#ff6b6b';
                     myPLEl.style.fontStyle = 'italic';
-                    myPLEl.title = 'Not eligible for Personal Leave (T Employee)';
+                } else {
+                    // Reset styling for normal employees
+                    myPLEl.style.color = '';
+                    myPLEl.style.fontStyle = '';
                 }
             }
             if (mySLEl) {
                 mySLEl.textContent = data['SL'] ?? 0;
-                // Handle "Not Eligible" text for T employees
-                if (data['SL'] === 'Not Eligible') {
+                // Handle "FL" text for T employees (red color)
+                if (data['SL'] === 'FL') {
                     mySLEl.style.color = '#ff6b6b';
                     mySLEl.style.fontStyle = 'italic';
-                    mySLEl.title = 'Not eligible for Sick Leave (T Employee)';
+                } else {
+                    // Reset styling for normal employees
+                    mySLEl.style.color = '';
+                    mySLEl.style.fontStyle = '';
                 }
             }
             if (myFLEl) myFLEl.textContent = data['FL'] ?? 0;

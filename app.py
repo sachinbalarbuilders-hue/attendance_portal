@@ -753,11 +753,11 @@ def extract_leave_totals(file_path):
                         totals[key] = 0
                     break
 
-        # For T employees, set PL and SL to "Not Eligible"
+        # For T employees, set PL and SL to "FL" (Festival Leave)
         if is_t_employee:
-            totals["PL"] = "Not Eligible"
-            totals["SL"] = "Not Eligible"
-            print(f"T Employee '{employee_name}' - PL/SL set to 'Not Eligible'")
+            totals["PL"] = "FL"
+            totals["SL"] = "FL"
+            print(f"T Employee '{employee_name}' - PL/SL set to 'FL'")
 
         per_employee[sheet.title] = totals
 
@@ -921,7 +921,7 @@ def get_leave_totals():
     if employee and employee not in totals:
         # Check if this employee is T to set appropriate defaults
         if employee_db.is_t_employee(employee):
-            totals[employee] = {"W/O": 0, "PL": "Not Eligible", "SL": "Not Eligible", "FL": 0}
+            totals[employee] = {"W/O": 0, "PL": "FL", "SL": "FL", "FL": 0}
         else:
             totals[employee] = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}
 
