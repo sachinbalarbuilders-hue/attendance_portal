@@ -9,7 +9,7 @@ let globalShowUpdateNote = false;
 // Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
 function cleanEmployeeName(fullName) {
     if (!fullName) return '';
-    return fullName.replace(/\s*\([^)]*\)$/, '').trim();
+    return fullName.replace(/\s*\([^)]*\)$/, '').trim();  // Updated: T employees not eligible for PL/SL
 }
 
 // Force desktop view

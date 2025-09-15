@@ -54,7 +54,7 @@ class EmployeeDatabase:
         """Check if employee has (T) suffix - these are not eligible for PL/SL"""
         if not full_name:
             return False
-        return '(T)' in full_name.upper()
+        return '(T)' in full_name.upper()  # Updated: T employees not eligible for PL/SL
     
     def get_employee_leave_eligibility(self, full_name):
         """Get leave eligibility for an employee based on their suffix"""
