@@ -223,7 +223,7 @@ async function login() {
         if (result.success) {
             currentUser = result.user;
             showDashboard();
-            showNotification(`Welcome back, ${currentUser.name}!`);
+            showNotification(`Welcome back, ${cleanEmployeeName(currentUser.name)}!`);
             // After login, force desktop view
             forceDesktopView();
         } else {
@@ -884,13 +884,27 @@ function clearEmployeeSearch() {
 }
 
 
-function showEmployeeProfile(employeeName) {
+async function showEmployeeProfile(employeeName) {
     const profileCard = document.getElementById('employee-profile');
     const employeeData = attendanceData.filter(record => record.Employee === employeeName);
     
     if (employeeData.length === 0) {
         hideEmployeeProfile();
         return;
+    }
+    
+    // Check if this employee is T (not eligible for PL/SL)
+    let isTEmployee = false;
+    try {
+        const eligibilityUrl = new URL('/api/employee-leave-eligibility', window.location.origin);
+        eligibilityUrl.searchParams.append('employee', employeeName);
+        const eligibilityRes = await fetch(eligibilityUrl);
+        const eligibilityResult = await eligibilityRes.json();
+        if (eligibilityResult.success) {
+            isTEmployee = eligibilityResult.is_t_employee;
+        }
+    } catch (e) {
+        console.error('Failed to check T status', e);
     }
     
     // Calculate stats for this employee
@@ -931,7 +945,11 @@ function showEmployeeProfile(employeeName) {
     }, 0);
     
     // Update profile card content
-    document.getElementById('profile-employee-name').textContent = cleanEmployeeName(employeeName);
+    const employeeNameEl = document.getElementById('profile-employee-name');
+    employeeNameEl.textContent = cleanEmployeeName(employeeName);
+    
+    // Note: TC indicator removed from dashboard display as requested
+    
     document.getElementById('profile-total-days').textContent = totalDaysInMonth;
     document.getElementById('profile-present-days').textContent = presentDaysWeighted;
     document.getElementById('profile-absent-days').textContent = absentDays;
@@ -945,8 +963,28 @@ function showEmployeeProfile(employeeName) {
     const slEl = document.getElementById('profile-sl');
     const flEl = document.getElementById('profile-fl');
     if (woEl) woEl.textContent = wo;
-    if (plEl) plEl.textContent = pl;
-    if (slEl) slEl.textContent = sl;
+    if (plEl) {
+        // For T employees, show "Not Eligible" instead of count
+        if (isTEmployee) {
+            plEl.textContent = 'Not Eligible';
+            plEl.style.color = '#ff6b6b';
+            plEl.style.fontStyle = 'italic';
+            plEl.title = 'Not eligible for Personal Leave (T Employee)';
+        } else {
+            plEl.textContent = pl;
+        }
+    }
+    if (slEl) {
+        // For T employees, show "Not Eligible" instead of count
+        if (isTEmployee) {
+            slEl.textContent = 'Not Eligible';
+            slEl.style.color = '#ff6b6b';
+            slEl.style.fontStyle = 'italic';
+            slEl.title = 'Not eligible for Sick Leave (T Employee)';
+        } else {
+            slEl.textContent = sl;
+        }
+    }
     if (flEl) flEl.textContent = fl;
     
     // Show the profile card
@@ -1485,6 +1523,13 @@ function updateEmployeeStats() {
 // Fetch cumulative leave totals from backend and render
 async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
     try {
+        // First get leave eligibility for this employee
+        const eligibilityUrl = new URL('/api/employee-leave-eligibility', window.location.origin);
+        eligibilityUrl.searchParams.append('employee', employeeName);
+        const eligibilityRes = await fetch(eligibilityUrl);
+        const eligibilityResult = await eligibilityRes.json();
+        
+        // Then get leave totals
         const url = new URL('/api/leave-totals', window.location.origin);
         url.searchParams.append('employee', employeeName);
         const res = await fetch(url);
@@ -1498,8 +1543,24 @@ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
             const slEl = document.getElementById('profile-sl');
             const flEl = document.getElementById('profile-fl');
             if (woEl) woEl.textContent = data['W/O'] ?? 0;
-            if (plEl) plEl.textContent = data['PL'] ?? 0;
-            if (slEl) slEl.textContent = data['SL'] ?? 0;
+            if (plEl) {
+                plEl.textContent = data['PL'] ?? 0;
+                // Handle "Not Eligible" text for T employees
+                if (data['PL'] === 'Not Eligible') {
+                    plEl.style.color = '#ff6b6b';
+                    plEl.style.fontStyle = 'italic';
+                    plEl.title = 'Not eligible for Personal Leave (T Employee)';
+                }
+            }
+            if (slEl) {
+                slEl.textContent = data['SL'] ?? 0;
+                // Handle "Not Eligible" text for T employees
+                if (data['SL'] === 'Not Eligible') {
+                    slEl.style.color = '#ff6b6b';
+                    slEl.style.fontStyle = 'italic';
+                    slEl.title = 'Not eligible for Sick Leave (T Employee)';
+                }
+            }
             if (flEl) flEl.textContent = data['FL'] ?? 0;
         } else {
             const myWOEl = document.getElementById('my-wo');
@@ -1507,8 +1568,24 @@ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
             const mySLEl = document.getElementById('my-sl');
             const myFLEl = document.getElementById('my-fl');
             if (myWOEl) myWOEl.textContent = data['W/O'] ?? 0;
-            if (myPLEl) myPLEl.textContent = data['PL'] ?? 0;
-            if (mySLEl) mySLEl.textContent = data['SL'] ?? 0;
+            if (myPLEl) {
+                myPLEl.textContent = data['PL'] ?? 0;
+                // Handle "Not Eligible" text for T employees
+                if (data['PL'] === 'Not Eligible') {
+                    myPLEl.style.color = '#ff6b6b';
+                    myPLEl.style.fontStyle = 'italic';
+                    myPLEl.title = 'Not eligible for Personal Leave (T Employee)';
+                }
+            }
+            if (mySLEl) {
+                mySLEl.textContent = data['SL'] ?? 0;
+                // Handle "Not Eligible" text for T employees
+                if (data['SL'] === 'Not Eligible') {
+                    mySLEl.style.color = '#ff6b6b';
+                    mySLEl.style.fontStyle = 'italic';
+                    mySLEl.title = 'Not eligible for Sick Leave (T Employee)';
+                }
+            }
             if (myFLEl) myFLEl.textContent = data['FL'] ?? 0;
         }
     } catch (e) {

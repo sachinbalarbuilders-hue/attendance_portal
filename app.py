@@ -49,6 +49,29 @@ class EmployeeDatabase:
         cleaned_name = full_name.strip()
         cleaned_name = re.sub(r'\s*\([^)]*\)$', '', cleaned_name)
         return cleaned_name.lower().replace(' ', '').replace('.', '').replace('-', '')
+    
+    def is_t_employee(self, full_name):
+        """Check if employee has (T) suffix - these are not eligible for PL/SL"""
+        if not full_name:
+            return False
+        return '(T)' in full_name.upper()
+    
+    def get_employee_leave_eligibility(self, full_name):
+        """Get leave eligibility for an employee based on their suffix"""
+        if self.is_t_employee(full_name):
+            return {
+                'W/O': True,   # Week Off - eligible
+                'PL': False,   # Personal Leave - NOT eligible
+                'SL': False,   # Sick Leave - NOT eligible  
+                'FL': True     # Festival Leave - eligible
+            }
+        else:
+            return {
+                'W/O': True,   # Week Off - eligible
+                'PL': True,    # Personal Leave - eligible
+                'SL': True,    # Sick Leave - eligible
+                'FL': True     # Festival Leave - eligible
+            }
 
     def create_employee_email(self, full_name):
         """Convert 'Sachin Mandal (T)' to 'sachinmandal@gmail.com'"""
@@ -160,9 +183,9 @@ class EmployeeDatabase:
 # **FIXED: Single global instance**
 employee_db = EmployeeDatabase()
 
-# Test function to demonstrate name cleaning
+# Test function to demonstrate name cleaning and TC employee detection
 def test_name_cleaning():
-    """Test the name cleaning functionality"""
+    """Test the name cleaning functionality and TC employee detection"""
     test_cases = [
         "Sachin Mandal (T)",
         "Priya Sharma (TC)", 
@@ -173,15 +196,23 @@ def test_name_cleaning():
         "Name With (Multiple) (Suffixes)"
     ]
     
-    print("Testing Employee Name Cleaning:")
-    print("=" * 50)
+    print("Testing Employee Name Cleaning and T Detection:")
+    print("=" * 60)
     for name in test_cases:
         cleaned = employee_db.clean_employee_name(name)
         email = employee_db.create_employee_email(name)
+        is_t = employee_db.is_t_employee(name)
+        eligibility = employee_db.get_employee_leave_eligibility(name)
         print(f"Original: {name}")
         print(f"Cleaned:  {cleaned}")
         print(f"Email:    {email}")
-        print("-" * 30)
+        print(f"T Employee: {is_t}")
+        print(f"PL Eligible: {eligibility['PL']}, SL Eligible: {eligibility['SL']}")
+        if is_t:
+            print(f"Display: PL='Not Eligible', SL='Not Eligible'")
+        else:
+            print(f"Display: PL=count, SL=count")
+        print("-" * 40)
 
 # Uncomment the line below to test the name cleaning
 test_name_cleaning()
@@ -669,6 +700,7 @@ def extract_leave_totals(file_path):
     """Parse cumulative W/O, PL, SL, FL totals per employee sheet from the Excel.
     Strategy: find header row containing these labels, then take the last numeric value
     in each corresponding column as the sheet's cumulative total.
+    TC employees are not eligible for PL/SL.
     """
     wb = load_workbook(file_path, data_only=True)
     visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == "visible"]
@@ -684,6 +716,10 @@ def extract_leave_totals(file_path):
 
     for sheet in visible_sheets:
         ws = wb[sheet.title]
+        employee_name = sheet.title
+        
+        # Check if this employee is T (not eligible for PL/SL)
+        is_t_employee = employee_db.is_t_employee(employee_name)
 
         # Search header rows (first 10 rows) for our labels
         label_to_col = {}
@@ -716,6 +752,12 @@ def extract_leave_totals(file_path):
                     except Exception:
                         totals[key] = 0
                     break
+
+        # For T employees, set PL and SL to "Not Eligible"
+        if is_t_employee:
+            totals["PL"] = "Not Eligible"
+            totals["SL"] = "Not Eligible"
+            print(f"T Employee '{employee_name}' - PL/SL set to 'Not Eligible'")
 
         per_employee[sheet.title] = totals
 
@@ -877,9 +919,39 @@ def get_leave_totals():
     totals = db.get_leave_totals(employee)
     
     if employee and employee not in totals:
-        totals[employee] = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}
+        # Check if this employee is T to set appropriate defaults
+        if employee_db.is_t_employee(employee):
+            totals[employee] = {"W/O": 0, "PL": "Not Eligible", "SL": "Not Eligible", "FL": 0}
+        else:
+            totals[employee] = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}
 
     return jsonify({'success': True, 'data': totals})
+
+@app.route('/api/employee-leave-eligibility')
+def get_employee_leave_eligibility():
+    """Get leave eligibility for an employee (T employees not eligible for PL/SL)"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+
+    user_data = session['user_data']
+    employee = request.args.get('employee')
+
+    # Non-admins can only view their own eligibility
+    if not user_data.get('is_admin'):
+        employee = user_data['name']
+
+    if not employee:
+        return jsonify({'success': False, 'message': 'Employee name required'})
+
+    # Get leave eligibility based on employee suffix
+    eligibility = employee_db.get_employee_leave_eligibility(employee)
+    
+    return jsonify({
+        'success': True, 
+        'employee': employee,
+        'is_t_employee': employee_db.is_t_employee(employee),
+        'eligibility': eligibility
+    })
 
 @app.route('/api/admin/set-date', methods=['POST'])
 def set_admin_date():

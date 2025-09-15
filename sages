@@ -1,0 +1,316 @@
+[1mdiff --git a/PYTHONANYWHERE_COMMANDS.txt b/PYTHONANYWHERE_COMMANDS.txt[m
+[1mindex 79efc8d..c1dfab3 100644[m
+[1m--- a/PYTHONANYWHERE_COMMANDS.txt[m
+[1m+++ b/PYTHONANYWHERE_COMMANDS.txt[m
+[36m@@ -12,6 +12,9 @@[m [mcd /home/checkattendance/attendance_portal[m
+ [m
+ STEP 3: Load Maintenance Commands[m
+ exec(open('maintenance_config.py').read())[m
+[32m+[m[32mpython3 -c "exec(open('maintenance_config.py').read()); disable()"[m
+[32m+[m[32mpython3 -c "exec(open('maintenance_config.py').read()); status()"[m
+[32m+[m[32mClear database: python3 -c "exec(open('maintenance_config.py').read()); db_clear()"[m
+ [m
+ STEP 4: Use These Commands[m
+ [m
+[1mdiff --git a/app.py b/app.py[m
+[1mindex 7eef41f..61bb9d3 100644[m
+[1m--- a/app.py[m
+[1m+++ b/app.py[m
+[36m@@ -49,6 +49,29 @@[m [mclass EmployeeDatabase:[m
+         cleaned_name = full_name.strip()[m
+         cleaned_name = re.sub(r'\s*\([^)]*\)$', '', cleaned_name)[m
+         return cleaned_name.lower().replace(' ', '').replace('.', '').replace('-', '')[m
+[32m+[m[41m    [m
+[32m+[m[32m    def is_t_employee(self, full_name):[m
+[32m+[m[32m        """Check if employee has (T) suffix - these are not eligible for PL/SL"""[m
+[32m+[m[32m        if not full_name:[m
+[32m+[m[32m            return False[m
+[32m+[m[32m        return '(T)' in full_name.upper()[m
+[32m+[m[41m    [m
+[32m+[m[32m    def get_employee_leave_eligibility(self, full_name):[m
+[32m+[m[32m        """Get leave eligibility for an employee based on their suffix"""[m
+[32m+[m[32m        if self.is_t_employee(full_name):[m
+[32m+[m[32m            return {[m
+[32m+[m[32m                'W/O': True,   # Week Off - eligible[m
+[32m+[m[32m                'PL': False,   # Personal Leave - NOT eligible[m
+[32m+[m[32m                'SL': False,   # Sick Leave - NOT eligible[m[41m  [m
+[32m+[m[32m                'FL': True     # Festival Leave - eligible[m
+[32m+[m[32m            }[m
+[32m+[m[32m        else:[m
+[32m+[m[32m            return {[m
+[32m+[m[32m                'W/O': True,   # Week Off - eligible[m
+[32m+[m[32m                'PL': True,    # Personal Leave - eligible[m
+[32m+[m[32m                'SL': True,    # Sick Leave - eligible[m
+[32m+[m[32m                'FL': True     # Festival Leave - eligible[m
+[32m+[m[32m            }[m
+ [m
+     def create_employee_email(self, full_name):[m
+         """Convert 'Sachin Mandal (T)' to 'sachinmandal@gmail.com'"""[m
+[36m@@ -160,9 +183,9 @@[m [mclass EmployeeDatabase:[m
+ # **FIXED: Single global instance**[m
+ employee_db = EmployeeDatabase()[m
+ [m
+[31m-# Test function to demonstrate name cleaning[m
+[32m+[m[32m# Test function to demonstrate name cleaning and TC employee detection[m
+ def test_name_cleaning():[m
+[31m-    """Test the name cleaning functionality"""[m
+[32m+[m[32m    """Test the name cleaning functionality and TC employee detection"""[m
+     test_cases = [[m
+         "Sachin Mandal (T)",[m
+         "Priya Sharma (TC)", [m
+[36m@@ -173,15 +196,23 @@[m [mdef test_name_cleaning():[m
+         "Name With (Multiple) (Suffixes)"[m
+     ][m
+     [m
+[31m-    print("Testing Employee Name Cleaning:")[m
+[31m-    print("=" * 50)[m
+[32m+[m[32m    print("Testing Employee Name Cleaning and T Detection:")[m
+[32m+[m[32m    print("=" * 60)[m
+     for name in test_cases:[m
+         cleaned = employee_db.clean_employee_name(name)[m
+         email = employee_db.create_employee_email(name)[m
+[32m+[m[32m        is_t = employee_db.is_t_employee(name)[m
+[32m+[m[32m        eligibility = employee_db.get_employee_leave_eligibility(name)[m
+         print(f"Original: {name}")[m
+         print(f"Cleaned:  {cleaned}")[m
+         print(f"Email:    {email}")[m
+[31m-        print("-" * 30)[m
+[32m+[m[32m        print(f"T Employee: {is_t}")[m
+[32m+[m[32m        print(f"PL Eligible: {eligibility['PL']}, SL Eligible: {eligibility['SL']}")[m
+[32m+[m[32m        if is_t:[m
+[32m+[m[32m            print(f"Display: PL='Not Eligible', SL='Not Eligible'")[m
+[32m+[m[32m        else:[m
+[32m+[m[32m            print(f"Display: PL=count, SL=count")[m
+[32m+[m[32m        print("-" * 40)[m
+ [m
+ # Uncomment the line below to test the name cleaning[m
+ test_name_cleaning()[m
+[36m@@ -669,6 +700,7 @@[m [mdef extract_leave_totals(file_path):[m
+     """Parse cumulative W/O, PL, SL, FL totals per employee sheet from the Excel.[m
+     Strategy: find header row containing these labels, then take the last numeric value[m
+     in each corresponding column as the sheet's cumulative total.[m
+[32m+[m[32m    TC employees are not eligible for PL/SL.[m
+     """[m
+     wb = load_workbook(file_path, data_only=True)[m
+     visible_sheets = [sheet for sheet in wb.worksheets if sheet.sheet_state == "visible"][m
+[36m@@ -684,6 +716,10 @@[m [mdef extract_leave_totals(file_path):[m
+ [m
+     for sheet in visible_sheets:[m
+         ws = wb[sheet.title][m
+[32m+[m[32m        employee_name = sheet.title[m
+[32m+[m[41m        [m
+[32m+[m[32m        # Check if this employee is T (not eligible for PL/SL)[m
+[32m+[m[32m        is_t_employee = employee_db.is_t_employee(employee_name)[m
+ [m
+         # Search header rows (first 10 rows) for our labels[m
+         label_to_col = {}[m
+[36m@@ -717,6 +753,12 @@[m [mdef extract_leave_totals(file_path):[m
+                         totals[key] = 0[m
+                     break[m
+ [m
+[32m+[m[32m        # For T employees, set PL and SL to "Not Eligible"[m
+[32m+[m[32m        if is_t_employee:[m
+[32m+[m[32m            totals["PL"] = "Not Eligible"[m
+[32m+[m[32m            totals["SL"] = "Not Eligible"[m
+[32m+[m[32m            print(f"T Employee '{employee_name}' - PL/SL set to 'Not Eligible'")[m
+[32m+[m
+         per_employee[sheet.title] = totals[m
+ [m
+     return per_employee[m
+[36m@@ -877,10 +919,40 @@[m [mdef get_leave_totals():[m
+     totals = db.get_leave_totals(employee)[m
+     [m
+     if employee and employee not in totals:[m
+[31m-        totals[employee] = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}[m
+[32m+[m[32m        # Check if this employee is T to set appropriate defaults[m
+[32m+[m[32m        if employee_db.is_t_employee(employee):[m
+[32m+[m[32m            totals[employee] = {"W/O": 0, "PL": "Not Eligible", "SL": "Not Eligible", "FL": 0}[m
+[32m+[m[32m        else:[m
+[32m+[m[32m            totals[employee] = {"W/O": 0, "PL": 0, "SL": 0, "FL": 0}[m
+ [m
+     return jsonify({'success': True, 'data': totals})[m
+ [m
+[32m+[m[32m@app.route('/api/employee-leave-eligibility')[m
+[32m+[m[32mdef get_employee_leave_eligibility():[m
+[32m+[m[32m    """Get leave eligibility for an employee (T employees not eligible for PL/SL)"""[m
+[32m+[m[32m    if 'user_data' not in session:[m
+[32m+[m[32m        return jsonify({'success': False, 'message': 'Not authenticated'})[m
+[32m+[m
+[32m+[m[32m    user_data = session['user_data'][m
+[32m+[m[32m    employee = request.args.get('employee')[m
+[32m+[m
+[32m+[m[32m    # Non-admins can only view their own eligibility[m
+[32m+[m[32m    if not user_data.get('is_admin'):[m
+[32m+[m[32m        employee = user_data['name'][m
+[32m+[m
+[32m+[m[32m    if not employee:[m
+[32m+[m[32m        return jsonify({'success': False, 'message': 'Employee name required'})[m
+[32m+[m
+[32m+[m[32m    # Get leave eligibility based on employee suffix[m
+[32m+[m[32m    eligibility = employee_db.get_employee_leave_eligibility(employee)[m
+[32m+[m[41m    [m
+[32m+[m[32m    return jsonify({[m
+[32m+[m[32m        'success': True,[m[41m [m
+[32m+[m[32m        'employee': employee,[m
+[32m+[m[32m        'is_t_employee': employee_db.is_t_employee(employee),[m
+[32m+[m[32m        'eligibility': eligibility[m
+[32m+[m[32m    })[m
+[32m+[m
+ @app.route('/api/admin/set-date', methods=['POST'])[m
+ def set_admin_date():[m
+     """Set admin's selected date"""[m
+[1mdiff --git a/static/js/app.js b/static/js/app.js[m
+[1mindex 198c49d..45de29a 100644[m
+[1m--- a/static/js/app.js[m
+[1m+++ b/static/js/app.js[m
+[36m@@ -223,7 +223,7 @@[m [masync function login() {[m
+         if (result.success) {[m
+             currentUser = result.user;[m
+             showDashboard();[m
+[31m-            showNotification(`Welcome back, ${currentUser.name}!`);[m
+[32m+[m[32m            showNotification(`Welcome back, ${cleanEmployeeName(currentUser.name)}!`);[m
+             // After login, force desktop view[m
+             forceDesktopView();[m
+         } else {[m
+[36m@@ -884,7 +884,7 @@[m [mfunction clearEmployeeSearch() {[m
+ }[m
+ [m
+ [m
+[31m-function showEmployeeProfile(employeeName) {[m
+[32m+[m[32masync function showEmployeeProfile(employeeName) {[m
+     const profileCard = document.getElementById('employee-profile');[m
+     const employeeData = attendanceData.filter(record => record.Employee === employeeName);[m
+     [m
+[36m@@ -893,6 +893,20 @@[m [mfunction showEmployeeProfile(employeeName) {[m
+         return;[m
+     }[m
+     [m
+[32m+[m[32m    // Check if this employee is T (not eligible for PL/SL)[m
+[32m+[m[32m    let isTEmployee = false;[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        const eligibilityUrl = new URL('/api/employee-leave-eligibility', window.location.origin);[m
+[32m+[m[32m        eligibilityUrl.searchParams.append('employee', employeeName);[m
+[32m+[m[32m        const eligibilityRes = await fetch(eligibilityUrl);[m
+[32m+[m[32m        const eligibilityResult = await eligibilityRes.json();[m
+[32m+[m[32m        if (eligibilityResult.success) {[m
+[32m+[m[32m            isTEmployee = eligibilityResult.is_t_employee;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    } catch (e) {[m
+[32m+[m[32m        console.error('Failed to check T status', e);[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+     // Calculate stats for this employee[m
+     const presentDays = employeeData.filter(record => record.Status.startsWith('P')).length;[m
+     const halfDays = employeeData.filter(record => record.Status.startsWith('HF')).length;[m
+[36m@@ -931,7 +945,11 @@[m [mfunction showEmployeeProfile(employeeName) {[m
+     }, 0);[m
+     [m
+     // Update profile card content[m
+[31m-    document.getElementById('profile-employee-name').textContent = cleanEmployeeName(employeeName);[m
+[32m+[m[32m    const employeeNameEl = document.getElementById('profile-employee-name');[m
+[32m+[m[32m    employeeNameEl.textContent = cleanEmployeeName(employeeName);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Note: TC indicator removed from dashboard display as requested[m
+[32m+[m[41m    [m
+     document.getElementById('profile-total-days').textContent = totalDaysInMonth;[m
+     document.getElementById('profile-present-days').textContent = presentDaysWeighted;[m
+     document.getElementById('profile-absent-days').textContent = absentDays;[m
+[36m@@ -945,8 +963,28 @@[m [mfunction showEmployeeProfile(employeeName) {[m
+     const slEl = document.getElementById('profile-sl');[m
+     const flEl = document.getElementById('profile-fl');[m
+     if (woEl) woEl.textContent = wo;[m
+[31m-    if (plEl) plEl.textContent = pl;[m
+[31m-    if (slEl) slEl.textContent = sl;[m
+[32m+[m[32m    if (plEl) {[m
+[32m+[m[32m        // For T employees, show "Not Eligible" instead of count[m
+[32m+[m[32m        if (isTEmployee) {[m
+[32m+[m[32m            plEl.textContent = 'Not Eligible';[m
+[32m+[m[32m            plEl.style.color = '#ff6b6b';[m
+[32m+[m[32m            plEl.style.fontStyle = 'italic';[m
+[32m+[m[32m            plEl.title = 'Not eligible for Personal Leave (T Employee)';[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            plEl.textContent = pl;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (slEl) {[m
+[32m+[m[32m        // For T employees, show "Not Eligible" instead of count[m
+[32m+[m[32m        if (isTEmployee) {[m
+[32m+[m[32m            slEl.textContent = 'Not Eligible';[m
+[32m+[m[32m            slEl.style.color = '#ff6b6b';[m
+[32m+[m[32m            slEl.style.fontStyle = 'italic';[m
+[32m+[m[32m            slEl.title = 'Not eligible for Sick Leave (T Employee)';[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            slEl.textContent = sl;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+     if (flEl) flEl.textContent = fl;[m
+     [m
+     // Show the profile card[m
+[36m@@ -1485,6 +1523,13 @@[m [mfunction updateEmployeeStats() {[m
+ // Fetch cumulative leave totals from backend and render[m
+ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {[m
+     try {[m
+[32m+[m[32m        // First get leave eligibility for this employee[m
+[32m+[m[32m        const eligibilityUrl = new URL('/api/employee-leave-eligibility', window.location.origin);[m
+[32m+[m[32m        eligibilityUrl.searchParams.append('employee', employeeName);[m
+[32m+[m[32m        const eligibilityRes = await fetch(eligibilityUrl);[m
+[32m+[m[32m        const eligibilityResult = await eligibilityRes.json();[m
+[32m+[m[41m        [m
+[32m+[m[32m        // Then get leave totals[m
+         const url = new URL('/api/leave-totals', window.location.origin);[m
+         url.searchParams.append('employee', employeeName);[m
+         const res = await fetch(url);[m
+[36m@@ -1498,8 +1543,24 @@[m [masync function fetchAndRenderLeaveTotals(employeeName, isSelf) {[m
+             const slEl = document.getElementById('profile-sl');[m
+             const flEl = document.getElementById('profile-fl');[m
+             if (woEl) woEl.textContent = data['W/O'] ?? 0;[m
+[31m-            if (plEl) plEl.textContent = data['PL'] ?? 0;[m
+[31m-            if (slEl) slEl.textContent = data['SL'] ?? 0;[m
+[32m+[m[32m            if (plEl) {[m
+[32m+[m[32m                plEl.textContent = data['PL'] ?? 0;[m
+[32m+[m[32m                // Handle "Not Eligible" text for T employees[m
+[32m+[m[32m                if (data['PL'] === 'Not Eligible') {[m
+[32m+[m[32m                    plEl.style.color = '#ff6b6b';[m
+[32m+[m[32m                    plEl.style.fontStyle = 'italic';[m
+[32m+[m[32m                    plEl.title = 'Not eligible for Personal Leave (T Employee)';[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m            if (slEl) {[m
+[32m+[m[32m                slEl.textContent = data['SL'] ?? 0;[m
+[32m+[m[32m                // Handle "Not Eligible" text for T employees[m
+[32m+[m[32m                if (data['SL'] === 'Not Eligible') {[m
+[32m+[m[32m                    slEl.style.color = '#ff6b6b';[m
+[32m+[m[32m                    slEl.style.fontStyle = 'italic';[m
+[32m+[m[32m                    slEl.title = 'Not eligible for Sick Leave (T Employee)';[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+             if (flEl) flEl.textContent = data['FL'] ?? 0;[m
+         } else {[m
+             const myWOEl = document.getElementById('my-wo');[m
+[36m@@ -1507,8 +1568,24 @@[m [masync function fetchAndRenderLeaveTotals(employeeName, isSelf) {[m
+             const mySLEl = document.getElementById('my-sl');[m
+             const myFLEl = document.getElementById('my-fl');[m
+             if (myWOEl) myWOEl.textContent = data['W/O'] ?? 0;[m
+[31m-            if (myPLEl) myPLEl.textContent = data['PL'] ?? 0;[m
+[31m-            if (mySLEl) mySLEl.textContent = data['SL'] ?? 0;[m
+[32m+[m[32m            if (myPLEl) {[m
+[32m+[m[32m                myPLEl.textContent = data['PL'] ?? 0;[m
+[32m+[m[32m                // Handle "Not Eligible" text for T employees[m
+[32m+[m[32m                if (data['PL'] === 'Not Eligible') {[m
+[32m+[m[32m                    myPLEl.style.color = '#ff6b6b';[m
+[32m+[m[32m                    myPLEl.style.fontStyle = 'italic';[m
+[32m+[m[32m                    myPLEl.title = 'Not eligible for Personal Leave (T Employee)';[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m            if (mySLEl) {[m
+[32m+[m[32m                mySLEl.textContent = data['SL'] ?? 0;[m
+[32m+[m[32m                // Handle "Not Eligible" text for T employees[m
+[32m+[m[32m                if (data['SL'] === 'Not Eligible') {[m
+[32m+[m[32m                    mySLEl.style.color = '#ff6b6b';[m
+[32m+[m[32m                    mySLEl.style.fontStyle = 'italic';[m
+[32m+[m[32m                    mySLEl.title = 'Not eligible for Sick Leave (T Employee)';[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+             if (myFLEl) myFLEl.textContent = data['FL'] ?? 0;[m
+         }[m
+     } catch (e) {[m
