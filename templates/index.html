@@ -44,12 +44,28 @@
                     <h3><i class="fas fa-lock"></i> Welcome Back</h3>
                     <div class="input-group">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="email" placeholder="Email Address" required>
+                        <input type="email" id="email" placeholder="Email Address" required autofocus>
                     </div>
                     <div class="input-group">
                         <i class="fas fa-lock"></i>
                         <input type="password" id="password" placeholder="Password" required>
                     </div>
+                    
+                    <!-- Remember Me Checkbox -->
+                    <div class="remember-me-group">
+                        <label class="remember-me-label">
+                            <input type="checkbox" id="remember-me" class="remember-me-checkbox">
+                            <span class="checkmark"></span>
+                            <span class="remember-text">Remember me</span>
+                        </label>
+                        <button type="button" id="clear-saved-credentials" class="clear-credentials-btn" title="Clear saved credentials">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    <div class="security-notice">
+                        <small><i class="fas fa-shield-alt"></i> Credentials are stored locally on this device only</small>
+                    </div>
+                    
                     <div class="button-group">
                         <button onclick="login()" class="btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login
@@ -127,7 +143,7 @@
                             </div>
                             <div class="employee-profile-stat">
                                 <h4 id="profile-present-days">0</h4>
-                                <p>Present Days (P + 0.5×HF)</p>
+                                <p>Present Days</p>
                             </div>
                             <div class="employee-profile-stat">
                                 <h4 id="profile-absent-days">0</h4>
@@ -284,7 +300,7 @@
                             <i class="fas fa-calendar-day"></i>
                             <div class="metric-content">
                                 <h3 id="present-days">--</h3>
-                                <p>Present Days (P + 0.5×HF)</p>
+                                <p>Present Days</p>
                             </div>
                         </div>
                         <div class="metric-card metric-total">

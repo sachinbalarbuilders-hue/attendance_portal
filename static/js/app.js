@@ -7,6 +7,107 @@ let selectedEmployee = null;
 let globalShowUpdateNote = false;
 let resetToken = null;
 
+// Initialize app focus on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved credentials if available
+    loadSavedCredentials();
+    
+    // Focus on email input when page loads
+    setTimeout(() => {
+        const emailInput = document.getElementById('email');
+        if (emailInput && document.getElementById('login-section').style.display !== 'none') {
+            emailInput.focus();
+        }
+    }, 200);
+    
+    // Add keyboard navigation for login form
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    
+    if (emailInput) {
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                passwordInput.focus();
+            }
+        });
+    }
+    
+    if (passwordInput) {
+        passwordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                login();
+            }
+        });
+    }
+    
+    // Add clear credentials button functionality
+    const clearBtn = document.getElementById('clear-saved-credentials');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            clearSavedCredentials();
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('remember-me').checked = false;
+            showNotification('Saved credentials cleared', 'success', 3000);
+        });
+    }
+});
+
+// Credential Management Functions
+function saveCredentials(email, password) {
+    try {
+        // Simple encryption (not secure, just obfuscation)
+        const encodedEmail = btoa(email);
+        const encodedPassword = btoa(password);
+        
+        localStorage.setItem('saved_email', encodedEmail);
+        localStorage.setItem('saved_password', encodedPassword);
+        localStorage.setItem('remember_me', 'true');
+        
+        console.log('Credentials saved successfully');
+    } catch (error) {
+        console.error('Failed to save credentials:', error);
+    }
+}
+
+function loadSavedCredentials() {
+    try {
+        const rememberMe = localStorage.getItem('remember_me');
+        if (rememberMe === 'true') {
+            const encodedEmail = localStorage.getItem('saved_email');
+            const encodedPassword = localStorage.getItem('saved_password');
+            
+            if (encodedEmail && encodedPassword) {
+                const email = atob(encodedEmail);
+                const password = atob(encodedPassword);
+                
+                document.getElementById('email').value = email;
+                document.getElementById('password').value = password;
+                document.getElementById('remember-me').checked = true;
+                
+                console.log('Saved credentials loaded');
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load saved credentials:', error);
+        // Clear corrupted data
+        clearSavedCredentials();
+    }
+}
+
+function clearSavedCredentials() {
+    try {
+        localStorage.removeItem('saved_email');
+        localStorage.removeItem('saved_password');
+        localStorage.removeItem('remember_me');
+        console.log('Saved credentials cleared');
+    } catch (error) {
+        console.error('Failed to clear saved credentials:', error);
+    }
+}
+
 // Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
 function cleanEmployeeName(fullName) {
     if (!fullName) return '';
@@ -235,6 +336,14 @@ async function login() {
         if (result.success) {
             currentUser = result.user;
             showNotification(`Welcome back, ${cleanEmployeeName(currentUser.name)}!`);
+            
+            // Handle remember me functionality
+            const rememberMe = document.getElementById('remember-me').checked;
+            if (rememberMe) {
+                saveCredentials(email, password);
+            } else {
+                clearSavedCredentials();
+            }
             
             // Store if user needs password change for later use
             currentUser.needs_password_change = result.needs_password_change;
@@ -666,12 +775,27 @@ function showLoginPage() {
     // When returning to login, make it responsive again
     enableResponsiveMode();
     
-    // Clear form fields
-    document.getElementById('email').value = '';
-    document.getElementById('password').value = '';
+    // Load saved credentials if remember me was checked
+    loadSavedCredentials();
+    
+    // If no saved credentials, clear form fields
+    const rememberMe = localStorage.getItem('remember_me');
+    if (rememberMe !== 'true') {
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('remember-me').checked = false;
+    }
     
     // Reset to login form
     document.getElementById('login-form').style.display = 'block';
+    
+    // Focus on email input after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        const emailInput = document.getElementById('email');
+        if (emailInput) {
+            emailInput.focus();
+        }
+    }, 100);
 }
 
 async function showDashboard() {

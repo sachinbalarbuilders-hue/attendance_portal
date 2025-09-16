@@ -103,6 +103,105 @@ body {
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
 }
 
+/* Remember Me Checkbox Styling */
+.remember-me-group {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.remember-me-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    user-select: none;
+}
+
+.remember-me-checkbox {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    margin-right: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.remember-me-checkbox:checked + .checkmark {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+.remember-me-checkbox:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkmark:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.remember-text {
+    font-weight: 500;
+}
+
+.clear-credentials-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.clear-credentials-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 1);
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.clear-credentials-btn:active {
+    transform: scale(0.95);
+}
+
+.security-notice {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.security-notice small {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.security-notice i {
+    color: #4CAF50;
+}
+
 .button-group {
     display: flex;
     gap: 1rem;
