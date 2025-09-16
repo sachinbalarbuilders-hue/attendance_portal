@@ -59,6 +59,11 @@ class EmployeeDatabase:
         return [user_data["name"] for email, user_data in self.EMPLOYEE_DB.items() 
                 if not user_data["is_admin"]]
     
+    def get_all_employee_emails(self):
+        """Get list of all employee emails (excluding admins)"""
+        return [email for email, user_data in self.EMPLOYEE_DB.items() 
+                if not user_data["is_admin"]]
+    
     def user_exists(self, email):
         """Check if user already exists"""
         return email in self.EMPLOYEE_DB
@@ -84,6 +89,18 @@ class EmployeeDatabase:
         
         return created_accounts, existing_accounts
     
+    
+    def get_user_by_email(self, email):
+        """Get user data by email"""
+        return self.EMPLOYEE_DB.get(email, None)
+    
+    def get_employee_name_by_email(self, email):
+        """Get employee name by email"""
+        user_data = self.get_user_by_email(email)
+        if user_data:
+            return user_data.get('name', 'Unknown')
+        return None
+    
     def reset_password(self, email, new_password):
         """Reset user password"""
         if email in self.EMPLOYEE_DB:
@@ -91,9 +108,12 @@ class EmployeeDatabase:
             return True
         return False
     
-    def get_user_by_email(self, email):
-        """Get user data by email"""
-        return self.EMPLOYEE_DB.get(email, None)
+    def has_default_password(self, email):
+        """Check if user has default password"""
+        if email in self.EMPLOYEE_DB:
+            default_password_hash = hashlib.sha256("Balar123".encode()).hexdigest()
+            return self.EMPLOYEE_DB[email]["password"] == default_password_hash
+        return False
 
 # Create global instance
 employee_db = EmployeeDatabase()

@@ -185,17 +185,28 @@ function hideLoading() {
     document.getElementById('loading-overlay').style.display = 'none';
 }
 
-function showNotification(message, type = 'success') {
+function showNotification(message, type = 'success', duration = 5000, clickable = false, clickCallback = null) {
     const container = document.getElementById('notification-container');
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.textContent = message;
     
+    if (clickable) {
+        notification.style.cursor = 'pointer';
+        notification.style.textDecoration = 'underline';
+        notification.addEventListener('click', () => {
+            if (clickCallback) {
+                clickCallback();
+            }
+            notification.remove();
+        });
+    }
+    
+    notification.textContent = message;
     container.appendChild(notification);
     
     setTimeout(() => {
         notification.remove();
-    }, 5000);
+    }, duration);
 }
 
 // Authentication functions
@@ -223,8 +234,19 @@ async function login() {
         
         if (result.success) {
             currentUser = result.user;
-            showDashboard();
             showNotification(`Welcome back, ${cleanEmployeeName(currentUser.name)}!`);
+            
+            // Store if user needs password change for later use
+            currentUser.needs_password_change = result.needs_password_change;
+            
+            // Show leave application notification if flag is set
+            if (result.leave_notification) {
+                setTimeout(() => {
+                    showNotification('Submit your pending applications', 'info', 8000);
+                }, 2000);
+            }
+            
+            showDashboard();
             // After login, force desktop view
             forceDesktopView();
         } else {
@@ -238,75 +260,7 @@ async function login() {
     }
 }
 
-function showForgotPassword() {
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('forgot-password-form').style.display = 'block';
-}
 
-function backToLogin() {
-    document.getElementById('forgot-password-form').style.display = 'none';
-    document.getElementById('login-form').style.display = 'block';
-    // Clear all form fields
-    document.getElementById('reset-email').value = '';
-    document.getElementById('current-password').value = '';
-    document.getElementById('new-password').value = '';
-    document.getElementById('confirm-password').value = '';
-}
-
-// Simplified password change - no separate forms needed
-
-async function submitPasswordChange() {
-    const email = document.getElementById('reset-email').value.trim();
-    const currentPassword = document.getElementById('current-password').value.trim();
-    const newPassword = document.getElementById('new-password').value.trim();
-    const confirmPassword = document.getElementById('confirm-password').value.trim();
-    
-    // Validation
-    if (!email || !currentPassword || !newPassword || !confirmPassword) {
-        showNotification('Please fill in all fields', 'error');
-        return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-        showNotification('New passwords do not match', 'error');
-        return;
-    }
-    
-    if (newPassword.length < 6) {
-        showNotification('New password must be at least 6 characters long', 'error');
-        return;
-    }
-    
-    if (currentPassword === newPassword) {
-        showNotification('New password must be different from current password', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/change-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                email, 
-                current_password: currentPassword, 
-                new_password: newPassword 
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showNotification('Password changed successfully! You can now login with your new password.', 'success');
-            backToLogin();
-        } else {
-            showNotification(result.message, 'error');
-        }
-    } catch (error) {
-        showNotification('Failed to change password. Please try again.', 'error');
-    }
-}
 
 async function logout() {
     try {
@@ -324,6 +278,369 @@ async function logout() {
     }
 }
 
+// Password change functionality
+
+function showChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    modal.style.display = 'flex';
+    // Clear inputs
+    document.getElementById('new-password-input').value = '';
+    document.getElementById('confirm-password-input').value = '';
+}
+
+function hideChangePasswordModal() {
+    const modal = document.getElementById('change-password-modal');
+    modal.style.display = 'none';
+    // Clear the needs_password_change flag after user interacts with modal
+    if (currentUser) {
+        currentUser.needs_password_change = false;
+    }
+}
+
+function closePasswordChangeDialog() {
+    hideChangePasswordModal();
+    // Add change password button next to user name when closed
+    addChangePasswordButtonToTop();
+    showNotification('You can change your password anytime using the button next to your name.', 'info');
+}
+
+function skipPasswordChange() {
+    hideChangePasswordModal();
+    // Add change password button next to user name
+    addChangePasswordButtonToTop();
+    showNotification('You can change your password anytime using the button next to your name.', 'info');
+}
+
+function addChangePasswordButtonToTop() {
+    const userInfoElement = document.getElementById('user-info');
+    if (userInfoElement && !userInfoElement.querySelector('.change-password-btn-top')) {
+        const changePasswordBtn = document.createElement('button');
+        changePasswordBtn.className = 'change-password-btn-top';
+        changePasswordBtn.innerHTML = '<i class="fas fa-key"></i> Change Password';
+        changePasswordBtn.onclick = showChangePasswordModal;
+        changePasswordBtn.style.cssText = `
+            margin-left: 10px;
+            padding: 5px 10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        `;
+        changePasswordBtn.addEventListener('mouseenter', () => {
+            changePasswordBtn.style.backgroundColor = '#ff5252';
+        });
+        changePasswordBtn.addEventListener('mouseleave', () => {
+            changePasswordBtn.style.backgroundColor = '#ff6b6b';
+        });
+        userInfoElement.appendChild(changePasswordBtn);
+    }
+}
+
+function removeChangePasswordButtonFromTop() {
+    const changePasswordBtn = document.querySelector('.change-password-btn-top');
+    if (changePasswordBtn) {
+        changePasswordBtn.remove();
+    }
+}
+
+async function submitPasswordChange() {
+    const newPassword = document.getElementById('new-password-input').value.trim();
+    const confirmPassword = document.getElementById('confirm-password-input').value.trim();
+    
+    // Validation
+    if (!newPassword || !confirmPassword) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('Passwords do not match', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('Password must be at least 6 characters long', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                new_password: newPassword 
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Password changed successfully!', 'success');
+            hideChangePasswordModal();
+            // Remove change password button from top if it exists
+            removeChangePasswordButtonFromTop();
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to change password. Please try again.', 'error');
+    }
+}
+
+// Current password functionality
+function showCurrentPassword() {
+    if (!selectedEmployee) {
+        showNotification('Please select an employee first', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById('current-password-modal');
+    modal.style.display = 'flex';
+    
+    // Get employee email
+    const employeeEmail = getEmployeeEmail(selectedEmployee);
+    console.log('DEBUG: Selected employee:', selectedEmployee);
+    console.log('DEBUG: Generated email:', employeeEmail);
+    
+    if (!employeeEmail) {
+        showNotification('Employee email not found', 'error');
+        return;
+    }
+    
+    // Set employee info
+    document.getElementById('password-employee-name').textContent = selectedEmployee;
+    document.getElementById('password-employee-email').textContent = employeeEmail;
+    
+    // Load current password
+    loadCurrentPassword(employeeEmail);
+}
+
+function showAllPasswords() {
+    // Get all unique employees from the current table data
+    const tableRows = document.querySelectorAll('.attendance-table tbody tr');
+    const employees = new Set();
+    
+    tableRows.forEach(row => {
+        const employeeCell = row.querySelector('td:first-child');
+        if (employeeCell) {
+            employees.add(employeeCell.textContent.trim());
+        }
+    });
+    
+    if (employees.size === 0) {
+        showNotification('No employees found in current table', 'error');
+        return;
+    }
+    
+    // Create a list of all employees with their passwords
+    let passwordList = '<div class="all-passwords-list">';
+    passwordList += '<h3><i class="fas fa-key"></i> All Employee Passwords</h3>';
+    passwordList += '<div class="password-items">';
+    
+    employees.forEach(employeeName => {
+        const employeeEmail = getEmployeeEmail(employeeName);
+        passwordList += `
+            <div class="password-item">
+                <div class="employee-info">
+                    <strong>${employeeName}</strong>
+                    <span class="email">${employeeEmail}</span>
+                </div>
+                <div class="password-display">
+                    <input type="text" value="Loading..." readonly class="password-input" data-email="${employeeEmail}">
+                    <button onclick="copyPassword(this.previousElementSibling.value)" class="copy-btn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    passwordList += '</div></div>';
+    
+    // Show in a modal
+    const modal = document.getElementById('current-password-modal');
+    const modalBody = modal.querySelector('.modal-body');
+    modalBody.innerHTML = passwordList;
+    modal.style.display = 'flex';
+    
+    // Load passwords for all employees
+    employees.forEach(employeeName => {
+        const employeeEmail = getEmployeeEmail(employeeName);
+        loadPasswordForDisplay(employeeEmail, employeeName);
+    });
+}
+
+async function loadPasswordForDisplay(email, employeeName) {
+    try {
+        const response = await fetch(`/api/current-password?email=${encodeURIComponent(email)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const passwordInput = document.querySelector(`input[data-email="${email}"]`);
+            if (passwordInput) {
+                passwordInput.value = result.password;
+            }
+        } else {
+            const passwordInput = document.querySelector(`input[data-email="${email}"]`);
+            if (passwordInput) {
+                passwordInput.value = "Error loading password";
+            }
+        }
+    } catch (error) {
+        console.error('Error loading password for', employeeName, ':', error);
+        const passwordInput = document.querySelector(`input[data-email="${email}"]`);
+        if (passwordInput) {
+            passwordInput.value = "Error loading password";
+        }
+    }
+}
+
+function closeCurrentPasswordModal() {
+    const modal = document.getElementById('current-password-modal');
+    modal.style.display = 'none';
+}
+
+// Login Logs functionality
+function showLogs() {
+    const modal = document.getElementById('logs-modal');
+    modal.style.display = 'flex';
+    loadLoginLogs();
+}
+
+function closeLogsModal() {
+    const modal = document.getElementById('logs-modal');
+    modal.style.display = 'none';
+}
+
+function refreshLogs() {
+    loadLoginLogs();
+}
+
+async function loadLoginLogs() {
+    try {
+        const response = await fetch('/api/login-logs');
+        const result = await response.json();
+        
+        if (result.success) {
+            displayLoginLogs(result.logs);
+        } else {
+            showNotification('Failed to load login logs: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error loading login logs:', error);
+        showNotification('Error loading login logs', 'error');
+    }
+}
+
+function displayLoginLogs(logs) {
+    const logsList = document.getElementById('logs-list');
+    
+    if (logs.length === 0) {
+        logsList.innerHTML = '<div class="no-logs">No login logs found.</div>';
+        return;
+    }
+    
+    // Group logs by date
+    const logsByDate = {};
+    logs.forEach(log => {
+        const date = new Date(log.login_time).toLocaleDateString();
+        if (!logsByDate[date]) {
+            logsByDate[date] = [];
+        }
+        logsByDate[date].push(log);
+    });
+    
+    let html = '';
+    Object.keys(logsByDate).sort().reverse().forEach(date => {
+        html += `
+            <div class="log-date-group">
+                <div class="log-date-header">
+                    <h5><i class="fas fa-calendar-day"></i> ${date}</h5>
+                    <span class="log-count">${logsByDate[date].length} login(s)</span>
+                </div>
+                <div class="log-entries">
+        `;
+        
+        logsByDate[date].forEach(log => {
+            const time = new Date(log.login_time).toLocaleTimeString();
+            const userType = log.is_admin ? 'Admin' : 'Employee';
+            const userTypeClass = log.is_admin ? 'admin-user' : 'employee-user';
+            
+            html += `
+                <div class="log-entry">
+                    <div class="log-time">
+                        <i class="fas fa-clock"></i> ${time}
+                    </div>
+                    <div class="log-user">
+                        <span class="user-name">${log.user_name}</span>
+                        <span class="user-type ${userTypeClass}">${userType}</span>
+                    </div>
+                    <div class="log-email">
+                        <i class="fas fa-envelope"></i> ${log.email}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    logsList.innerHTML = html;
+}
+
+async function loadCurrentPassword(email) {
+    try {
+        console.log('DEBUG: Loading password for email:', email);
+        const response = await fetch(`/api/current-password?email=${encodeURIComponent(email)}`);
+        const result = await response.json();
+        
+        console.log('DEBUG: API response:', result);
+        
+        if (result.success) {
+            console.log('DEBUG: Setting password to:', result.password);
+            document.getElementById('current-password-display').value = result.password;
+        } else {
+            showNotification('Failed to load password: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('DEBUG: Error loading password:', error);
+        showNotification('Error loading password', 'error');
+    }
+}
+
+function copyCurrentPassword() {
+    const passwordField = document.getElementById('current-password-display');
+    passwordField.select();
+    document.execCommand('copy');
+    showNotification('Password copied to clipboard!', 'success');
+}
+
+function getEmployeeEmail(employeeName) {
+    // Convert employee name to email format (matching backend logic)
+    let cleanedName = employeeName.trim();
+    
+    // Remove suffixes like (T), (TC), etc. using regex
+    cleanedName = cleanedName.replace(/\s*\([^)]*\)$/, '');
+    
+    // Convert to lowercase and remove spaces, dots, and hyphens
+    const emailName = cleanedName.toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/\./g, '')
+        .replace(/-/g, '');
+    
+    return `${emailName}@gmail.com`;
+}
+
+
+
 // Dashboard functions
 function showLoginPage() {
     document.getElementById('dashboard-section').style.display = 'none';
@@ -334,10 +651,8 @@ function showLoginPage() {
     // Clear form fields
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
-    document.getElementById('reset-email').value = '';
     
     // Reset to login form
-    document.getElementById('forgot-password-form').style.display = 'none';
     document.getElementById('login-form').style.display = 'block';
 }
 
@@ -351,6 +666,13 @@ async function showDashboard() {
         showAdminDashboard();
     } else {
         showEmployeeDashboard();
+    }
+    
+    // Check if user needs password change and show dialog directly
+    if (currentUser.needs_password_change) {
+        setTimeout(() => {
+            showChangePasswordModal();
+        }, 1000); // Show after 1 second delay
     }
     
     // Set today's date as default
@@ -372,7 +694,6 @@ async function showDashboard() {
         }
     }
     
-    loadPasswordResetRequests();
 }
 
 async function loadLateStatistics() {
@@ -877,6 +1198,7 @@ function selectEmployee(employeeName) {
     // Also fetch cumulative leave totals from Excel and render breakdown
     fetchAndRenderLeaveTotals(employeeName, false);
     
+    
     displayAdminAttendanceData(globalShowUpdateNote);
     updateAdminStats();
     
@@ -892,6 +1214,7 @@ function clearEmployeeSearch() {
     document.getElementById('employee-search').value = '';
     
     hideEmployeeProfile();
+    
     
     // Remove search dropdown if exists
     const dropdown = document.getElementById('search-results-dropdown');
@@ -1167,46 +1490,7 @@ async function loadEmployees() {
     }
 }
 
-async function loadPasswordResetRequests() {
-    if (!currentUser.is_admin) return;
-    
-    try {
-        const response = await fetch('/api/reset-requests');
-        const result = await response.json();
-        
-        if (result.success && result.requests.length > 0) {
-            displayPasswordResetRequests(result.requests);
-        }
-    } catch (error) {
-        console.error('Error loading reset requests:', error);
-    }
-}
 
-async function loadPasswordResetHistory() {
-    if (!currentUser.is_admin) {
-        console.log('User is not admin, skipping password history load');
-        return;
-    }
-    
-    console.log('Loading password reset history...');
-    
-    try {
-        const response = await fetch('/api/password-reset-history');
-        const result = await response.json();
-        
-        console.log('Password history API response:', result);
-        
-        if (result.success) {
-            displayPasswordResetHistory(result.history);
-        } else {
-            console.error('Failed to load password history:', result.message);
-            showNotification('Failed to load password history: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error loading password reset history:', error);
-        showNotification('Error loading password history', 'error');
-    }
-}
 
 // Display functions
 function displayAdminAttendanceData(showUpdateNote = false) {
@@ -1289,7 +1573,14 @@ function createAttendanceTable(data) {
         <table class="attendance-table">
             <thead>
                 <tr>
-                    <th>Employee</th>
+                    <th>
+                        <div class="header-cell">
+                            <span>Employee</span>
+                            <button class="header-eye-btn" onclick="showAllPasswords()" title="Show All Passwords">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </th>
                     <th>Date</th>
                     <th>Punch-In</th>
                     <th>Punch-Out</th>
@@ -1419,6 +1710,20 @@ function showMobileTooltip(element, comment) {
             }, 200);
         }
     }, 8000);
+}
+
+function hideMobileTooltip() {
+    const existingTooltip = document.querySelector('.mobile-tooltip');
+    if (existingTooltip) {
+        existingTooltip.style.transition = 'all 0.2s ease-out';
+        existingTooltip.style.opacity = '0';
+        existingTooltip.style.transform = 'scale(0.9) translateY(-10px)';
+        setTimeout(() => {
+            if (existingTooltip.parentNode) {
+                existingTooltip.remove();
+            }
+        }, 200);
+    }
 }
 
 // Close tooltip when tapping elsewhere
@@ -1606,24 +1911,26 @@ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
             const flEl = document.getElementById('profile-fl');
             if (woEl) woEl.textContent = data['W/O'] ?? 0;
             if (plEl) {
-                plEl.textContent = data['PL'] ?? 0;
-                // Handle "FL" text for T employees (red color)
+                // Handle "FL" text for T employees - show "Not Eligible"
                 if (data['PL'] === 'FL') {
+                    plEl.textContent = 'Not Eligible';
                     plEl.style.color = '#ff6b6b';
                     plEl.style.fontStyle = 'italic';
                 } else {
+                    plEl.textContent = data['PL'] ?? 0;
                     // Reset styling for normal employees
                     plEl.style.color = '';
                     plEl.style.fontStyle = '';
                 }
             }
             if (slEl) {
-                slEl.textContent = data['SL'] ?? 0;
-                // Handle "FL" text for T employees (red color)
+                // Handle "FL" text for T employees - show "Not Eligible"
                 if (data['SL'] === 'FL') {
+                    slEl.textContent = 'Not Eligible';
                     slEl.style.color = '#ff6b6b';
                     slEl.style.fontStyle = 'italic';
                 } else {
+                    slEl.textContent = data['SL'] ?? 0;
                     // Reset styling for normal employees
                     slEl.style.color = '';
                     slEl.style.fontStyle = '';
@@ -1713,187 +2020,8 @@ window.handleEmployeeFilterChange = function() {
 }
 
 
-function displayPasswordResetRequests(requests) {
-    const section = document.getElementById('password-reset-section');
-    const listContainer = document.getElementById('reset-requests-list');
-    
-    let html = '';
-    requests.forEach((request, index) => {
-        html += `
-            <div class="reset-request">
-                <h4>${request.name}</h4>
-                <p><strong>Email:</strong> ${request.email}</p>
-                <p><strong>Requested:</strong> ${new Date(request.timestamp).toLocaleString()}</p>
-                <div class="reset-form">
-                    <input type="password" id="new-password-${index}" placeholder="Enter new password">
-                    <button onclick="resetUserPassword('${request.email}', ${index})">
-                        <i class="fas fa-key"></i> Reset Password
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-    
-    listContainer.innerHTML = html;
-    section.style.display = 'block';
-}
 
-function displayPasswordResetHistory(history) {
-    console.log('Displaying password reset history:', history);
-    const listContainer = document.getElementById('password-history-list');
-    
-    if (!listContainer) {
-        console.error('Password history list container not found!');
-        return;
-    }
-    
-    if (history.length === 0) {
-        console.log('No password history found, showing no-data message');
-        listContainer.innerHTML = '<p class="no-data">No password reset history found.</p>';
-        return;
-    }
-    
-    let html = '<div class="password-history-table">';
-    html += `
-        <div class="history-header">
-            <div class="history-cell">Employee</div>
-            <div class="history-cell">Email</div>
-            <div class="history-cell">New Password</div>
-            <div class="history-cell">Method</div>
-            <div class="history-cell">Reset By</div>
-            <div class="history-cell">Date/Time</div>
-        </div>
-    `;
-    
-    history.forEach((entry, index) => {
-        const resetDate = new Date(entry.reset_at).toLocaleString();
-        const methodBadge = entry.reset_method === 'self_service' ? 
-            '<span class="badge badge-blue">Self-Service</span>' : 
-            '<span class="badge badge-green">Admin Reset</span>';
-        
-        html += `
-            <div class="history-row">
-                <div class="history-cell">${entry.employee_name}</div>
-                <div class="history-cell">${entry.email}</div>
-                <div class="history-cell password-cell">
-                    <span class="password-display" title="Click to copy" onclick="copyPassword('${entry.new_password}')">
-                        ${entry.new_password}
-                    </span>
-                </div>
-                <div class="history-cell">${methodBadge}</div>
-                <div class="history-cell">${entry.reset_by || 'System'}</div>
-                <div class="history-cell">${resetDate}</div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    listContainer.innerHTML = html;
-}
 
-function copyPassword(password) {
-    navigator.clipboard.writeText(password).then(() => {
-        showNotification('Password copied to clipboard!', 'success');
-    }).catch(() => {
-        showNotification('Failed to copy password', 'error');
-    });
-}
-
-function openPasswordHistoryModal() {
-    console.log('Opening password history modal...');
-    const modal = document.getElementById('password-history-modal');
-    if (!modal) {
-        console.error('Password history modal not found!');
-        showNotification('Password history modal not found', 'error');
-        return;
-    }
-    
-    modal.style.display = 'flex';
-    console.log('Modal displayed, loading history...');
-    loadPasswordResetHistory();
-}
-
-function closePasswordHistoryModal() {
-    const modal = document.getElementById('password-history-modal');
-    modal.style.display = 'none';
-}
-
-function exportPasswordHistory() {
-    // Get the current history data
-    const listContainer = document.getElementById('password-history-list');
-    const table = listContainer.querySelector('.password-history-table');
-    
-    if (!table) {
-        showNotification('No data to export', 'error');
-        return;
-    }
-    
-    // Create CSV content
-    let csvContent = 'Employee,Email,New Password,Method,Reset By,Date/Time\n';
-    
-    const rows = table.querySelectorAll('.history-row');
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('.history-cell');
-        const rowData = [];
-        
-        cells.forEach((cell, index) => {
-            let cellText = cell.textContent.trim();
-            // Handle password cell differently
-            if (index === 2) {
-                cellText = cell.querySelector('.password-display').textContent;
-            }
-            // Escape commas and quotes
-            cellText = cellText.replace(/"/g, '""');
-            rowData.push(`"${cellText}"`);
-        });
-        
-        csvContent += rowData.join(',') + '\n';
-    });
-    
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `password_reset_history_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showNotification('Password history exported successfully!', 'success');
-}
-
-async function resetUserPassword(email, index) {
-    const newPassword = document.getElementById(`new-password-${index}`).value.trim();
-    
-    if (!newPassword) {
-        showNotification('Please enter a new password', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/reset-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, new_password: newPassword })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showNotification(`Password reset successfully for ${email}`);
-            loadPasswordResetRequests();
-        } else {
-            showNotification(result.message, 'error');
-        }
-    } catch (error) {
-        showNotification('Failed to reset password', 'error');
-        console.error('Password reset error:', error);
-    }
-}
 
 // Filter and utility functions
 function applyFilters() {
@@ -2093,8 +2221,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('login-section').style.display !== 'none') {
                 if (document.getElementById('login-form').style.display !== 'none') {
                     login();
-                } else if (document.getElementById('forgot-password-form').style.display !== 'none') {
-                    submitPasswordReset();
                 }
             }
         }
@@ -2108,18 +2234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Token-based reset removed - now using current password verification
     
-    // **NEW: Handle modal click-outside-to-close**
-    document.addEventListener('click', function(e) {
-        const passwordModal = document.getElementById('password-history-modal');
-        if (passwordModal && passwordModal.style.display === 'flex') {
-            if (e.target === passwordModal) {
-                closePasswordHistoryModal();
-            }
-        }
-    });
     
 });
 
-// Token validation function removed - now using current password verification

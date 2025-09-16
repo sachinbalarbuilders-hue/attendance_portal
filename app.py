@@ -7,6 +7,7 @@ import os
 from werkzeug.utils import secure_filename
 import tempfile
 from database import db
+from utils.auth import EmployeeDatabase
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
@@ -169,16 +170,24 @@ class EmployeeDatabase:
         
         return created_accounts, existing_accounts
 
+
+    def get_user_by_email(self, email):
+        """Get user data by email"""
+        return self.EMPLOYEE_DB.get(email, None)
+    
     def reset_password(self, email, new_password):
         """Reset user password"""
         if email in self.EMPLOYEE_DB:
             self.EMPLOYEE_DB[email]["password"] = hashlib.sha256(new_password.encode()).hexdigest()
             return True
         return False
-
-    def get_user_by_email(self, email):
-        """Get user data by email"""
-        return self.EMPLOYEE_DB.get(email, None)
+    
+    def has_default_password(self, email):
+        """Check if user has default password"""
+        if email in self.EMPLOYEE_DB:
+            default_password_hash = hashlib.sha256("Balar123".encode()).hexdigest()
+            return self.EMPLOYEE_DB[email]["password"] == default_password_hash
+        return False
 
 # **FIXED: Single global instance**
 employee_db = EmployeeDatabase()
@@ -219,7 +228,6 @@ test_name_cleaning()
 
 
 # Global variables for session-like behavior
-password_reset_requests = []
 
 def authenticate_user(email, password):
     """Use the centralized authentication"""
@@ -770,7 +778,6 @@ def index():
         return render_template('maintenance.html')
     return render_template('index.html')
 
-# Token-based reset route removed - now using current password verification
 
 @app.route('/maintenance')
 def maintenance():
@@ -790,7 +797,23 @@ def login():
     if is_valid:
         session['user_email'] = email
         session['user_data'] = user_data
-        return jsonify({'success': True, 'user': user_data})
+        
+        # Log the login
+        ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', 'Unknown'))
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        db.log_login(email, user_data.get('name', 'Unknown'), user_data.get('is_admin', False), ip_address, user_agent)
+        
+        # Check if user has default password AND has never changed password before
+        has_default_password = employee_db.has_default_password(email)
+        has_ever_changed_password = db.has_user_changed_password(email)
+        needs_password_change = has_default_password and not has_ever_changed_password
+        
+        return jsonify({
+            'success': True, 
+            'user': user_data,
+            'needs_password_change': needs_password_change,
+            'leave_notification': not user_data.get('is_admin', False)  # Only show for non-admin users
+        })
 
     return jsonify({'success': False, 'message': 'Invalid credentials'})
 
@@ -798,6 +821,105 @@ def login():
 def logout():
     session.clear()
     return jsonify({'success': True})
+
+@app.route('/api/change-password', methods=['POST'])
+def change_password():
+    """Change password for logged-in user"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    data = request.json
+    new_password = data.get('new_password')
+    
+    if not new_password:
+        return jsonify({'success': False, 'message': 'New password is required'})
+    
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'Password must be at least 6 characters long'})
+    
+    email = session['user_email']
+    user_data = session['user_data']
+    
+    # Change password
+    if employee_db.reset_password(email, new_password):
+        # Log password change for admin visibility
+        db.log_password_change(
+            email=email,
+            employee_name=user_data.get('name', 'Unknown'),
+            current_password=new_password,
+            changed_by='employee'
+        )
+        # Mark that user has changed their password
+        db.mark_password_as_changed(email)
+        return jsonify({'success': True, 'message': 'Password changed successfully'})
+    
+    return jsonify({'success': False, 'message': 'Failed to change password'})
+
+@app.route('/api/login-logs')
+def get_login_logs():
+    """Get login logs (admin only)"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    if not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+    
+    try:
+        logs = db.get_login_logs(limit=200)  # Get last 200 logins
+        return jsonify({'success': True, 'logs': logs})
+    except Exception as e:
+        print(f"Error getting login logs: {e}")
+        return jsonify({'success': False, 'message': 'Error retrieving login logs'})
+
+@app.route('/api/current-password')
+def get_current_password():
+    """Get current password for an employee (admin only)"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not authenticated'})
+    
+    if not session['user_data'].get('is_admin'):
+        return jsonify({'success': False, 'message': 'Admin access required'})
+    
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'success': False, 'message': 'Email parameter required'})
+    
+    # Get user data
+    user_data = employee_db.get_user_by_email(email)
+    print(f"DEBUG: User data for {email}: {user_data}")
+    
+    if not user_data:
+        # Let's also check what emails are available
+        all_employees = employee_db.get_all_employees()
+        all_emails = employee_db.get_all_employee_emails()
+        print(f"DEBUG: Available employees: {all_employees}")
+        print(f"DEBUG: Available emails: {all_emails}")
+        return jsonify({'success': False, 'message': f'Employee not found for email: {email}'})
+    
+    # Get the current password from password history (most recent)
+    history = db.get_password_history(limit=1000)  # Get all history to find this employee
+    current_password = "Balar123"  # Default password
+    
+    print(f"DEBUG: Looking for password for email: {email}")
+    print(f"DEBUG: Password history entries: {len(history)}")
+    
+    # Find the most recent password for this employee
+    for entry in history:
+        print(f"DEBUG: Checking entry for {entry['email']}")
+        if entry['email'] == email:
+            current_password = entry['current_password']
+            print(f"DEBUG: Found password: {current_password}")
+            break
+    
+    print(f"DEBUG: Final password: {current_password}")
+    
+    return jsonify({
+        'success': True, 
+        'password': current_password,
+        'employee_name': user_data.get('name', 'Unknown')
+    })
+
+
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -1015,262 +1137,14 @@ def clear_database():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error clearing database: {str(e)}'})
 
-@app.route('/api/password-reset', methods=['POST'])
-def request_password_reset():
-    global password_reset_requests
 
-    data = request.json
-    email = data.get('email')
 
-    # Check if user exists in our database
-    if employee_db.user_exists(email):
-        user_data = employee_db.get_user_by_email(email)
-        if user_data:
-            request_obj = {
-                "email": email,
-                "name": user_data["name"],
-                "timestamp": datetime.datetime.now().isoformat(),
-                "status": "pending"
-            }
-            password_reset_requests.append(request_obj)
-            return jsonify({'success': True, 'message': 'Password reset request submitted'})
 
-    return jsonify({'success': False, 'message': 'Email not found'})
 
-@app.route('/api/reset-requests')
-def get_reset_requests():
-    global password_reset_requests
 
-    if 'user_data' not in session or not session['user_data'].get('is_admin'):
-        return jsonify({'success': False, 'message': 'Admin access required'})
 
-    pending_requests = [req for req in password_reset_requests if req['status'] == 'pending']
-    return jsonify({'success': True, 'requests': pending_requests})
 
-@app.route('/api/reset-password', methods=['POST'])
-def reset_password():
-    global password_reset_requests
 
-    if 'user_data' not in session or not session['user_data'].get('is_admin'):
-        return jsonify({'success': False, 'message': 'Admin access required'})
-
-    data = request.json
-    email = data.get('email')
-    new_password = data.get('new_password')
-
-    if email and new_password:
-        # Get user data for logging
-        user_data = employee_db.get_user_by_email(email)
-        if not user_data:
-            return jsonify({'success': False, 'message': 'User not found'})
-        
-        # Get old password hash for logging
-        old_password_hash = user_data.get('password', '')
-        
-        # Use centralized password reset
-        if employee_db.reset_password(email, new_password):
-            # Log password reset for admin visibility
-            admin_name = session['user_data'].get('name', 'Admin')
-            db.log_password_reset(
-                email=email,
-                employee_name=user_data.get('name', 'Unknown'),
-                old_password_hash=old_password_hash,
-                new_password=new_password,  # Store actual password for admin
-                reset_method='admin_reset',
-                reset_by=admin_name,
-                ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', '')
-            )
-            
-            # Mark requests as completed
-            for req in password_reset_requests:
-                if req["email"] == email and req["status"] == "pending":
-                    req["status"] = "completed"
-            return jsonify({'success': True, 'message': 'Password reset successfully'})
-
-    return jsonify({'success': False, 'message': 'Invalid email or password'})
-
-@app.route('/api/self-reset-request', methods=['POST'])
-def self_reset_request():
-    """Self-service password reset request - direct verification"""
-    data = request.json
-    email = data.get('email')
-    
-    if not email:
-        return jsonify({'success': False, 'message': 'Email is required'})
-    
-    # Check if user exists
-    if not employee_db.user_exists(email):
-        return jsonify({'success': False, 'message': 'Email not found in our system'})
-    
-    # Get user data for verification
-    user_data = employee_db.get_user_by_email(email)
-    if not user_data:
-        return jsonify({'success': False, 'message': 'User data not found'})
-    
-    # Generate secure token
-    import secrets
-    import datetime
-    token = secrets.token_urlsafe(32)
-    expires_at = datetime.datetime.now() + datetime.timedelta(minutes=15)  # 15 minutes expiry
-    
-    # Store token in database
-    if db.create_password_reset_token(email, token, expires_at.isoformat()):
-        # Return token directly for immediate use (no email needed)
-        return jsonify({
-            'success': True, 
-            'message': 'Password reset token generated',
-            'token': token,  # Return token directly
-            'employee_name': user_data.get('name', 'Unknown'),
-            'expires_in': '15 minutes'
-        })
-    
-    return jsonify({'success': False, 'message': 'Failed to create reset token'})
-
-@app.route('/api/validate-reset-token', methods=['POST'])
-def validate_reset_token():
-    """Validate a password reset token"""
-    data = request.json
-    token = data.get('token')
-    
-    if not token:
-        return jsonify({'success': False, 'message': 'Token is required'})
-    
-    token_info = db.validate_password_reset_token(token)
-    if token_info:
-        return jsonify({
-            'success': True,
-            'email': token_info['email'],
-            'expires_at': token_info['expires_at']
-        })
-    
-    return jsonify({'success': False, 'message': 'Invalid or expired token'})
-
-@app.route('/api/self-reset-password', methods=['POST'])
-def self_reset_password():
-    """Self-service password reset using token"""
-    data = request.json
-    token = data.get('token')
-    new_password = data.get('new_password')
-    
-    if not token or not new_password:
-        return jsonify({'success': False, 'message': 'Token and new password are required'})
-    
-    # Validate token
-    token_info = db.validate_password_reset_token(token)
-    if not token_info:
-        return jsonify({'success': False, 'message': 'Invalid or expired token'})
-    
-    email = token_info['email']
-    
-    # Get user data for logging
-    user_data = employee_db.get_user_by_email(email)
-    if not user_data:
-        return jsonify({'success': False, 'message': 'User data not found'})
-    
-    # Get old password hash for logging
-    old_password_hash = user_data.get('password', '')
-    
-    # Reset password
-    if employee_db.reset_password(email, new_password):
-        # Log password reset for admin visibility
-        db.log_password_reset(
-            email=email,
-            employee_name=user_data.get('name', 'Unknown'),
-            old_password_hash=old_password_hash,
-            new_password=new_password,  # Store actual password for admin
-            reset_method='self_service',
-            reset_by='employee',
-            ip_address=request.remote_addr,
-            user_agent=request.headers.get('User-Agent', '')
-        )
-        
-        # Mark token as used
-        db.mark_token_as_used(token)
-        return jsonify({'success': True, 'message': 'Password reset successfully'})
-    
-    return jsonify({'success': False, 'message': 'Failed to reset password'})
-
-@app.route('/api/password-reset-history')
-def get_password_reset_history():
-    """Get password reset history for admin view"""
-    print("Password reset history API called")
-    
-    if 'user_data' not in session:
-        print("No user session found")
-        return jsonify({'success': False, 'message': 'Not authenticated'})
-    
-    if not session['user_data'].get('is_admin'):
-        print("User is not admin")
-        return jsonify({'success': False, 'message': 'Admin access required'})
-    
-    print("User is admin, fetching history...")
-    history = db.get_password_reset_history(limit=100)
-    print(f"Found {len(history)} password reset records")
-    
-    return jsonify({'success': True, 'history': history})
-
-@app.route('/api/check-user-exists', methods=['POST'])
-def check_user_exists():
-    """Check if user exists for password change"""
-    data = request.json
-    email = data.get('email')
-    
-    if not email:
-        return jsonify({'success': False, 'message': 'Email is required'})
-    
-    # Check if user exists
-    if not employee_db.user_exists(email):
-        return jsonify({'success': False, 'message': 'Email not found in our system'})
-    
-    # Get user data
-    user_data = employee_db.get_user_by_email(email)
-    if not user_data:
-        return jsonify({'success': False, 'message': 'User data not found'})
-    
-    return jsonify({
-        'success': True,
-        'employee_name': user_data.get('name', 'Unknown'),
-        'email': email
-    })
-
-@app.route('/api/change-password', methods=['POST'])
-def change_password():
-    """Change password with current password verification"""
-    data = request.json
-    email = data.get('email')
-    current_password = data.get('current_password')
-    new_password = data.get('new_password')
-    
-    if not email or not current_password or not new_password:
-        return jsonify({'success': False, 'message': 'Email, current password, and new password are required'})
-    
-    # Check if user exists
-    if not employee_db.user_exists(email):
-        return jsonify({'success': False, 'message': 'Email not found in our system'})
-    
-    # Verify current password
-    auth_success, user_data = employee_db.authenticate_user(email, current_password)
-    if not auth_success:
-        return jsonify({'success': False, 'message': 'Current password is incorrect'})
-    
-    # Change password
-    if employee_db.reset_password(email, new_password):
-        # Log password change for admin visibility
-        db.log_password_reset(
-            email=email,
-            employee_name=user_data.get('name', 'Unknown'),
-            old_password_hash=hashlib.sha256(current_password.encode()).hexdigest(),
-            new_password=new_password,  # Store actual password for admin
-            reset_method='self_change',
-            reset_by='employee',
-            ip_address=request.remote_addr,
-            user_agent=request.headers.get('User-Agent', '')
-        )
-        
-        return jsonify({'success': True, 'message': 'Password changed successfully'})
-    
-    return jsonify({'success': False, 'message': 'Failed to change password'})
 
 @app.route('/api/late-statistics')
 def get_late_statistics():
@@ -1362,6 +1236,7 @@ def get_admin_late_statistics():
             'success': False,
             'message': 'Failed to calculate late statistics'
         })
+
 
 if __name__ == '__main__':
     app.run(debug=True)

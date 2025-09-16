@@ -31,46 +31,9 @@
                         <button onclick="login()" class="btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </button>
-                        <button onclick="showForgotPassword()" class="btn-secondary">
-                            <i class="fas fa-key"></i> Forgot Password?
-                        </button>
                     </div>
                 </div>
 
-                <!-- Simplified Password Change Form -->
-                <div id="forgot-password-form" class="login-form" style="display: none;">
-                    <h3><i class="fas fa-key"></i> Change Password</h3>
-                    <p class="info-text">Enter your email and current password to set a new password.</p>
-                    
-                    <div class="input-group">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="reset-email" placeholder="Enter your registered email" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <i class="fas fa-key"></i>
-                        <input type="password" id="current-password" placeholder="Enter current password" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="new-password" placeholder="Enter new password" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="confirm-password" placeholder="Confirm new password" required>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button onclick="submitPasswordChange()" class="btn-primary">
-                            <i class="fas fa-check"></i> Change Password
-                        </button>
-                        <button onclick="backToLogin()" class="btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to Login
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -82,6 +45,9 @@
                 </div>
                 <div class="nav-user">
                     <span id="user-info"><i class="fas fa-user"></i> <span id="user-name"></span></span>
+                    <button onclick="showLogs()" class="btn-logs">
+                        <i class="fas fa-list-alt"></i> Logs
+                    </button>
                     <button onclick="logout()" class="btn-logout">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
@@ -95,6 +61,7 @@
                         <h1><i class="fas fa-tools"></i> Admin Dashboard</h1>
                         <p>Complete System Management</p>
                     </div>
+
 
                     <div class="control-panel">
                         <div class="upload-section">
@@ -126,15 +93,6 @@
                         </div>
                     </div>
 
-                    <div id="password-reset-section" class="reset-section" style="display: none;">
-                        <h3><i class="fas fa-key"></i> Password Reset Requests</h3>
-                        <div class="admin-controls">
-                            <button onclick="openPasswordHistoryModal()" class="btn-secondary">
-                                <i class="fas fa-history"></i> View Password History
-                            </button>
-                        </div>
-                        <div id="reset-requests-list"></div>
-                    </div>
 
                     <!-- Employee Profile Card -->
                     <div id="employee-profile" class="employee-profile">
@@ -245,6 +203,7 @@
                             <i class="fas fa-download"></i> Export CSV
                         </button>
                     </div>
+                    
 
                     <!-- Data Update Note -->
                     <div id="data-update-note" class="data-update-note" style="display: none;">
@@ -430,6 +389,93 @@
     <!-- Notification Container -->
     <div id="notification-container" class="notification-container"></div>
 
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Change Password</h3>
+                <p class="modal-subtitle">We recommend changing your default password for better security</p>
+                <button class="modal-close" onclick="closePasswordChangeDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="new-password-input" placeholder="Enter new password" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="confirm-password-input" placeholder="Confirm new password" required>
+                </div>
+                <div class="password-requirements">
+                    <small>Password must be at least 6 characters long</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="submitPasswordChange()" class="btn-primary">
+                    <i class="fas fa-check"></i> Change Password
+                </button>
+                <button onclick="skipPasswordChange()" class="btn-secondary">
+                    <i class="fas fa-times"></i> Skip for Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Password Modal -->
+    <div id="current-password-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Current Password</h3>
+                <button class="modal-close" onclick="closeCurrentPasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="password-display-container">
+                    <p><strong>Employee:</strong> <span id="password-employee-name"></span></p>
+                    <p><strong>Email:</strong> <span id="password-employee-email"></span></p>
+                    <div class="current-password-display">
+                        <label>Current Password:</label>
+                        <div class="password-field">
+                            <input type="text" id="current-password-display" readonly>
+                            <button onclick="copyCurrentPassword()" class="copy-btn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Logs Modal -->
+    <div id="logs-modal" class="modal" style="display: none;">
+        <div class="modal-content logs-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-list-alt"></i> Login Logs</h3>
+                <button class="modal-close" onclick="closeLogsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="logs-container">
+                    <div class="logs-header">
+                        <h4>Date-wise Login History</h4>
+                        <button onclick="refreshLogs()" class="btn-refresh">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="logs-list" class="logs-list">
+                        <!-- Logs will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Late Statistics Modal -->
     <div id="late-statistics-modal" class="late-statistics-modal" style="display: none;">
         <div class="late-statistics-modal-content">
@@ -471,28 +517,6 @@
         </div>
     </div>
 
-    <!-- Password Reset History Modal -->
-    <div id="password-history-modal" class="modal" style="display: none;">
-        <div class="modal-content password-history-modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-history"></i> Password Reset History</h3>
-                <button class="modal-close" onclick="closePasswordHistoryModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="admin-controls">
-                    <button onclick="loadPasswordResetHistory()" class="btn-secondary">
-                        <i class="fas fa-sync"></i> Refresh History
-                    </button>
-                    <button onclick="exportPasswordHistory()" class="btn-secondary">
-                        <i class="fas fa-download"></i> Export History
-                    </button>
-                </div>
-                <div id="password-history-list"></div>
-            </div>
-        </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
