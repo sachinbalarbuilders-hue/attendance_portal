@@ -249,6 +249,10 @@ function showDesktopTooltip(event) {
         existingTooltip.remove();
     }
     
+    // Add visual feedback to the cell
+    cell.style.transform = 'scale(1.02)';
+    cell.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+    
     const tooltip = document.createElement('div');
     tooltip.className = 'desktop-tooltip';
     tooltip.innerHTML = `
@@ -261,38 +265,55 @@ function showDesktopTooltip(event) {
     
     document.body.appendChild(tooltip);
     
-    // Position tooltip with better logic
+    // Position tooltip with enhanced logic
     const rect = cell.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
     // Calculate optimal position (prefer above, fallback to below)
-    let top = rect.top + window.scrollY - tooltipRect.height - 15;
+    let top = rect.top + window.scrollY - tooltipRect.height - 20;
     let left = rect.left + window.scrollX + rect.width/2 - tooltipRect.width/2;
     
     // If tooltip would go above viewport, position below
     if (top < window.scrollY + 10) {
-        top = rect.bottom + window.scrollY + 10;
+        top = rect.bottom + window.scrollY + 20;
     }
     
-    // Keep tooltip within horizontal viewport bounds
-    if (left < 10) {
-        left = 10;
-    } else if (left + tooltipRect.width > window.innerWidth - 10) {
-        left = window.innerWidth - tooltipRect.width - 10;
+    // Keep tooltip within horizontal viewport bounds with padding
+    const padding = 15;
+    if (left < padding) {
+        left = padding;
+    } else if (left + tooltipRect.width > viewportWidth - padding) {
+        left = viewportWidth - tooltipRect.width - padding;
     }
     
     tooltip.style.left = left + 'px';
     tooltip.style.top = top + 'px';
     
-    // Add fade-in animation
+    // Add enhanced fade-in animation
     tooltip.style.opacity = '0';
-    tooltip.style.transform = 'translateY(-5px) scale(0.95)';
+    tooltip.style.transform = 'translateY(-10px) scale(0.9)';
     
     requestAnimationFrame(() => {
-        tooltip.style.transition = 'all 0.2s ease-out';
+        tooltip.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
         tooltip.style.opacity = '1';
         tooltip.style.transform = 'translateY(0) scale(1)';
     });
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (tooltip.parentNode) {
+            tooltip.style.transition = 'all 0.2s ease-out';
+            tooltip.style.opacity = '0';
+            tooltip.style.transform = 'translateY(-5px) scale(0.95)';
+            setTimeout(() => {
+                if (tooltip.parentNode) {
+                    tooltip.remove();
+                }
+            }, 200);
+        }
+    }, 5000);
 }
 
 function moveDesktopTooltip(event) {
@@ -309,8 +330,22 @@ function moveDesktopTooltip(event) {
 function hideDesktopTooltip() {
     const tooltip = document.querySelector('.desktop-tooltip');
     if (tooltip) {
-        tooltip.remove();
+        tooltip.style.transition = 'all 0.2s ease-out';
+        tooltip.style.opacity = '0';
+        tooltip.style.transform = 'translateY(-5px) scale(0.95)';
+        setTimeout(() => {
+            if (tooltip.parentNode) {
+                tooltip.remove();
+            }
+        }, 200);
     }
+    
+    // Reset cell styling
+    const commentCells = document.querySelectorAll('[data-comment]:not([data-comment=""])');
+    commentCells.forEach(cell => {
+        cell.style.transform = '';
+        cell.style.boxShadow = '';
+    });
 }
 
 // Initialize desktop view on page load
@@ -1858,13 +1893,17 @@ function showMobileTooltip(element, comment) {
         existingTooltip.remove();
     }
     
-    // Add visual feedback to the clicked cell
-    element.style.backgroundColor = 'rgba(102, 126, 234, 0.2)';
-    element.style.transform = 'scale(1.02)';
+    // Add enhanced visual feedback to the clicked cell
+    element.style.backgroundColor = 'rgba(102, 126, 234, 0.25)';
+    element.style.transform = 'scale(1.05)';
+    element.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+    element.style.transition = 'all 0.2s ease';
+    
     setTimeout(() => {
         element.style.backgroundColor = '';
         element.style.transform = '';
-    }, 200);
+        element.style.boxShadow = '';
+    }, 300);
     
     const tooltip = document.createElement('div');
     tooltip.className = 'mobile-tooltip';
@@ -1872,7 +1911,7 @@ function showMobileTooltip(element, comment) {
         <div class="mobile-tooltip-header">
             <span class="mobile-tooltip-icon">💬</span>
             <span class="mobile-tooltip-title">Comment</span>
-            <button class="mobile-tooltip-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            <button class="mobile-tooltip-close" onclick="hideMobileTooltip()">×</button>
         </div>
         <div class="mobile-tooltip-content">${comment}</div>
         <div class="mobile-tooltip-footer">Tap anywhere to close</div>
@@ -1880,23 +1919,28 @@ function showMobileTooltip(element, comment) {
     
     document.body.appendChild(tooltip);
     
-    // Better positioning logic
+    // Enhanced positioning logic
     const rect = element.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
+    const padding = 20;
     
     // Calculate optimal position
     let top, left;
     
     // Try to position above the cell first
-    if (rect.top - tooltipRect.height - 20 > 0) {
-        top = rect.top - tooltipRect.height - 20;
-        left = Math.max(10, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - 10));
-    } else {
+    if (rect.top - tooltipRect.height - padding > 0) {
+        top = rect.top - tooltipRect.height - padding;
+        left = Math.max(padding, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - padding));
+    } else if (rect.bottom + tooltipRect.height + padding < viewportHeight) {
         // Position below the cell
-        top = rect.bottom + 20;
-        left = Math.max(10, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - 10));
+        top = rect.bottom + padding;
+        left = Math.max(padding, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - padding));
+    } else {
+        // Center in viewport if no space above or below
+        top = (viewportHeight - tooltipRect.height) / 2;
+        left = Math.max(padding, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - padding));
     }
     
     tooltip.style.position = 'fixed';
@@ -1904,29 +1948,29 @@ function showMobileTooltip(element, comment) {
     tooltip.style.left = left + 'px';
     tooltip.style.transform = 'none';
     
-    // Add entrance animation
+    // Add enhanced entrance animation
     tooltip.style.opacity = '0';
-    tooltip.style.transform = 'scale(0.9) translateY(-10px)';
+    tooltip.style.transform = 'scale(0.8) translateY(-20px)';
     
     requestAnimationFrame(() => {
-        tooltip.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        tooltip.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
         tooltip.style.opacity = '1';
         tooltip.style.transform = 'scale(1) translateY(0)';
     });
     
-    // Auto-remove after 8 seconds (longer for mobile)
+    // Auto-remove after 10 seconds (longer for mobile)
     setTimeout(() => {
         if (tooltip.parentNode) {
-            tooltip.style.transition = 'all 0.2s ease-out';
+            tooltip.style.transition = 'all 0.3s ease-out';
             tooltip.style.opacity = '0';
             tooltip.style.transform = 'scale(0.9) translateY(-10px)';
             setTimeout(() => {
                 if (tooltip.parentNode) {
                     tooltip.remove();
                 }
-            }, 200);
+            }, 300);
         }
-    }, 8000);
+    }, 10000);
 }
 
 function hideMobileTooltip() {
