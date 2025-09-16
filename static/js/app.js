@@ -15,17 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize horizontal scroll functionality
     initializeHorizontalScroll();
     
-    // Focus on email input when page loads
-    setTimeout(() => {
-        const emailInput = document.getElementById('email');
-        const loginSection = document.getElementById('login-section');
-        if (emailInput && loginSection && loginSection.style.display !== 'none') {
-            // Always focus on email input regardless of device size
-            emailInput.focus();
-        }
-    }, 200);
+    // Focus functionality removed
     
-    // Add keyboard navigation for login form
+    // Keyboard navigation for login form (Enter key only)
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     
@@ -33,7 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
         emailInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                passwordInput.focus();
+                // Move to password field without focus
+                passwordInput.click();
             }
         });
     }
@@ -883,20 +876,7 @@ function showLoginPage() {
     document.getElementById('login-form').style.display = 'block';
     
     // Focus on email input after a short delay to ensure DOM is ready
-    setTimeout(() => {
-        const emailInput = document.getElementById('email');
-        if (emailInput) {
-            // For mobile devices, ensure proper focus behavior
-            if (window.innerWidth <= 768) {
-                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => {
-                    emailInput.focus();
-                }, 300);
-            } else {
-                emailInput.focus();
-            }
-        }
-    }, 100);
+    // Focus functionality removed from showLoginPage
 }
 
 async function showDashboard() {
