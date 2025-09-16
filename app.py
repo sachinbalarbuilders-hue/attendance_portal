@@ -778,6 +778,10 @@ def index():
         return render_template('maintenance.html')
     return render_template('index.html')
 
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/json')
+
 
 @app.route('/maintenance')
 def maintenance():
