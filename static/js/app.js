@@ -20,15 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const emailInput = document.getElementById('email');
         const loginSection = document.getElementById('login-section');
         if (emailInput && loginSection && loginSection.style.display !== 'none') {
-            // For mobile devices, ensure the input is visible before focusing
-            if (window.innerWidth <= 768) {
-                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => {
-                    emailInput.focus();
-                }, 300);
-            } else {
-                emailInput.focus();
-            }
+            // Always focus on email input regardless of device size
+            emailInput.focus();
         }
     }, 200);
     
@@ -350,8 +343,8 @@ function hideDesktopTooltip() {
 
 // Initialize desktop view on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // On initial load show responsive login
-    enableResponsiveMode();
+    // Always force desktop view for login page
+    forceDesktopView();
     
     // Re-apply desktop view on window resize
     window.addEventListener('resize', forceDesktopView);
@@ -872,8 +865,8 @@ function getEmployeeEmail(employeeName) {
 function showLoginPage() {
     document.getElementById('dashboard-section').style.display = 'none';
     document.getElementById('login-section').style.display = 'flex';
-    // When returning to login, make it responsive again
-    enableResponsiveMode();
+    // Always force desktop view for login page
+    forceDesktopView();
     
     // Load saved credentials if remember me was checked
     loadSavedCredentials();

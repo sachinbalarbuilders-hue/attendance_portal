@@ -1792,14 +1792,31 @@ body {
     }
 }
 
-/* Mobile-friendly login when body has .mobile */
+/* Force desktop mode for login page */
+#login-section {
+    min-width: 1200px !important;
+    overflow-x: auto !important;
+}
+
+#login-section .main-header {
+    min-width: 1200px !important;
+    overflow-x: auto !important;
+}
+
+#login-section .login-container {
+    max-width: 600px !important;
+    width: 100% !important;
+    padding: 3rem 2rem !important;
+}
+
+/* Mobile-friendly login when body has .mobile - but not for login section */
 @media screen and (max-width: 768px) {
-    body.mobile {
+    body.mobile:not(:has(#login-section)) {
         min-width: 0 !important;
         overflow-x: hidden !important;
     }
     
-    .main-header {
+    .main-header:not(#login-section .main-header) {
         min-height: 100vh !important;
         display: flex !important;
         align-items: center !important;
