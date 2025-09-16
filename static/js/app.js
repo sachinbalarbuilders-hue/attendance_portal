@@ -239,6 +239,12 @@ async function login() {
             // Store if user needs password change for later use
             currentUser.needs_password_change = result.needs_password_change;
             
+            // Show logs button only for admin users
+            const logsBtn = document.getElementById('logs-btn');
+            if (logsBtn) {
+                logsBtn.style.display = currentUser.is_admin ? 'flex' : 'none';
+            }
+            
             // Show leave application notification if flag is set
             if (result.leave_notification) {
                 setTimeout(() => {
@@ -421,6 +427,12 @@ function showCurrentPassword() {
 }
 
 function showAllPasswords() {
+    // Check if user is admin before showing passwords
+    if (!currentUser || !currentUser.is_admin) {
+        showNotification('Access denied. Admin privileges required.', 'error');
+        return;
+    }
+    
     // Get all unique employees from the current table data
     const tableRows = document.querySelectorAll('.attendance-table tbody tr');
     const employees = new Set();
@@ -507,6 +519,12 @@ function closeCurrentPasswordModal() {
 
 // Login Logs functionality
 function showLogs() {
+    // Check if user is admin before showing logs
+    if (!currentUser || !currentUser.is_admin) {
+        showNotification('Access denied. Admin privileges required.', 'error');
+        return;
+    }
+    
     const modal = document.getElementById('logs-modal');
     modal.style.display = 'flex';
     loadLoginLogs();
@@ -1576,9 +1594,11 @@ function createAttendanceTable(data) {
                     <th>
                         <div class="header-cell">
                             <span>Employee</span>
+                            ${currentUser && currentUser.is_admin ? `
                             <button class="header-eye-btn" onclick="showAllPasswords()" title="Show All Passwords">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            ` : ''}
                         </div>
                     </th>
                     <th>Date</th>
