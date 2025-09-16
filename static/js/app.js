@@ -1964,24 +1964,26 @@ async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
             const myFLEl = document.getElementById('my-fl');
             if (myWOEl) myWOEl.textContent = data['W/O'] ?? 0;
             if (myPLEl) {
-                myPLEl.textContent = data['PL'] ?? 0;
-                // Handle "FL" text for T employees (red color)
+                // Handle "FL" text for T employees - show "Not Eligible"
                 if (data['PL'] === 'FL') {
+                    myPLEl.textContent = 'Not Eligible';
                     myPLEl.style.color = '#ff6b6b';
                     myPLEl.style.fontStyle = 'italic';
                 } else {
+                    myPLEl.textContent = data['PL'] ?? 0;
                     // Reset styling for normal employees
                     myPLEl.style.color = '';
                     myPLEl.style.fontStyle = '';
                 }
             }
             if (mySLEl) {
-                mySLEl.textContent = data['SL'] ?? 0;
-                // Handle "FL" text for T employees (red color)
+                // Handle "FL" text for T employees - show "Not Eligible"
                 if (data['SL'] === 'FL') {
+                    mySLEl.textContent = 'Not Eligible';
                     mySLEl.style.color = '#ff6b6b';
                     mySLEl.style.fontStyle = 'italic';
                 } else {
+                    mySLEl.textContent = data['SL'] ?? 0;
                     // Reset styling for normal employees
                     mySLEl.style.color = '';
                     mySLEl.style.fontStyle = '';
