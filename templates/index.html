@@ -576,77 +576,20 @@
             });
         }
         
-        // PWA Install Prompt
+        // PWA Install Prompt - No install button, let browser handle it
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
             // Stash the event so it can be triggered later
             deferredPrompt = e;
-            // Show install button or notification
-            showInstallButton();
+            // No install button - users can install via browser menu
+            console.log('PWA install prompt available - users can install via browser menu');
         });
-        
-        function showInstallButton() {
-            // Create install button
-            const installBtn = document.createElement('button');
-            installBtn.innerHTML = '📱 Install App';
-            installBtn.className = 'install-btn';
-            installBtn.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: #667eea;
-                color: white;
-                border: none;
-                padding: 12px 20px;
-                border-radius: 25px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-                z-index: 1000;
-                transition: all 0.3s ease;
-            `;
-            
-            installBtn.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User response to the install prompt: ${outcome}`);
-                    deferredPrompt = null;
-                    installBtn.remove();
-                }
-            });
-            
-            installBtn.addEventListener('mouseenter', () => {
-                installBtn.style.transform = 'translateY(-2px)';
-                installBtn.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
-            });
-            
-            installBtn.addEventListener('mouseleave', () => {
-                installBtn.style.transform = 'translateY(0)';
-                installBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-            });
-            
-            document.body.appendChild(installBtn);
-            
-            // Auto-hide after 10 seconds
-            setTimeout(() => {
-                if (installBtn.parentNode) {
-                    installBtn.remove();
-                }
-            }, 10000);
-        }
         
         // Handle successful PWA installation
         window.addEventListener('appinstalled', (evt) => {
             console.log('PWA was installed');
-            // Hide install button if it exists
-            const installBtn = document.querySelector('.install-btn');
-            if (installBtn) {
-                installBtn.remove();
-            }
         });
     </script>
 </body>

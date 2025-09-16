@@ -812,6 +812,11 @@ def login():
         has_ever_changed_password = db.has_user_changed_password(email)
         needs_password_change = has_default_password and not has_ever_changed_password
         
+        print(f"DEBUG: Password change check for {email}:")
+        print(f"  - has_default_password: {has_default_password}")
+        print(f"  - has_ever_changed_password: {has_ever_changed_password}")
+        print(f"  - needs_password_change: {needs_password_change}")
+        
         return jsonify({
             'success': True, 
             'user': user_data,

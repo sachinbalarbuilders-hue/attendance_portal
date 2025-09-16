@@ -157,6 +157,27 @@ function cleanEmployeeName(fullName) {
     return fullName.replace(/\s*\([^)]*\)$/, '').trim();  // Updated: T employees not eligible for PL/SL
 }
 
+// Ensure only one section is visible at a time
+function ensureSingleSectionVisible() {
+    const loginSection = document.getElementById('login-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    
+    if (!loginSection || !dashboardSection) return;
+    
+    // Check which section should be visible based on current state
+    const loginVisible = loginSection.style.display !== 'none';
+    const dashboardVisible = dashboardSection.style.display !== 'none';
+    
+    // If both are visible or both are hidden, determine which should be shown
+    if (loginVisible && dashboardVisible) {
+        // Both visible - hide dashboard, keep login
+        dashboardSection.style.display = 'none';
+    } else if (!loginVisible && !dashboardVisible) {
+        // Both hidden - show login by default
+        loginSection.style.display = 'flex';
+    }
+}
+
 // Force desktop view
 function forceDesktopView() {
     // Set minimum width for all devices
@@ -175,6 +196,9 @@ function forceDesktopView() {
     // Remove any mobile-specific classes
     document.body.classList.remove('mobile', 'touch-device');
     document.documentElement.classList.remove('mobile', 'touch-device');
+    
+    // Ensure only one section is visible
+    ensureSingleSectionVisible();
     
     // Force desktop tooltip behavior
     handleDesktopComments();
@@ -336,11 +360,91 @@ function hideDesktopTooltip() {
 
 // Initialize desktop view on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Always force desktop view for login page
-    forceDesktopView();
+    // Check if running as PWA (installed app)
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone === true ||
+                  document.referrer.includes('android-app://');
+    
+    // Check if we're on login page or dashboard
+    const loginSection = document.getElementById('login-section');
+    const dashboardSection = document.getElementById('dashboard-section');
+    
+    if (isPWA) {
+        // PWA mode - always force desktop view regardless of page
+        console.log('PWA detected - forcing desktop mode');
+        forceDesktopView();
+        
+        // Ensure proper section visibility for PWA
+        if (loginSection && loginSection.style.display !== 'none') {
+            // Login page in PWA - still allow some responsive behavior but maintain desktop layout
+            document.body.classList.remove('mobile', 'touch-device');
+            document.documentElement.classList.remove('mobile', 'touch-device');
+            document.body.style.overflowX = 'hidden';
+            document.documentElement.style.overflowX = 'hidden';
+        }
+    } else if (loginSection && loginSection.style.display !== 'none') {
+        // Login page - allow responsive behavior
+        document.body.classList.remove('mobile', 'touch-device');
+        document.documentElement.classList.remove('mobile', 'touch-device');
+        document.documentElement.style.minWidth = '';
+        document.body.style.minWidth = '';
+        document.body.style.overflowX = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
+    } else {
+        // Dashboard - force desktop view
+        forceDesktopView();
+    }
     
     // Re-apply desktop view on window resize
-    window.addEventListener('resize', forceDesktopView);
+    window.addEventListener('resize', function() {
+        // Check if running as PWA (installed app)
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true ||
+                      document.referrer.includes('android-app://');
+        
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        
+        if (isPWA) {
+            // PWA mode - always maintain desktop view
+            console.log('PWA resize - maintaining desktop mode');
+            forceDesktopView();
+            
+            // Ensure proper section visibility
+            if (loginSection && loginSection.style.display !== 'none') {
+                if (dashboardSection) dashboardSection.style.display = 'none';
+                loginSection.style.display = 'flex';
+            } else if (dashboardSection && dashboardSection.style.display !== 'none') {
+                if (loginSection) loginSection.style.display = 'none';
+                dashboardSection.style.display = 'block';
+            }
+        } else {
+            // Browser mode - normal responsive behavior
+            if (loginSection && loginSection.style.display !== 'none') {
+                // Login is active - allow responsive behavior but prevent dual display
+                if (dashboardSection) dashboardSection.style.display = 'none';
+                loginSection.style.display = 'flex';
+                
+                // For login page, don't force desktop view - allow responsive
+                document.body.classList.remove('mobile', 'touch-device');
+                document.documentElement.classList.remove('mobile', 'touch-device');
+                document.documentElement.style.minWidth = '';
+                document.body.style.minWidth = '';
+                document.body.style.overflowX = 'hidden';
+                document.documentElement.style.overflowX = 'hidden';
+            } else if (dashboardSection && dashboardSection.style.display !== 'none') {
+                // Dashboard is active - apply desktop view and prevent mobile mode
+                if (loginSection) loginSection.style.display = 'none';
+                dashboardSection.style.display = 'block';
+                
+                // Prevent mobile class from being applied
+                document.body.classList.remove('mobile', 'touch-device');
+                document.documentElement.classList.remove('mobile', 'touch-device');
+                
+                forceDesktopView();
+            }
+        }
+    });
     
     // Observer to handle dynamically loaded content
     const observer = new MutationObserver(function(mutations) {
@@ -355,6 +459,19 @@ document.addEventListener('DOMContentLoaded', function() {
         childList: true,
         subtree: true
     });
+    
+    // Continuous check to ensure proper section visibility
+    setInterval(function() {
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        
+        if (dashboardSection && dashboardSection.style.display === 'block') {
+            // Dashboard is active, ensure login is hidden
+            if (loginSection && loginSection.style.display !== 'none') {
+                loginSection.style.display = 'none';
+            }
+        }
+    }, 100); // Check every 100ms
 });
 
 // Keep all your existing JavaScript functions below this point
@@ -433,6 +550,7 @@ async function login() {
             
             // Store if user needs password change for later use
             currentUser.needs_password_change = result.needs_password_change;
+            console.log('DEBUG: needs_password_change flag set to:', result.needs_password_change);
             
             // Show logs button only for admin users
             const logsBtn = document.getElementById('logs-btn');
@@ -482,11 +600,19 @@ async function logout() {
 // Password change functionality
 
 function showChangePasswordModal() {
+    console.log('DEBUG: showChangePasswordModal called');
     const modal = document.getElementById('change-password-modal');
+    if (!modal) {
+        console.error('DEBUG: change-password-modal not found in DOM');
+        return;
+    }
+    console.log('DEBUG: Modal found, showing...');
     modal.style.display = 'flex';
     // Clear inputs
-    document.getElementById('new-password-input').value = '';
-    document.getElementById('confirm-password-input').value = '';
+    const newPasswordInput = document.getElementById('new-password-input');
+    const confirmPasswordInput = document.getElementById('confirm-password-input');
+    if (newPasswordInput) newPasswordInput.value = '';
+    if (confirmPasswordInput) confirmPasswordInput.value = '';
 }
 
 function hideChangePasswordModal() {
@@ -858,8 +984,27 @@ function getEmployeeEmail(employeeName) {
 function showLoginPage() {
     document.getElementById('dashboard-section').style.display = 'none';
     document.getElementById('login-section').style.display = 'flex';
-    // Always force desktop view for login page
-    forceDesktopView();
+    
+    // Check if running as PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone === true ||
+                  document.referrer.includes('android-app://');
+    
+    if (isPWA) {
+        // PWA mode - maintain desktop layout
+        console.log('PWA login page - maintaining desktop layout');
+        forceDesktopView();
+        document.body.style.overflowX = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
+    } else {
+        // Browser mode - allow responsive behavior
+        document.body.classList.remove('mobile', 'touch-device');
+        document.documentElement.classList.remove('mobile', 'touch-device');
+        document.documentElement.style.minWidth = '';
+        document.body.style.minWidth = '';
+        document.body.style.overflowX = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
+    }
     
     // Load saved credentials if remember me was checked
     loadSavedCredentials();
@@ -883,6 +1028,22 @@ async function showDashboard() {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('dashboard-section').style.display = 'block';
     
+    // Check if running as PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone === true ||
+                  document.referrer.includes('android-app://');
+    
+    if (isPWA) {
+        // PWA mode - always force desktop view
+        console.log('PWA dashboard - forcing desktop view');
+        forceDesktopView();
+    } else {
+        // Browser mode - prevent mobile mode from interfering with dashboard
+        document.body.classList.remove('mobile', 'touch-device');
+        document.documentElement.classList.remove('mobile', 'touch-device');
+        forceDesktopView();
+    }
+    
     document.getElementById('user-name').textContent = cleanEmployeeName(currentUser.name);
     
     if (currentUser.is_admin) {
@@ -892,11 +1053,19 @@ async function showDashboard() {
     }
     
     // Check if user needs password change and show dialog directly
+    console.log('DEBUG: Checking password change flag:', currentUser.needs_password_change);
     if (currentUser.needs_password_change) {
+        console.log('DEBUG: Showing change password modal');
         setTimeout(() => {
             showChangePasswordModal();
         }, 1000); // Show after 1 second delay
     }
+    
+    // Add manual trigger for testing (remove in production)
+    window.testChangePasswordModal = function() {
+        console.log('DEBUG: Manual test trigger called');
+        showChangePasswordModal();
+    };
     
     // Set today's date as default
     const today = new Date().toISOString().split('T')[0];
