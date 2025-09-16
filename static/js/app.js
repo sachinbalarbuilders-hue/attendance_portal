@@ -12,11 +12,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved credentials if available
     loadSavedCredentials();
     
+    // Initialize horizontal scroll functionality
+    initializeHorizontalScroll();
+    
     // Focus on email input when page loads
     setTimeout(() => {
         const emailInput = document.getElementById('email');
-        if (emailInput && document.getElementById('login-section').style.display !== 'none') {
-            emailInput.focus();
+        const loginSection = document.getElementById('login-section');
+        if (emailInput && loginSection && loginSection.style.display !== 'none') {
+            // For mobile devices, ensure the input is visible before focusing
+            if (window.innerWidth <= 768) {
+                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    emailInput.focus();
+                }, 300);
+            } else {
+                emailInput.focus();
+            }
         }
     }, 200);
     
@@ -108,6 +120,51 @@ function clearSavedCredentials() {
     }
 }
 
+// Horizontal scroll functionality
+function initializeHorizontalScroll() {
+    // Create scroll indicator element
+    const scrollIndicator = document.createElement('div');
+    scrollIndicator.className = 'scroll-indicator';
+    scrollIndicator.innerHTML = '<i class="fas fa-arrows-alt-h"></i>';
+    document.body.appendChild(scrollIndicator);
+    
+    // Check if horizontal scroll is needed
+    function checkHorizontalScroll() {
+        const body = document.body;
+        const html = document.documentElement;
+        
+        // Check if content overflows horizontally
+        const hasHorizontalScroll = body.scrollWidth > body.clientWidth || 
+                                   html.scrollWidth > html.clientWidth;
+        
+        if (hasHorizontalScroll) {
+            scrollIndicator.classList.add('show');
+        } else {
+            scrollIndicator.classList.remove('show');
+        }
+    }
+    
+    // Check on load and resize
+    checkHorizontalScroll();
+    window.addEventListener('resize', checkHorizontalScroll);
+    window.addEventListener('load', checkHorizontalScroll);
+    
+    // Auto-hide indicator after 3 seconds
+    setTimeout(() => {
+        scrollIndicator.classList.remove('show');
+    }, 3000);
+    
+    // Show indicator on scroll
+    let scrollTimeout;
+    window.addEventListener('scroll', function() {
+        scrollIndicator.classList.add('show');
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            scrollIndicator.classList.remove('show');
+        }, 2000);
+    });
+}
+
 // Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
 function cleanEmployeeName(fullName) {
     if (!fullName) return '';
@@ -120,6 +177,14 @@ function forceDesktopView() {
     document.documentElement.style.minWidth = '1200px';
     document.body.style.minWidth = '1200px';
     document.body.style.overflowX = 'auto';
+    document.body.style.overflowY = 'auto';
+    
+    // Ensure app container has horizontal scroll
+    const app = document.getElementById('app');
+    if (app) {
+        app.style.overflowX = 'auto';
+        app.style.overflowY = 'auto';
+    }
     
     // Remove any mobile-specific classes
     document.body.classList.remove('mobile', 'touch-device');
@@ -793,7 +858,15 @@ function showLoginPage() {
     setTimeout(() => {
         const emailInput = document.getElementById('email');
         if (emailInput) {
-            emailInput.focus();
+            // For mobile devices, ensure proper focus behavior
+            if (window.innerWidth <= 768) {
+                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    emailInput.focus();
+                }, 300);
+            } else {
+                emailInput.focus();
+            }
         }
     }, 100);
 }

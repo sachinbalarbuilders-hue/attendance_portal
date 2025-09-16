@@ -8,11 +8,79 @@
 /* Default: allow responsive; desktop mode re-applied via JS after login */
 html {
     overflow-x: auto !important;
+    overflow-y: auto !important;
 }
 
 body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+    overflow-x: auto;
+    overflow-y: auto;
+    width: 100%;
+}
+
+/* Main app container with horizontal scroll */
+#app {
+    width: 100%;
+    min-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.6);
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.8);
+}
+
+::-webkit-scrollbar-corner {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Firefox scrollbar styling */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 126, 234, 0.6) rgba(255, 255, 255, 0.1);
+}
+
+/* Scroll indicator for horizontal scroll */
+.scroll-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(102, 126, 234, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.scroll-indicator.show {
+    opacity: 1;
+}
+
+.scroll-indicator i {
+    margin-right: 5px;
 }
 
 /* Enhanced gradient header with animated background - IMPROVED SIZE */
@@ -364,6 +432,9 @@ body {
     padding: 2rem;
     background: #f8f9fa;
     min-height: calc(100vh - 80px);
+    overflow-x: auto;
+    overflow-y: auto;
+    width: 100%;
 }
 
 .dashboard-header {
@@ -1678,6 +1749,14 @@ body {
         overflow-x: hidden !important;
     }
     
+    .main-header {
+        min-height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 1rem !important;
+    }
+    
     /* Disable heavy animations on mobile for better performance */
     .desktop-tooltip,
     .mobile-tooltip {
@@ -1796,16 +1875,32 @@ body {
     }
     
     .login-container {
-        max-width: 600px !important;
-        padding: 3rem 2rem !important;
+        max-width: 90% !important;
+        width: 90% !important;
+        padding: 2rem 1.5rem !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 100vh !important;
     }
     
     .login-container h1 {
-        font-size: 3rem !important;
+        font-size: 2.5rem !important;
+        text-align: center !important;
+        margin-bottom: 1rem !important;
     }
     
     .login-form {
-        padding: 3rem !important;
+        padding: 2rem 1.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .input-group input {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 1rem 1.5rem 1rem 3rem !important;
     }
 }
 
