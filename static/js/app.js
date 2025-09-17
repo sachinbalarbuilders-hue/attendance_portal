@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSavedCredentials();
     
     // Initialize horizontal scroll functionality
-    initializeHorizontalScroll();
     
     // Focus functionality removed
     
@@ -106,50 +105,6 @@ function clearSavedCredentials() {
     }
 }
 
-// Horizontal scroll functionality
-function initializeHorizontalScroll() {
-    // Create scroll indicator element
-    const scrollIndicator = document.createElement('div');
-    scrollIndicator.className = 'scroll-indicator';
-    scrollIndicator.innerHTML = '<i class="fas fa-arrows-alt-h"></i>';
-    document.body.appendChild(scrollIndicator);
-    
-    // Check if horizontal scroll is needed
-    function checkHorizontalScroll() {
-        const body = document.body;
-        const html = document.documentElement;
-        
-        // Check if content overflows horizontally
-        const hasHorizontalScroll = body.scrollWidth > body.clientWidth || 
-                                   html.scrollWidth > html.clientWidth;
-        
-        if (hasHorizontalScroll) {
-            scrollIndicator.classList.add('show');
-        } else {
-            scrollIndicator.classList.remove('show');
-        }
-    }
-    
-    // Check on load and resize
-    checkHorizontalScroll();
-    window.addEventListener('resize', checkHorizontalScroll);
-    window.addEventListener('load', checkHorizontalScroll);
-    
-    // Auto-hide indicator after 3 seconds
-    setTimeout(() => {
-        scrollIndicator.classList.remove('show');
-    }, 3000);
-    
-    // Show indicator on scroll
-    let scrollTimeout;
-    window.addEventListener('scroll', function() {
-        scrollIndicator.classList.add('show');
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            scrollIndicator.classList.remove('show');
-        }, 2000);
-    });
-}
 
 // Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
 function cleanEmployeeName(fullName) {

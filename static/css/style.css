@@ -58,30 +58,6 @@ body {
     scrollbar-color: rgba(102, 126, 234, 0.6) rgba(255, 255, 255, 0.1);
 }
 
-/* Scroll indicator for horizontal scroll */
-.scroll-indicator {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(102, 126, 234, 0.8);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.scroll-indicator.show {
-    opacity: 1;
-}
-
-.scroll-indicator i {
-    margin-right: 5px;
-}
 
 /* Enhanced gradient header with animated background - IMPROVED SIZE */
 .main-header {
