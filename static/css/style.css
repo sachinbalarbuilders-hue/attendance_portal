@@ -12,7 +12,7 @@ html {
 }
 
 body {
-    background: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     overflow-x: auto;
     overflow-y: auto;
@@ -59,14 +59,16 @@ body {
 }
 
 
-/* Clean white header background */
+/* Enhanced gradient header with animated background - IMPROVED SIZE */
 .main-header {
-    background: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #2c3e50;
+    color: white;
     text-align: center;
     padding: 2rem;
 }
@@ -295,7 +297,7 @@ body {
 }
 
 .btn-primary {
-    background: #667eea;
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
@@ -398,14 +400,13 @@ body {
 
 /* Dashboard Styles */
 .navbar {
-    background: #ffffff;
-    color: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-bottom: 1px solid #e0e0e0;
 }
 
 .nav-brand {
@@ -424,7 +425,7 @@ body {
 }
 
 .btn-logout {
-    background: #e74c3c;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: white;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
@@ -955,7 +956,7 @@ body {
 }
 
 .export-btn {
-    background: #27ae60;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
     color: white;
     padding: 1rem 1.5rem;
     justify-self: end;
