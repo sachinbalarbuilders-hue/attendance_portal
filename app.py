@@ -839,6 +839,14 @@ def login():
         # Check if user has default password AND has never changed password before
         has_default_password = employee_db.has_default_password(email)
         has_ever_changed_password = db.has_user_changed_password(email)
+        
+        # For employees not in EMPLOYEE_DB, assume they have default password if they can login
+        if not has_default_password and not user_data.get('is_admin', False):
+            # Check if this is an employee email (ends with @gmail.com)
+            if email.endswith('@gmail.com'):
+                # Employee can login, so they must have default password
+                has_default_password = True
+        
         needs_password_change = has_default_password and not has_ever_changed_password
         
         print(f"DEBUG: Password change check for {email}:")
