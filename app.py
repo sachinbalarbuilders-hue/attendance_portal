@@ -1005,11 +1005,17 @@ def verify_otp_only():
     email = session['user_email']
     
     try:
-        # Verify OTP
+        # Verify OTP and get the actual email
         if db.verify_otp(email, otp_code):
-            # Store OTP verification in session
+            # Get the actual email from the OTP record
+            actual_email = db.get_actual_email_from_otp(email)
+            
+            # Store OTP verification and actual email in session
             session['otp_verified'] = True
             session['otp_verified_at'] = time.time()
+            session['actual_email'] = actual_email
+            
+            print(f"DEBUG: OTP verified for {email}, stored actual email: {actual_email}")
             
             # Clean up expired OTPs
             db.cleanup_expired_otps()
@@ -1052,8 +1058,14 @@ def change_password_final():
     user_data = session['user_data']
     
     try:
-        # Get the actual email from OTP record
-        actual_email = db.get_actual_email_from_otp(email)
+        # Get the actual email from session (stored during OTP verification)
+        actual_email = session.get('actual_email')
+        
+        if not actual_email:
+            # Fallback: try to get from OTP record
+            actual_email = db.get_actual_email_from_otp(email)
+        
+        print(f"DEBUG: Changing password for {email}, using actual email: {actual_email}")
         
         # Change password
         if employee_db.reset_password(email, new_password):
@@ -1070,6 +1082,7 @@ def change_password_final():
             # Clear OTP verification from session
             session.pop('otp_verified', None)
             session.pop('otp_verified_at', None)
+            session.pop('actual_email', None)
             
             return jsonify({'success': True, 'message': 'Password changed successfully'})
         else:

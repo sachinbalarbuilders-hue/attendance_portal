@@ -468,10 +468,11 @@ class AttendanceDatabase:
                 cursor = conn.cursor()
                 cursor.execute('''
                     INSERT OR REPLACE INTO user_password_status 
-                    (email, has_changed_password, actual_email, updated_at)
-                    VALUES (?, 1, ?, CURRENT_TIMESTAMP)
+                    (email, has_changed_password, updated_at, actual_email)
+                    VALUES (?, 1, CURRENT_TIMESTAMP, ?)
                 ''', (email, actual_email))
                 conn.commit()
+                print(f"DEBUG: Marked password as changed for {email}, stored actual email: {actual_email}")
                 return True
         except Exception as e:
             print(f"Error marking password as changed: {e}")
@@ -497,10 +498,10 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                # Check both expired and non-expired OTPs to find stored email
+                # Check all OTP records (used, unused, expired, non-expired) to find stored email
                 cursor.execute('''
                     SELECT actual_email FROM otp_verification 
-                    WHERE email = ?
+                    WHERE email = ? AND actual_email IS NOT NULL AND actual_email != ''
                     ORDER BY created_at DESC LIMIT 1
                 ''', (email,))
                 result = cursor.fetchone()
