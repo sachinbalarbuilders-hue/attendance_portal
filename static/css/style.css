@@ -1867,6 +1867,25 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         background: #ffffff !important;
     }
     
+    /* Force white background on all mobile devices */
+    html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
+    /* Override any gradient backgrounds on mobile */
+    body * {
+        background-image: none !important;
+    }
+    
+    /* Specific override for main header gradient */
+    .main-header {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
     .main-header:not(#login-section .main-header) {
         min-height: 100vh !important;
         display: flex !important;
@@ -2011,6 +2030,24 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         min-width: 0 !important;
         overflow-x: hidden !important;
         background: #ffffff !important;
+    }
+    
+    /* Extra force for smaller screens */
+    html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
+    /* Remove all gradient backgrounds on small mobile */
+    * {
+        background-image: none !important;
+    }
+    
+    .main-header {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
     }
     
     .login-container {
@@ -3749,5 +3786,36 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         gap: 10px;
     }
     
+}
+
+/* FINAL MOBILE OVERRIDE - Remove all blue backgrounds on mobile */
+@media screen and (max-width: 768px) {
+    html {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
+    body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
+    
+    /* Remove all gradient backgrounds */
+    * {
+        background-image: none !important;
+    }
+    
+    /* Force white backgrounds for all elements */
+    .main-header,
+    .login-container,
+    .dashboard-container,
+    .navbar,
+    .attendance-table-container {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        background-image: none !important;
+    }
 }
 
