@@ -901,6 +901,95 @@ def send_otp():
         print(f"Error sending OTP: {e}")
         return jsonify({'success': False, 'message': 'Error sending OTP'})
 
+@app.route('/api/verify-otp-only', methods=['POST'])
+def verify_otp_only():
+    """Verify OTP only (without changing password) - stores verification in session"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    data = request.json
+    otp_code = data.get('otp_code')
+    
+    if not otp_code:
+        return jsonify({'success': False, 'message': 'OTP code is required'})
+    
+    email = session['user_email']
+    
+    try:
+        # Verify OTP
+        if db.verify_otp(email, otp_code):
+            # Store OTP verification in session
+            session['otp_verified'] = True
+            session['otp_verified_at'] = time.time()
+            
+            # Clean up expired OTPs
+            db.cleanup_expired_otps()
+            
+            return jsonify({'success': True, 'message': 'OTP verified successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Invalid or expired OTP'})
+            
+    except Exception as e:
+        print(f"Error verifying OTP: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while verifying OTP'})
+
+@app.route('/api/change-password-final', methods=['POST'])
+def change_password_final():
+    """Change password after OTP verification (uses session verification)"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    # Check if OTP was verified in session
+    if not session.get('otp_verified'):
+        return jsonify({'success': False, 'message': 'OTP verification required'})
+    
+    # Check if OTP verification is not too old (5 minutes)
+    otp_verified_at = session.get('otp_verified_at', 0)
+    if time.time() - otp_verified_at > 300:  # 5 minutes
+        session.pop('otp_verified', None)
+        session.pop('otp_verified_at', None)
+        return jsonify({'success': False, 'message': 'OTP verification expired. Please verify OTP again.'})
+    
+    data = request.json
+    new_password = data.get('new_password')
+    
+    if not new_password:
+        return jsonify({'success': False, 'message': 'New password is required'})
+    
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'Password must be at least 6 characters long'})
+    
+    email = session['user_email']
+    user_data = session['user_data']
+    
+    try:
+        # Get the actual email from OTP record
+        actual_email = db.get_actual_email(email)
+        
+        # Change password
+        if employee_db.reset_password(email, new_password):
+            # Log password change for admin visibility
+            db.log_password_change(
+                email=email,
+                employee_name=user_data.get('name', 'Unknown'),
+                current_password=new_password,
+                changed_by='employee'
+            )
+            # Mark that user has changed their password and store actual email
+            db.mark_password_as_changed(email, actual_email)
+            
+            # Clear OTP verification from session
+            session.pop('otp_verified', None)
+            session.pop('otp_verified_at', None)
+            
+            return jsonify({'success': True, 'message': 'Password changed successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to change password'})
+            
+    except Exception as e:
+        print(f"Error changing password: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while changing password'})
+
 @app.route('/api/verify-otp', methods=['POST'])
 def verify_otp():
     """Verify OTP and change password"""
