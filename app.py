@@ -113,15 +113,30 @@ class EmployeeDatabase:
                 cleaned_emp_name = self.clean_employee_name(emp_name)
                 
                 if email_name == cleaned_emp_name:
-                    # Check if password matches default employee password
-                    hashed_password = hashlib.sha256("Balar123".encode()).hexdigest()
-                    if hashlib.sha256(password.encode()).hexdigest() == hashed_password:
-                        return True, {
-                            "password": hashed_password,
-                            "name": emp_name,
-                            "role": "Employee",
-                            "is_admin": False
-                        }
+                    # Check if user has changed their password before
+                    has_ever_changed_password = db.has_user_changed_password(email)
+                    
+                    if has_ever_changed_password:
+                        # User has changed password, only check against stored password in EMPLOYEE_DB
+                        if email in self.EMPLOYEE_DB:
+                            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+                            if self.EMPLOYEE_DB[email]["password"] == hashed_password:
+                                return True, {
+                                    "password": hashed_password,
+                                    "name": emp_name,
+                                    "role": "Employee",
+                                    "is_admin": False
+                                }
+                    else:
+                        # User still has default password, check against default
+                        hashed_password = hashlib.sha256("Balar123".encode()).hexdigest()
+                        if hashlib.sha256(password.encode()).hexdigest() == hashed_password:
+                            return True, {
+                                "password": hashed_password,
+                                "name": emp_name,
+                                "role": "Employee",
+                                "is_admin": False
+                            }
         
         return False, None
 
