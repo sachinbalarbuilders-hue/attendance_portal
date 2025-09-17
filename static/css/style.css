@@ -12,7 +12,7 @@ html {
 }
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff;
     min-height: 100vh;
     overflow-x: auto;
     overflow-y: auto;
@@ -59,30 +59,16 @@ body {
 }
 
 
-/* Modern Login Page Design */
+/* Clean white header background */
 .main-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #2c3e50;
     text-align: center;
     padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.main-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    opacity: 0.3;
-    pointer-events: none;
 }
 
 @keyframes gradientShift {
@@ -91,51 +77,34 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* Modern Login Container Design */
+/* IMPROVED LOGIN CONTAINER SIZE */
 .login-container {
-    max-width: 450px;
+    max-width: 600px;
     width: 95%;
     padding: 3rem 2rem;
-    position: relative;
-    z-index: 10;
 }
 
 .login-container h1 {
-    font-size: 2.8rem;
-    margin-bottom: 0.5rem;
+    font-size: 3rem;
+    margin-bottom: 1rem;
     text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    font-weight: 700;
-    background: linear-gradient(135deg, #ffffff, #f0f0f0);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .login-container > p {
-    font-size: 1.2rem;
-    margin-bottom: 2.5rem;
+    font-size: 1.3rem;
+    margin-bottom: 3rem;
     opacity: 0.9;
-    font-weight: 300;
 }
 
-/* Modern Glass-morphism Login Form */
+/* IMPROVED LOGIN FORM SIZE */
 .login-form {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px;
-    padding: 2.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 3rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     margin-bottom: 2rem;
-    transition: all 0.3s ease;
-}
-
-.login-form:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .login-form h3 {
@@ -144,55 +113,36 @@ body {
     font-size: 1.4rem;
 }
 
-/* Modern Input Groups */
 .input-group {
     position: relative;
-    margin-bottom: 1.8rem;
+    margin-bottom: 1.5rem;
 }
 
 .input-group i {
     position: absolute;
-    left: 1.2rem;
+    left: 20px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.6);
+    color: #667eea;
     z-index: 2;
     font-size: 1.1rem;
-    transition: all 0.3s ease;
 }
 
 .input-group input {
     width: 100%;
-    padding: 1.2rem 1.5rem 1.2rem 3.2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
-    font-size: 1rem;
-    font-weight: 400;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 1.3rem 1.5rem 1.3rem 3.5rem;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .input-group input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1),
-                0 8px 25px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
-}
-
-.input-group input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 300;
-}
-
-.input-group:focus-within i {
-    color: rgba(255, 255, 255, 0.9);
-    transform: translateY(-50%) scale(1.1);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
 }
 
 /* Email Display Styling */
@@ -344,47 +294,16 @@ body {
     text-decoration: none;
 }
 
-/* Modern Button Design */
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: #667eea;
     color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 16px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
 }
-
-.btn-primary:hover::before {
-    left: 100%;
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-}
-
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.2);
@@ -477,31 +396,16 @@ body {
     font-size: 0.95rem;
 }
 
-/* Modern Dashboard Navbar */
+/* Dashboard Styles */
 .navbar {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    color: white;
-    padding: 1.2rem 2rem;
+    background: #ffffff;
+    color: #2c3e50;
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    position: relative;
-    z-index: 100;
-}
-
-.navbar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    pointer-events: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .nav-brand {
@@ -520,7 +424,7 @@ body {
 }
 
 .btn-logout {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: #e74c3c;
     color: white;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
@@ -530,22 +434,9 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: #f8f9fa;
     min-height: calc(100vh - 80px);
     overflow-x: auto;
-    position: relative;
-}
-
-.dashboard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(102,126,234,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
-    opacity: 0.5;
-    pointer-events: none;
     overflow-y: auto;
     width: 100%;
 }
@@ -903,44 +794,19 @@ body {
     margin-bottom: 2rem;
 }
 
-/* Modern Stat Cards */
 .stat-card {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: white;
     padding: 2rem;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-.stat-card:hover::before {
-    opacity: 1;
+    transform: translateY(-5px);
 }
 
 .stat-card i {
@@ -968,42 +834,20 @@ body {
 }
 
 .metric-card {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: white;
     padding: 2rem;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
-                0 0 0 1px rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     gap: 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: all 0.3s ease;
+    border-left: 5px solid #667eea;
 }
 
 .metric-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-.metric-card:hover::before {
-    opacity: 1;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .metric-card i {
@@ -1111,7 +955,7 @@ body {
 }
 
 .export-btn {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: #27ae60;
     color: white;
     padding: 1rem 1.5rem;
     justify-self: end;
