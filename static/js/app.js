@@ -2251,28 +2251,34 @@ function showMobileTooltip(element, comment) {
     
     document.body.appendChild(tooltip);
     
-    // Enhanced positioning logic
+    // Enhanced positioning logic for mobile
     const rect = element.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     const padding = 20;
     
-    // Calculate optimal position
+    // Force tooltip to recalculate its size
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.display = 'block';
+    const actualTooltipRect = tooltip.getBoundingClientRect();
+    tooltip.style.visibility = 'visible';
+    
+    // Calculate optimal position using actual tooltip dimensions
     let top, left;
     
     // Try to position above the cell first
-    if (rect.top - tooltipRect.height - padding > 0) {
-        top = rect.top - tooltipRect.height - padding;
-        left = Math.max(padding, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - padding));
-    } else if (rect.bottom + tooltipRect.height + padding < viewportHeight) {
+    if (rect.top - actualTooltipRect.height - padding > 0) {
+        top = rect.top - actualTooltipRect.height - padding;
+        left = Math.max(padding, Math.min(rect.left + rect.width/2 - actualTooltipRect.width/2, viewportWidth - actualTooltipRect.width - padding));
+    } else if (rect.bottom + actualTooltipRect.height + padding < viewportHeight) {
         // Position below the cell
         top = rect.bottom + padding;
-        left = Math.max(padding, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - padding));
+        left = Math.max(padding, Math.min(rect.left + rect.width/2 - actualTooltipRect.width/2, viewportWidth - actualTooltipRect.width - padding));
     } else {
         // Center in viewport if no space above or below
-        top = (viewportHeight - tooltipRect.height) / 2;
-        left = Math.max(padding, Math.min(rect.left + rect.width/2 - tooltipRect.width/2, viewportWidth - tooltipRect.width - padding));
+        top = Math.max(padding, (viewportHeight - actualTooltipRect.height) / 2);
+        left = Math.max(padding, Math.min((viewportWidth - actualTooltipRect.width) / 2, viewportWidth - actualTooltipRect.width - padding));
     }
     
     tooltip.style.position = 'fixed';
