@@ -80,11 +80,6 @@
                         </button>
                     </div>
                     
-                    <div class="forgot-password-section">
-                        <a href="#" onclick="showForgotPasswordModal(); return false;" class="forgot-password-link">
-                            <i class="fas fa-key"></i> Forgot Password?
-                        </a>
-                    </div>
                 </div>
 
             </div>
@@ -614,116 +609,6 @@
         </div>
     </div>
 
-    <!-- Forgot Password Modal -->
-    <div id="forgot-password-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-key"></i> Reset Password</h3>
-                <button class="modal-close" onclick="closeForgotPasswordModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- Step 1: Email Input -->
-                <div id="forgot-email-step" class="forgot-step">
-                    <div class="step-indicator">
-                        <div class="step-number">1</div>
-                        <div class="step-text">Enter Email</div>
-                    </div>
-                    <div class="password-step">
-                        <label for="forgot-email">Email Address:</label>
-                        <div class="input-group">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="forgot-email" placeholder="Enter your company email address" required>
-                        </div>
-                        <p class="step-description">Enter your actual company email address (the one you provided when changing your password) to receive a password reset code. <strong>Note: This feature is only available for users who have changed their password at least once.</strong></p>
-                        <div class="button-group">
-                            <button onclick="checkForgotPasswordEmail()" class="btn-primary">
-                                <i class="fas fa-search"></i> Check Email
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 1.5: Email Display (Pre-filled) -->
-                <div id="forgot-email-display-step" class="forgot-step" style="display: none;">
-                    <div class="step-indicator">
-                        <div class="step-number">1</div>
-                        <div class="step-text">Verify Email</div>
-                    </div>
-                    <div class="password-step">
-                        <label>Reset Code will be sent to:</label>
-                        <div class="email-display">
-                            <i class="fas fa-envelope"></i>
-                            <span id="forgot-stored-email-display"></span>
-                        </div>
-                        <p class="step-description">We found your stored email address. Click "Send Reset Code" to receive a verification code.</p>
-                        <div class="button-group">
-                            <button onclick="sendForgotPasswordOTPFromStored()" class="btn-primary">
-                                <i class="fas fa-paper-plane"></i> Send Reset Code
-                            </button>
-                            <button onclick="showForgotEmailInputStep()" class="btn-secondary">
-                                <i class="fas fa-edit"></i> Change Email
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2: OTP Verification -->
-                <div id="forgot-otp-step" class="forgot-step" style="display: none;">
-                    <div class="step-indicator">
-                        <div class="step-number">2</div>
-                        <div class="step-text">Verify Code</div>
-                    </div>
-                    <div class="password-step">
-                        <label for="forgot-otp">Enter Verification Code:</label>
-                        <div class="input-group">
-                            <i class="fas fa-shield-alt"></i>
-                            <input type="text" id="forgot-otp" placeholder="Enter 6-digit code" maxlength="6" required>
-                        </div>
-                        <p class="otp-info">
-                            <i class="fas fa-info-circle"></i> 
-                            A 6-digit verification code has been sent to your email. 
-                            <span id="forgot-otp-timer" class="otp-timer"></span>
-                        </p>
-                        <div class="button-group">
-                            <button onclick="verifyForgotPasswordOTP()" class="btn-primary">
-                                <i class="fas fa-check"></i> Verify Code
-                            </button>
-                            <button onclick="resendForgotPasswordOTP()" class="btn-secondary resend-btn">
-                                <i class="fas fa-redo"></i> Resend Code
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 3: New Password -->
-                <div id="forgot-new-password-step" class="forgot-step" style="display: none;">
-                    <div class="step-indicator">
-                        <div class="step-number">3</div>
-                        <div class="step-text">New Password</div>
-                    </div>
-                    <div class="password-step">
-                        <label for="forgot-new-password">New Password:</label>
-                        <div class="input-group">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="forgot-new-password" placeholder="Enter new password" required>
-                        </div>
-                        <label for="forgot-confirm-password">Confirm New Password:</label>
-                        <div class="input-group">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="forgot-confirm-password" placeholder="Confirm new password" required>
-                        </div>
-                        <div class="button-group">
-                            <button onclick="resetPassword()" class="btn-primary">
-                                <i class="fas fa-check"></i> Reset Password
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}?v={{ range(1000, 9999) | random }}"></script>
     
