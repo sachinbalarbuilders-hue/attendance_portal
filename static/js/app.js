@@ -2853,6 +2853,14 @@ function closeForgotPasswordModal() {
 function resetForgotPasswordSteps() {
     // Show step 1, hide others
     document.getElementById('forgot-email-step').style.display = 'block';
+    document.getElementById('forgot-email-display-step').style.display = 'none';
+    document.getElementById('forgot-otp-step').style.display = 'none';
+    document.getElementById('forgot-new-password-step').style.display = 'none';
+}
+
+function hideAllForgotPasswordSteps() {
+    document.getElementById('forgot-email-step').style.display = 'none';
+    document.getElementById('forgot-email-display-step').style.display = 'none';
     document.getElementById('forgot-otp-step').style.display = 'none';
     document.getElementById('forgot-new-password-step').style.display = 'none';
     
@@ -3052,6 +3060,116 @@ function resetPassword() {
     .catch(error => {
         console.error('Error:', error);
         showForgotPasswordError('An error occurred. Please try again.', 'forgot-new-password-step');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// New function to check if email has stored actual email
+function checkForgotPasswordEmail() {
+    const email = document.getElementById('forgot-email').value.trim();
+    
+    if (!email) {
+        showForgotPasswordError('Please enter your email address', 'forgot-email-step');
+        return;
+    }
+    
+    if (!isValidEmail(email)) {
+        showForgotPasswordError('Please enter a valid email address', 'forgot-email-step');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+    button.disabled = true;
+    
+    fetch('/api/forgot-password/check-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Store email for later use
+            window.forgotPasswordEmail = email;
+            window.forgotPasswordStoredEmail = data.stored_email;
+            
+            // Show the email display step with pre-filled email
+            showForgotEmailDisplayStep(data.stored_email);
+        } else {
+            showForgotPasswordError(data.message, 'forgot-email-step');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showForgotPasswordError('An error occurred. Please try again.', 'forgot-email-step');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Show email display step with pre-filled email
+function showForgotEmailDisplayStep(storedEmail) {
+    hideAllForgotPasswordSteps();
+    document.getElementById('forgot-email-display-step').style.display = 'block';
+    document.getElementById('forgot-stored-email-display').textContent = storedEmail;
+}
+
+// Show email input step (when user wants to change email)
+function showForgotEmailInputStep() {
+    hideAllForgotPasswordSteps();
+    document.getElementById('forgot-email-step').style.display = 'block';
+}
+
+// Send OTP from stored email (when user confirms the pre-filled email)
+function sendForgotPasswordOTPFromStored() {
+    const email = window.forgotPasswordEmail;
+    const storedEmail = window.forgotPasswordStoredEmail;
+    
+    if (!email || !storedEmail) {
+        showForgotPasswordError('Email information not found. Please try again.', 'forgot-email-display-step');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    button.disabled = true;
+    
+    fetch('/api/forgot-password/send-otp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showForgotPasswordSuccess(data.message, 'forgot-email-display-step');
+            // Move to step 2
+            setTimeout(() => {
+                document.getElementById('forgot-email-display-step').style.display = 'none';
+                document.getElementById('forgot-otp-step').style.display = 'block';
+                startForgotPasswordTimer();
+            }, 1500);
+        } else {
+            showForgotPasswordError(data.message, 'forgot-email-display-step');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showForgotPasswordError('An error occurred. Please try again.', 'forgot-email-display-step');
     })
     .finally(() => {
         button.innerHTML = originalText;

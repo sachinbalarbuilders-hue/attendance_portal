@@ -1093,6 +1093,43 @@ def change_password_final():
         return jsonify({'success': False, 'message': 'An error occurred while changing password'})
 
 # Forgot Password API Endpoints
+@app.route('/api/forgot-password/check-email', methods=['POST'])
+def forgot_password_check_email():
+    """Check if user has stored email for forgot password"""
+    data = request.json
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'success': False, 'message': 'Email address is required'})
+    
+    # Validate email format
+    if '@' not in email or '.' not in email.split('@')[1]:
+        return jsonify({'success': False, 'message': 'Please enter a valid email address'})
+    
+    try:
+        # Check if user has changed their password before (has actual email stored)
+        stored_email = db.get_actual_email(email)
+        
+        # If not found in password status, check OTP verification table
+        if not stored_email:
+            stored_email = db.get_actual_email_from_otp(email)
+        
+        if not stored_email:
+            return jsonify({
+                'success': False, 
+                'message': 'Password reset is only available for users who have changed their password at least once. Please contact your administrator.'
+            })
+        
+        return jsonify({
+            'success': True,
+            'stored_email': stored_email,
+            'message': 'Email found. You can proceed with password reset.'
+        })
+        
+    except Exception as e:
+        print(f"Error checking forgot password email: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while checking email'})
+
 @app.route('/api/forgot-password/send-otp', methods=['POST'])
 def forgot_password_send_otp():
     """Send OTP for forgot password (only for users who have changed password before)"""

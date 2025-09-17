@@ -638,8 +638,32 @@
                         </div>
                         <p class="step-description">Enter your actual company email address (the one you provided when changing your password) to receive a password reset code. <strong>Note: This feature is only available for users who have changed their password at least once.</strong></p>
                         <div class="button-group">
-                            <button onclick="sendForgotPasswordOTP()" class="btn-primary">
+                            <button onclick="checkForgotPasswordEmail()" class="btn-primary">
+                                <i class="fas fa-search"></i> Check Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 1.5: Email Display (Pre-filled) -->
+                <div id="forgot-email-display-step" class="forgot-step" style="display: none;">
+                    <div class="step-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-text">Verify Email</div>
+                    </div>
+                    <div class="password-step">
+                        <label>Reset Code will be sent to:</label>
+                        <div class="email-display">
+                            <i class="fas fa-envelope"></i>
+                            <span id="forgot-stored-email-display"></span>
+                        </div>
+                        <p class="step-description">We found your stored email address. Click "Send Reset Code" to receive a verification code.</p>
+                        <div class="button-group">
+                            <button onclick="sendForgotPasswordOTPFromStored()" class="btn-primary">
                                 <i class="fas fa-paper-plane"></i> Send Reset Code
+                            </button>
+                            <button onclick="showForgotEmailInputStep()" class="btn-secondary">
+                                <i class="fas fa-edit"></i> Change Email
                             </button>
                         </div>
                     </div>
