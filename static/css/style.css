@@ -1861,6 +1861,10 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
 
 /* Mobile-friendly login when body has .mobile - but not for login section */
 @media screen and (max-width: 768px) {
+    body {
+        background: #ffffff !important;
+    }
+    
     body.mobile:not(:has(#login-section)) {
         min-width: 0 !important;
         overflow-x: hidden !important;
@@ -2003,6 +2007,10 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
 }
 
 @media screen and (max-width: 480px) {
+    body {
+        background: #ffffff !important;
+    }
+    
     body.mobile {
         min-width: 0 !important;
         overflow-x: hidden !important;
