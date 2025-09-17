@@ -112,6 +112,13 @@ function cleanEmployeeName(fullName) {
     return fullName.replace(/\s*\([^)]*\)$/, '').trim();  // Updated: T employees not eligible for PL/SL
 }
 
+// Helper function to check if we're on mobile
+function isMobileDevice() {
+    return document.body.classList.contains('mobile') || 
+           document.documentElement.classList.contains('mobile') ||
+           window.innerWidth <= 768;
+}
+
 // Ensure only one section is visible at a time
 function ensureSingleSectionVisible() {
     const loginSection = document.getElementById('login-section');
@@ -195,10 +202,12 @@ function handleDesktopComments() {
         cell.removeEventListener('touchstart', showMobileTooltip);
         cell.removeEventListener('touchend', hideMobileTooltip);
         
-        // Add desktop hover events
-        cell.addEventListener('mouseenter', showDesktopTooltip);
-        cell.addEventListener('mouseleave', hideDesktopTooltip);
-        cell.addEventListener('mousemove', moveDesktopTooltip);
+        // Only add desktop events if not on mobile
+        if (!document.body.classList.contains('mobile') && !document.documentElement.classList.contains('mobile')) {
+            cell.addEventListener('mouseenter', showDesktopTooltip);
+            cell.addEventListener('mouseleave', hideDesktopTooltip);
+            cell.addEventListener('mousemove', moveDesktopTooltip);
+        }
     });
 }
 
@@ -2131,19 +2140,19 @@ function createAttendanceTable(data) {
         <td>${formatDate(record.Date)}</td>
         <td class="${record.pin_highlight ? 'red-text' : ''}" 
             title="${record.pin_comment || ''}"
-            onclick="showMobileTooltip(this, this.getAttribute('data-comment'))"
+            ${isMobileDevice() ? 'onclick="showMobileTooltip(this, this.getAttribute(\'data-comment\'))"' : ''}
             data-comment="${(record.pin_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record['Punch-In']}
         </td>
         <td class="${record.pout_highlight ? 'red-text' : ''}" 
             title="${record.pout_comment || ''}"
-            onclick="showMobileTooltip(this, this.getAttribute('data-comment'))"
+            ${isMobileDevice() ? 'onclick="showMobileTooltip(this, this.getAttribute(\'data-comment\'))"' : ''}
             data-comment="${(record.pout_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record['Punch-Out']}
         </td>
         <td class="${record.status_highlight ? 'red-text' : ''}" 
             title="${record.status_comment || ''}"
-            onclick="showMobileTooltip(this, this.getAttribute('data-comment'))"
+            ${isMobileDevice() ? 'onclick="showMobileTooltip(this, this.getAttribute(\'data-comment\'))"' : ''}
             data-comment="${(record.status_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record.Status}
         </td>
@@ -2165,6 +2174,11 @@ function createAttendanceTable(data) {
 // Mobile tooltip function
 function showMobileTooltip(element, comment) {
     try {
+        // Only show mobile tooltip on mobile devices
+        if (!isMobileDevice()) {
+            return;
+        }
+        
         // Get comment from data attribute if not provided directly
         if (!comment) {
             comment = element.getAttribute('data-comment') || '';
