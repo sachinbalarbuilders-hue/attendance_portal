@@ -1024,13 +1024,19 @@ def get_current_password():
     user_data = employee_db.get_user_by_email(email)
     print(f"DEBUG: User data for {email}: {user_data}")
     
-    if not user_data:
-        # Let's also check what emails are available
-        all_employees = employee_db.get_all_employees()
-        all_emails = employee_db.get_all_employee_emails()
-        print(f"DEBUG: Available employees: {all_employees}")
-        print(f"DEBUG: Available emails: {all_emails}")
-        return jsonify({'success': False, 'message': f'Employee not found for email: {email}'})
+    # If user not found in EMPLOYEE_DB, try to get employee name from database
+    employee_name = "Unknown"
+    if user_data:
+        employee_name = user_data.get('name', 'Unknown')
+    else:
+        # Try to get employee name from attendance records
+        employees = db.get_employees()
+        email_name = email.replace('@gmail.com', '')
+        for emp_name in employees:
+            cleaned_emp_name = employee_db.clean_employee_name(emp_name)
+            if email_name == cleaned_emp_name:
+                employee_name = emp_name
+                break
     
     # Check if user has changed their password
     has_changed_password = db.has_user_changed_password(email)
@@ -1056,7 +1062,7 @@ def get_current_password():
     return jsonify({
         'success': True, 
         'password': current_password,
-        'employee_name': user_data.get('name', 'Unknown')
+        'employee_name': employee_name
     })
 
 
