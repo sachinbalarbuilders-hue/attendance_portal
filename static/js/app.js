@@ -3065,6 +3065,8 @@ function sendForgotPasswordOTP() {
     .then(data => {
         if (data.success) {
             showForgotPasswordSuccess(data.message, 'forgot-email-step');
+            // Store email for later use
+            window.forgotPasswordEmail = email;
             // Move to step 2
             setTimeout(() => {
                 document.getElementById('forgot-email-step').style.display = 'none';
@@ -3110,7 +3112,10 @@ function verifyForgotPasswordOTP() {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ otp: otp })
+        body: JSON.stringify({ 
+            otp: otp,
+            email: window.forgotPasswordEmail
+        })
     })
     .then(response => response.json())
     .then(data => {
