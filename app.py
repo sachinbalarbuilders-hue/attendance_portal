@@ -1373,5 +1373,48 @@ def get_admin_late_statistics():
         })
 
 
+# Maintenance Mode Routes
+@app.route('/admin/maintenance')
+def maintenance_admin():
+    """Admin page for maintenance mode control"""
+    return render_template('maintenance_admin.html')
+
+@app.route('/api/maintenance/status')
+def maintenance_status():
+    """Get current maintenance status"""
+    try:
+        maintenance_enabled = os.path.exists(MAINTENANCE_FLAG_FILE)
+        return jsonify({
+            'enabled': maintenance_enabled,
+            'status': 'enabled' if maintenance_enabled else 'disabled'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/maintenance/toggle', methods=['POST'])
+def toggle_maintenance():
+    """Toggle maintenance mode"""
+    try:
+        data = request.get_json()
+        action = data.get('action')  # 'enable' or 'disable'
+        
+        if action == 'enable':
+            # Create maintenance flag file
+            with open(MAINTENANCE_FLAG_FILE, 'w') as f:
+                f.write('maintenance_enabled')
+            return jsonify({'success': True, 'message': 'Maintenance mode enabled', 'status': 'enabled'})
+        
+        elif action == 'disable':
+            # Remove maintenance flag file
+            if os.path.exists(MAINTENANCE_FLAG_FILE):
+                os.remove(MAINTENANCE_FLAG_FILE)
+            return jsonify({'success': True, 'message': 'Maintenance mode disabled', 'status': 'disabled'})
+        
+        else:
+            return jsonify({'success': False, 'message': 'Invalid action'}), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)

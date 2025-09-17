@@ -248,10 +248,14 @@ function handleDesktopComments() {
 }
 
 function showDesktopTooltip(event) {
-    const cell = event.currentTarget;
-    const comment = cell.getAttribute('data-comment');
-    
-    if (!comment || !comment.trim()) return;
+    try {
+        const cell = event.currentTarget;
+        let comment = cell.getAttribute('data-comment');
+        
+        // Decode HTML entities
+        comment = comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        
+        if (!comment || !comment.trim()) return;
     
     // Remove any existing tooltips
     const existingTooltip = document.querySelector('.desktop-tooltip');
@@ -270,7 +274,7 @@ function showDesktopTooltip(event) {
             <span class="tooltip-icon">💬</span>
             <span class="tooltip-title">Comment</span>
         </div>
-        <div class="tooltip-content">${comment}</div>
+        <div class="tooltip-content">${comment.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
     `;
     
     document.body.appendChild(tooltip);
@@ -324,6 +328,9 @@ function showDesktopTooltip(event) {
             }, 200);
         }
     }, 5000);
+    } catch (error) {
+        console.error('Error showing desktop tooltip:', error);
+    }
 }
 
 function moveDesktopTooltip(event) {
@@ -935,7 +942,7 @@ function skipPasswordChange() {
     // Add change password button next to user name (only for non-admin users)
     addChangePasswordButtonToTop();
     if (!currentUser || !currentUser.is_admin) {
-        showNotification('You can change your password anytime using the button next to your name.', 'info');
+    showNotification('You can change your password anytime using the button next to your name.', 'info');
     }
 }
 
@@ -2306,20 +2313,20 @@ function createAttendanceTable(data) {
         <td>${formatDate(record.Date)}</td>
         <td class="${record.pin_highlight ? 'red-text' : ''}" 
             title="${record.pin_comment || ''}"
-            onclick="showMobileTooltip(this, '${record.pin_comment || ''}')"
-            data-comment="${record.pin_comment || ''}">
+            onclick="showMobileTooltip(this, this.getAttribute('data-comment'))"
+            data-comment="${(record.pin_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record['Punch-In']}
         </td>
         <td class="${record.pout_highlight ? 'red-text' : ''}" 
             title="${record.pout_comment || ''}"
-            onclick="showMobileTooltip(this, '${record.pout_comment || ''}')"
-            data-comment="${record.pout_comment || ''}">
+            onclick="showMobileTooltip(this, this.getAttribute('data-comment'))"
+            data-comment="${(record.pout_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record['Punch-Out']}
         </td>
         <td class="${record.status_highlight ? 'red-text' : ''}" 
             title="${record.status_comment || ''}"
-            onclick="showMobileTooltip(this, '${record.status_comment || ''}')"
-            data-comment="${record.status_comment || ''}">
+            onclick="showMobileTooltip(this, this.getAttribute('data-comment'))"
+            data-comment="${(record.status_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record.Status}
         </td>
         <td>${comments}</td>
@@ -2339,7 +2346,16 @@ function createAttendanceTable(data) {
 
 // Mobile tooltip function
 function showMobileTooltip(element, comment) {
-    if (!comment.trim()) return;
+    try {
+        // Get comment from data attribute if not provided directly
+        if (!comment) {
+            comment = element.getAttribute('data-comment') || '';
+        }
+        
+        // Decode HTML entities
+        comment = comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        
+        if (!comment || !comment.trim()) return;
     
     const existingTooltip = document.querySelector('.mobile-tooltip');
     if (existingTooltip) {
@@ -2366,7 +2382,7 @@ function showMobileTooltip(element, comment) {
             <span class="mobile-tooltip-title">Comment</span>
             <button class="mobile-tooltip-close" onclick="hideMobileTooltip()">×</button>
         </div>
-        <div class="mobile-tooltip-content">${comment}</div>
+        <div class="mobile-tooltip-content">${comment.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
         <div class="mobile-tooltip-footer">Tap anywhere to close</div>
     `;
     
@@ -2424,6 +2440,9 @@ function showMobileTooltip(element, comment) {
             }, 300);
         }
     }, 10000);
+    } catch (error) {
+        console.error('Error showing mobile tooltip:', error);
+    }
 }
 
 function hideMobileTooltip() {

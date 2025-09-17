@@ -43,6 +43,12 @@
                 <h1><i class="fas fa-building"></i> Employee Attendance Portal</h1>
                 <p>Professional attendance management system</p>
                 
+                <!-- Maintenance Status Indicator -->
+                <div id="maintenance-status" class="maintenance-status-indicator" style="display: none;">
+                    <i class="fas fa-tools"></i>
+                    <span>System maintenance in progress...</span>
+                </div>
+                
                 <div id="login-form" class="login-form">
                     <h3><i class="fas fa-lock"></i> Welcome Back</h3>
                     <div class="input-group">
@@ -104,6 +110,16 @@
                         <p>Complete System Management</p>
                     </div>
 
+                    <!-- Maintenance Control -->
+                    <div class="maintenance-control-section">
+                        <h3><i class="fas fa-wrench"></i> System Maintenance</h3>
+                        <div class="maintenance-control-content">
+                            <p>Control maintenance mode for system updates</p>
+                            <a href="/admin/maintenance" class="maintenance-link" target="_blank">
+                                <i class="fas fa-cog"></i> Open Maintenance Control
+                            </a>
+                        </div>
+                    </div>
 
                     <div class="control-panel">
                         <div class="upload-section">
@@ -644,6 +660,67 @@
         window.addEventListener('appinstalled', (evt) => {
             console.log('PWA was installed');
         });
+        
+        // Real-time Maintenance Mode Checker
+        let maintenanceCheckInterval;
+        
+        function checkMaintenanceStatus() {
+            fetch('/api/maintenance/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusIndicator = document.getElementById('maintenance-status');
+                    
+                    if (data.enabled) {
+                        // Show maintenance indicator
+                        if (statusIndicator) {
+                            statusIndicator.style.display = 'flex';
+                        }
+                        
+                        // Redirect to maintenance page if not already there
+                        if (!window.location.pathname.includes('/admin/maintenance') && 
+                            !window.location.pathname.includes('/maintenance')) {
+                            console.log('Maintenance mode detected, redirecting...');
+                            window.location.href = '/maintenance';
+                        }
+                    } else {
+                        // Hide maintenance indicator
+                        if (statusIndicator) {
+                            statusIndicator.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.log('Maintenance check failed:', error);
+                });
+        }
+        
+        // Start checking maintenance status every 3 seconds
+        function startMaintenanceChecker() {
+            if (maintenanceCheckInterval) {
+                clearInterval(maintenanceCheckInterval);
+            }
+            maintenanceCheckInterval = setInterval(checkMaintenanceStatus, 3000);
+        }
+        
+        // Stop checking when page is hidden (user switched tabs)
+        function stopMaintenanceChecker() {
+            if (maintenanceCheckInterval) {
+                clearInterval(maintenanceCheckInterval);
+                maintenanceCheckInterval = null;
+            }
+        }
+        
+        // Start checking when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopMaintenanceChecker();
+            } else {
+                startMaintenanceChecker();
+            }
+        });
+        
+        // Start checking immediately
+        startMaintenanceChecker();
     </script>
 </body>
 </html>
