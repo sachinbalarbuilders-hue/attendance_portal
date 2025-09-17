@@ -1109,12 +1109,18 @@ def forgot_password_send_otp():
     try:
         # Check if user has changed their password before (has actual email stored)
         stored_email = db.get_actual_email(email)
+        print(f"DEBUG: Forgot password for {email}")
+        print(f"DEBUG: From user_password_status: {stored_email}")
         
         # If not found in password status, check OTP verification table
         if not stored_email:
             stored_email = db.get_actual_email_from_otp(email)
+            print(f"DEBUG: From otp_verification: {stored_email}")
+        
+        print(f"DEBUG: Final stored_email: {stored_email}")
         
         if not stored_email:
+            print(f"DEBUG: No stored email found for {email}, denying forgot password")
             return jsonify({
                 'success': False, 
                 'message': 'Password reset is only available for users who have changed their password at least once. Please contact your administrator.'
