@@ -1031,22 +1031,26 @@ def get_current_password():
         print(f"DEBUG: Available emails: {all_emails}")
         return jsonify({'success': False, 'message': f'Employee not found for email: {email}'})
     
-    # Get the current password from password history (most recent)
-    history = db.get_password_history(limit=1000)  # Get all history to find this employee
-    current_password = "Balar123"  # Default password
+    # Check if user has changed their password
+    has_changed_password = db.has_user_changed_password(email)
     
-    print(f"DEBUG: Looking for password for email: {email}")
-    print(f"DEBUG: Password history entries: {len(history)}")
+    if has_changed_password:
+        # User has changed password, get from password history
+        history = db.get_password_history(limit=1000)
+        current_password = "Balar123"  # Default fallback
+        
+        print(f"DEBUG: User has changed password, looking in history for: {email}")
+        for entry in history:
+            if entry['email'] == email:
+                current_password = entry['current_password']
+                print(f"DEBUG: Found changed password: {current_password}")
+                break
+    else:
+        # User still has default password
+        current_password = "Balar123"
+        print(f"DEBUG: User has default password: {current_password}")
     
-    # Find the most recent password for this employee
-    for entry in history:
-        print(f"DEBUG: Checking entry for {entry['email']}")
-        if entry['email'] == email:
-            current_password = entry['current_password']
-            print(f"DEBUG: Found password: {current_password}")
-            break
-    
-    print(f"DEBUG: Final password: {current_password}")
+    print(f"DEBUG: Final password for {email}: {current_password}")
     
     return jsonify({
         'success': True, 
