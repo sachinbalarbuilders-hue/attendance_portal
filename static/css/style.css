@@ -1864,6 +1864,7 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     body.mobile:not(:has(#login-section)) {
         min-width: 0 !important;
         overflow-x: hidden !important;
+        background: #ffffff !important;
     }
     
     .main-header:not(#login-section .main-header) {
@@ -2005,6 +2006,7 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     body.mobile {
         min-width: 0 !important;
         overflow-x: hidden !important;
+        background: #ffffff !important;
     }
     
     .login-container {
