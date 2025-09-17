@@ -11,9 +11,9 @@ STEP 2: Navigate to Your Project
 cd /home/checkattendance/attendance_portal
 
 STEP 3: Load Maintenance Commands
-exec(open('maintenance_config.py').read())
 python3 -c "exec(open('maintenance_config.py').read()); disable()"
 python3 -c "exec(open('maintenance_config.py').read()); status()"
+python3 -c "exec(open('maintenance_config.py').read()); enable()"
 
 STEP 4: Use These Commands
 
