@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 import tempfile
 from database import db
 from utils.auth import EmployeeDatabase
+from email_service import email_service
+import gmail_config  # This will set up Gmail credentials
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
@@ -846,9 +848,118 @@ def logout():
     session.clear()
     return jsonify({'success': True})
 
+@app.route('/api/send-otp', methods=['POST'])
+def send_otp():
+    """Send OTP to user's email for password change verification"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    data = request.json
+    actual_email = data.get('actual_email')
+    
+    if not actual_email:
+        return jsonify({'success': False, 'message': 'Email address is required'})
+    
+    # Validate email format
+    if '@' not in actual_email or '.' not in actual_email.split('@')[1]:
+        return jsonify({'success': False, 'message': 'Please enter a valid email address'})
+    
+    email = session['user_email']
+    user_data = session['user_data']
+    
+    try:
+        # Generate OTP
+        otp_code = email_service.generate_otp()
+        
+        # Store OTP in database
+        if db.store_otp(email, otp_code, actual_email):
+            # Send OTP email
+            if email_service.send_otp_email(actual_email, otp_code, user_data.get('name', 'Employee')):
+                return jsonify({
+                    'success': True, 
+                    'message': f'OTP sent to {actual_email}',
+                    'email': actual_email
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Failed to send OTP email'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to generate OTP'})
+            
+    except Exception as e:
+        print(f"Error sending OTP: {e}")
+        return jsonify({'success': False, 'message': 'Error sending OTP'})
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp():
+    """Verify OTP and change password"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    data = request.json
+    otp_code = data.get('otp_code')
+    new_password = data.get('new_password')
+    
+    if not otp_code:
+        return jsonify({'success': False, 'message': 'OTP code is required'})
+    
+    if not new_password:
+        return jsonify({'success': False, 'message': 'New password is required'})
+    
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'Password must be at least 6 characters long'})
+    
+    email = session['user_email']
+    user_data = session['user_data']
+    
+    try:
+        # Verify OTP
+        if db.verify_otp(email, otp_code):
+            # Get the actual email from OTP record
+            actual_email = db.get_actual_email(email)
+            
+            # Change password
+            if employee_db.reset_password(email, new_password):
+                # Log password change for admin visibility
+                db.log_password_change(
+                    email=email,
+                    employee_name=user_data.get('name', 'Unknown'),
+                    current_password=new_password,
+                    changed_by='employee'
+                )
+                # Mark that user has changed their password and store actual email
+                db.mark_password_as_changed(email, actual_email)
+                
+                # Clean up expired OTPs
+                db.cleanup_expired_otps()
+                
+                return jsonify({'success': True, 'message': 'Password changed successfully'})
+            else:
+                return jsonify({'success': False, 'message': 'Failed to change password'})
+        else:
+            return jsonify({'success': False, 'message': 'Invalid or expired OTP'})
+            
+    except Exception as e:
+        print(f"Error verifying OTP: {e}")
+        return jsonify({'success': False, 'message': 'Error verifying OTP'})
+
+@app.route('/api/get-stored-email')
+def get_stored_email():
+    """Get the stored email address for the current user"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    email = session['user_email']
+    actual_email = db.get_actual_email(email)
+    
+    return jsonify({
+        'success': True,
+        'has_stored_email': actual_email is not None,
+        'email': actual_email
+    })
+
 @app.route('/api/change-password', methods=['POST'])
 def change_password():
-    """Change password for logged-in user"""
+    """Legacy change password endpoint - kept for backward compatibility"""
     if 'user_data' not in session:
         return jsonify({'success': False, 'message': 'Not logged in'})
     

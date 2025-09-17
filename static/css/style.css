@@ -2926,6 +2926,116 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     font-size: 0.85rem;
 }
 
+/* OTP Password Change Modal Styles */
+.password-step {
+    margin-bottom: 1.5rem;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.step-number {
+    background: #667eea;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.step-text {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.email-display {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.email-display i {
+    color: #667eea;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.email-display span {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.email-note {
+    margin-top: 0.5rem;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.email-note i {
+    color: #667eea;
+    margin-right: 0.25rem;
+}
+
+.otp-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: #e8f4fd;
+    border-radius: 6px;
+    border-left: 3px solid #3498db;
+}
+
+.otp-info small {
+    color: #2c3e50;
+    font-size: 0.85rem;
+}
+
+.otp-info small i {
+    color: #3498db;
+    margin-right: 0.25rem;
+}
+
+.resend-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.resend-btn:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.resend-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Password History Modal */
 .password-history-modal-content {
     max-width: 800px;

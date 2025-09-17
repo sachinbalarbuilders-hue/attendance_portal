@@ -104,7 +104,28 @@ class AttendanceDatabase:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT UNIQUE NOT NULL,
                     has_changed_password BOOLEAN DEFAULT 0,
+                    actual_email TEXT,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Add actual_email column if it doesn't exist (for existing databases)
+            try:
+                cursor.execute('ALTER TABLE user_password_status ADD COLUMN actual_email TEXT')
+            except sqlite3.OperationalError:
+                # Column already exists, ignore
+                pass
+            
+            # Create OTP table for password change verification
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS otp_verification (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    otp_code TEXT NOT NULL,
+                    actual_email TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    expires_at DATETIME NOT NULL,
+                    is_used BOOLEAN DEFAULT 0
                 )
             ''')
             
@@ -426,20 +447,92 @@ class AttendanceDatabase:
             print(f"Error checking password change status: {e}")
             return False
     
-    def mark_password_as_changed(self, email: str) -> bool:
+    def mark_password_as_changed(self, email: str, actual_email: str = None) -> bool:
         """Mark that user has changed their password"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
                     INSERT OR REPLACE INTO user_password_status 
-                    (email, has_changed_password, updated_at)
-                    VALUES (?, 1, CURRENT_TIMESTAMP)
-                ''', (email,))
+                    (email, has_changed_password, actual_email, updated_at)
+                    VALUES (?, 1, ?, CURRENT_TIMESTAMP)
+                ''', (email, actual_email))
                 conn.commit()
                 return True
         except Exception as e:
             print(f"Error marking password as changed: {e}")
+            return False
+    
+    def get_actual_email(self, email: str) -> Optional[str]:
+        """Get the actual email address for a user"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT actual_email FROM user_password_status 
+                    WHERE email = ?
+                ''', (email,))
+                result = cursor.fetchone()
+                return result[0] if result and result[0] else None
+        except Exception as e:
+            print(f"Error getting actual email: {e}")
+            return None
+    
+    def store_otp(self, email: str, otp_code: str, actual_email: str, expires_minutes: int = 5) -> bool:
+        """Store OTP code for verification"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                # Calculate expiration time
+                expires_at = datetime.datetime.now() + datetime.timedelta(minutes=expires_minutes)
+                
+                cursor.execute('''
+                    INSERT INTO otp_verification 
+                    (email, otp_code, actual_email, expires_at)
+                    VALUES (?, ?, ?, ?)
+                ''', (email, otp_code, actual_email, expires_at))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error storing OTP: {e}")
+            return False
+    
+    def verify_otp(self, email: str, otp_code: str) -> bool:
+        """Verify OTP code"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT id, actual_email FROM otp_verification 
+                    WHERE email = ? AND otp_code = ? AND is_used = 0 AND expires_at > CURRENT_TIMESTAMP
+                ''', (email, otp_code))
+                result = cursor.fetchone()
+                
+                if result:
+                    # Mark OTP as used
+                    cursor.execute('''
+                        UPDATE otp_verification SET is_used = 1 WHERE id = ?
+                    ''', (result[0],))
+                    conn.commit()
+                    return True
+                return False
+        except Exception as e:
+            print(f"Error verifying OTP: {e}")
+            return False
+    
+    def cleanup_expired_otps(self) -> bool:
+        """Clean up expired OTPs"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    DELETE FROM otp_verification 
+                    WHERE expires_at < CURRENT_TIMESTAMP OR is_used = 1
+                ''')
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error cleaning up expired OTPs: {e}")
             return False
     
     def log_login(self, email: str, user_name: str, is_admin: bool, ip_address: str = None, user_agent: str = None) -> bool:

@@ -597,7 +597,10 @@ async function logout() {
     }
 }
 
-// Password change functionality
+// Password change functionality with OTP
+
+let passwordChangeStep = 1;
+let currentActualEmail = '';
 
 function showChangePasswordModal() {
     console.log('DEBUG: showChangePasswordModal called');
@@ -608,11 +611,307 @@ function showChangePasswordModal() {
     }
     console.log('DEBUG: Modal found, showing...');
     modal.style.display = 'flex';
+    
+    // Reset to step 1
+    passwordChangeStep = 1;
+    currentActualEmail = '';
+    
+    // Check if user has stored email
+    checkStoredEmail();
+}
+
+async function checkStoredEmail() {
+    try {
+        const response = await fetch('/api/get-stored-email');
+        const result = await response.json();
+        
+        if (result.success && result.has_stored_email) {
+            // User has stored email, show email display step
+            showEmailDisplayStep(result.email);
+        } else {
+            // User doesn't have stored email, show email input step
+            showEmailInputStep();
+        }
+    } catch (error) {
+        console.error('Error checking stored email:', error);
+        showEmailInputStep();
+    }
+}
+
+function showEmailInputStep() {
+    // Hide all steps
+    hideAllPasswordSteps();
+    
+    // Show email input step
+    document.getElementById('email-input-step').style.display = 'block';
+    
+    // Update button
+    const btn = document.getElementById('password-modal-btn');
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+    btn.onclick = handlePasswordChangeStep;
+    
     // Clear inputs
-    const newPasswordInput = document.getElementById('new-password-input');
-    const confirmPasswordInput = document.getElementById('confirm-password-input');
-    if (newPasswordInput) newPasswordInput.value = '';
-    if (confirmPasswordInput) confirmPasswordInput.value = '';
+    document.getElementById('actual-email-input').value = '';
+}
+
+function showEmailDisplayStep(email) {
+    // Hide all steps
+    hideAllPasswordSteps();
+    
+    // Show email display step
+    document.getElementById('email-display-step').style.display = 'block';
+    document.getElementById('stored-email-display').textContent = email;
+    
+    // Update button
+    const btn = document.getElementById('password-modal-btn');
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+    btn.onclick = handlePasswordChangeStep;
+    
+    currentActualEmail = email;
+}
+
+function showOTPStep(email) {
+    // Hide all steps
+    hideAllPasswordSteps();
+    
+    // Show OTP input step
+    document.getElementById('otp-input-step').style.display = 'block';
+    document.getElementById('otp-email-display').textContent = email;
+    
+    // Update button
+    const btn = document.getElementById('password-modal-btn');
+    btn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+    btn.onclick = handlePasswordChangeStep;
+    
+    // Clear OTP input
+    document.getElementById('otp-input').value = '';
+    
+    // Focus on OTP input
+    setTimeout(() => {
+        document.getElementById('otp-input').focus();
+    }, 100);
+}
+
+function showNewPasswordStep() {
+    // Hide all steps
+    hideAllPasswordSteps();
+    
+    // Show new password step
+    document.getElementById('new-password-step').style.display = 'block';
+    
+    // Update button
+    const btn = document.getElementById('password-modal-btn');
+    btn.innerHTML = '<i class="fas fa-key"></i> Change Password';
+    btn.onclick = handlePasswordChangeStep;
+    
+    // Clear password inputs
+    document.getElementById('new-password-input').value = '';
+    document.getElementById('confirm-password-input').value = '';
+}
+
+function hideAllPasswordSteps() {
+    document.getElementById('email-input-step').style.display = 'none';
+    document.getElementById('email-display-step').style.display = 'none';
+    document.getElementById('otp-input-step').style.display = 'none';
+    document.getElementById('new-password-step').style.display = 'none';
+}
+
+async function handlePasswordChangeStep() {
+    const btn = document.getElementById('password-modal-btn');
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+        
+        if (passwordChangeStep === 1) {
+            // Step 1: Send OTP
+            await sendOTP();
+        } else if (passwordChangeStep === 2) {
+            // Step 2: Verify OTP
+            await verifyOTP();
+        } else if (passwordChangeStep === 3) {
+            // Step 3: Change Password
+            await changePasswordWithOTP();
+        }
+    } catch (error) {
+        console.error('Error in password change step:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function sendOTP() {
+    let email;
+    
+    if (currentActualEmail) {
+        // Using stored email
+        email = currentActualEmail;
+    } else {
+        // Get email from input
+        email = document.getElementById('actual-email-input').value.trim();
+        
+        if (!email) {
+            showNotification('Please enter your company email address', 'error');
+            return;
+        }
+        
+        // Basic email validation
+        if (!email.includes('@') || !email.includes('.')) {
+            showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+        
+        currentActualEmail = email;
+    }
+    
+    try {
+        const response = await fetch('/api/send-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                actual_email: email 
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            passwordChangeStep = 2;
+            showOTPStep(email);
+            showNotification(`OTP sent to ${email}`, 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error sending OTP:', error);
+        showNotification('Failed to send OTP. Please try again.', 'error');
+    }
+}
+
+async function verifyOTP() {
+    const otpCode = document.getElementById('otp-input').value.trim();
+    
+    if (!otpCode) {
+        showNotification('Please enter the OTP code', 'error');
+        return;
+    }
+    
+    if (otpCode.length !== 6) {
+        showNotification('OTP must be 6 digits', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                otp_code: otpCode,
+                new_password: 'temp_password' // We'll change this in the next step
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            passwordChangeStep = 3;
+            showNewPasswordStep();
+            showNotification('OTP verified successfully! Now set your new password.', 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error verifying OTP:', error);
+        showNotification('Failed to verify OTP. Please try again.', 'error');
+    }
+}
+
+async function changePasswordWithOTP() {
+    const newPassword = document.getElementById('new-password-input').value.trim();
+    const confirmPassword = document.getElementById('confirm-password-input').value.trim();
+    
+    // Validation
+    if (!newPassword || !confirmPassword) {
+        showNotification('Please fill in all password fields', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('Passwords do not match', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('Password must be at least 6 characters long', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                otp_code: document.getElementById('otp-input').value.trim(),
+                new_password: newPassword
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Password changed successfully!', 'success');
+            hideChangePasswordModal();
+            addChangePasswordButtonToTop();
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showNotification('Failed to change password. Please try again.', 'error');
+    }
+}
+
+async function resendOTP() {
+    const btn = document.querySelector('.resend-btn');
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+        
+        const response = await fetch('/api/send-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                actual_email: currentActualEmail 
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(`OTP resent to ${currentActualEmail}`, 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error resending OTP:', error);
+        showNotification('Failed to resend OTP. Please try again.', 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
 
 function hideChangePasswordModal() {
@@ -633,12 +932,19 @@ function closePasswordChangeDialog() {
 
 function skipPasswordChange() {
     hideChangePasswordModal();
-    // Add change password button next to user name
+    // Add change password button next to user name (only for non-admin users)
     addChangePasswordButtonToTop();
-    showNotification('You can change your password anytime using the button next to your name.', 'info');
+    if (!currentUser || !currentUser.is_admin) {
+        showNotification('You can change your password anytime using the button next to your name.', 'info');
+    }
 }
 
 function addChangePasswordButtonToTop() {
+    // Don't show change password button for admin users
+    if (currentUser && currentUser.is_admin) {
+        return;
+    }
+    
     const userInfoElement = document.getElementById('user-info');
     if (userInfoElement && !userInfoElement.querySelector('.change-password-btn-top')) {
         const changePasswordBtn = document.createElement('button');
@@ -709,8 +1015,8 @@ async function submitPasswordChange() {
         if (result.success) {
             showNotification('Password changed successfully!', 'success');
             hideChangePasswordModal();
-            // Remove change password button from top if it exists
-            removeChangePasswordButtonFromTop();
+            // Keep the change password button available for future changes
+            addChangePasswordButtonToTop();
         } else {
             showNotification(result.message, 'error');
         }
@@ -1054,11 +1360,16 @@ async function showDashboard() {
     
     // Check if user needs password change and show dialog directly
     console.log('DEBUG: Checking password change flag:', currentUser.needs_password_change);
-    if (currentUser.needs_password_change) {
+    if (currentUser.needs_password_change && !currentUser.is_admin) {
         console.log('DEBUG: Showing change password modal');
         setTimeout(() => {
             showChangePasswordModal();
         }, 1000); // Show after 1 second delay
+    } else if (!currentUser.is_admin) {
+        // If user doesn't need password change and is not admin, add the change password button
+        setTimeout(() => {
+            addChangePasswordButtonToTop();
+        }, 1000);
     }
     
     // Add manual trigger for testing (remove in production)

@@ -436,27 +436,80 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-key"></i> Change Password</h3>
-                <p class="modal-subtitle">We recommend changing your default password for better security</p>
+                <p class="modal-subtitle">Secure password change with email verification</p>
                 <button class="modal-close" onclick="closePasswordChangeDialog()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="new-password-input" placeholder="Enter new password" required>
+                <!-- Step 1: Email Input (for first time users) -->
+                <div id="email-input-step" class="password-step">
+                    <div class="step-indicator">
+                        <span class="step-number">1</span>
+                        <span class="step-text">Enter Company Email</span>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="actual-email-input" placeholder="Enter your company email address" required>
+                    </div>
+                    <div class="email-note">
+                        <small><i class="fas fa-info-circle"></i> We'll send an OTP to this email for verification</small>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="confirm-password-input" placeholder="Confirm new password" required>
+
+                <!-- Step 2: Email Display (for returning users) -->
+                <div id="email-display-step" class="password-step" style="display: none;">
+                    <div class="step-indicator">
+                        <span class="step-number">1</span>
+                        <span class="step-text">Verify Email</span>
+                    </div>
+                    <div class="email-display">
+                        <i class="fas fa-envelope"></i>
+                        <span id="stored-email-display"></span>
+                    </div>
+                    <div class="email-note">
+                        <small><i class="fas fa-info-circle"></i> We'll send an OTP to this email</small>
+                    </div>
                 </div>
-                <div class="password-requirements">
-                    <small>Password must be at least 6 characters long</small>
+
+                <!-- Step 3: OTP Input -->
+                <div id="otp-input-step" class="password-step" style="display: none;">
+                    <div class="step-indicator">
+                        <span class="step-number">2</span>
+                        <span class="step-text">Enter OTP</span>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-shield-alt"></i>
+                        <input type="text" id="otp-input" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                    </div>
+                    <div class="otp-info">
+                        <small><i class="fas fa-clock"></i> OTP sent to <span id="otp-email-display"></span></small>
+                        <button onclick="resendOTP()" class="resend-btn">Resend OTP</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: New Password -->
+                <div id="new-password-step" class="password-step" style="display: none;">
+                    <div class="step-indicator">
+                        <span class="step-number">3</span>
+                        <span class="step-text">Set New Password</span>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="new-password-input" placeholder="Enter new password" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirm-password-input" placeholder="Confirm new password" required>
+                    </div>
+                    <div class="password-requirements">
+                        <small>Password must be at least 6 characters long</small>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button onclick="submitPasswordChange()" class="btn-primary">
-                    <i class="fas fa-check"></i> Change Password
+                <button id="password-modal-btn" onclick="handlePasswordChangeStep()" class="btn-primary">
+                    <i class="fas fa-check"></i> Send OTP
                 </button>
                 <button onclick="skipPasswordChange()" class="btn-secondary">
                     <i class="fas fa-times"></i> Skip for Now
@@ -560,7 +613,7 @@
     </div>
 
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ range(1000, 9999) | random }}"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>
