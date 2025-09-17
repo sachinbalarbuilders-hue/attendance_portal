@@ -3509,6 +3509,12 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     gap: 15px;
 }
 
+.maintenance-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 .maintenance-control-content p {
     color: #7f8c8d;
     margin: 0;
@@ -3542,6 +3548,33 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     font-size: 1.1em;
 }
 
+.clear-cache-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    font-size: 0.9em;
+}
+
+.clear-cache-btn:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.clear-cache-btn i {
+    font-size: 1em;
+}
+
+
 /* Responsive design for maintenance control */
 @media (max-width: 768px) {
     .maintenance-control-content {
@@ -3554,8 +3587,15 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         margin-bottom: 10px;
     }
     
-    .maintenance-link {
+    .maintenance-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .maintenance-link,
+    .clear-cache-btn {
         justify-content: center;
+        width: 100%;
     }
 }
 
@@ -3583,5 +3623,270 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     0% { opacity: 1; }
     50% { opacity: 0.7; }
     100% { opacity: 1; }
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+}
+
+.notification-error {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.notification-content {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.notification-message {
+    flex: 1;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.notification-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive notifications */
+@media (max-width: 768px) {
+    .notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+}
+
+
+/* Forgot Password Styles */
+.forgot-password-section {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.forgot-password-link {
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.forgot-password-link:hover {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.forgot-password-link i {
+    font-size: 0.8em;
+}
+
+/* Forgot Password Modal Styles */
+#forgot-password-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+}
+
+#forgot-password-modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#forgot-password-modal .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    margin: auto;
+}
+
+.forgot-step {
+    display: block;
+}
+
+.forgot-step .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.forgot-step .step-number {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.forgot-step .step-text {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.forgot-step .step-description {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.forgot-step .otp-info {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    color: #1565c0;
+    font-size: 0.9em;
+}
+
+.forgot-step .otp-info i {
+    margin-right: 8px;
+    color: #1976d2;
+}
+
+.forgot-step .otp-timer {
+    font-weight: 600;
+    color: #d32f2f;
+}
+
+.forgot-step .resend-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.forgot-step .resend-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+.forgot-step .error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 15px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.forgot-step .success-message {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 15px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    
+    .attendance-percentage {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .forgot-step .step-indicator {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .forgot-step .step-number {
+        width: 30px;
+        height: 30px;
+        font-size: 1em;
+    }
+    
+    .forgot-step .step-text {
+        font-size: 1.1em;
+    }
 }
 

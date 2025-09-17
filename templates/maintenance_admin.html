@@ -117,6 +117,26 @@
             transform: translateY(-2px);
         }
 
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            border-color: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .danger-section {
+            margin-top: 40px;
+            padding: 20px;
+            border: 2px dashed #dc3545;
+            border-radius: 10px;
+            background: #fff5f5;
+        }
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -201,6 +221,17 @@
             </button>
             <button class="btn btn-disable" id="disableBtn" onclick="toggleMaintenance('disable')">
                 Disable Maintenance
+            </button>
+        </div>
+        
+        <div class="danger-section">
+            <h3 style="color: #dc3545; margin: 30px 0 15px 0;">⚠️ DANGER ZONE</h3>
+            <p style="color: #666; margin-bottom: 20px; font-size: 0.9em;">
+                The following action will permanently delete ALL attendance records from the database. This cannot be undone!<br>
+                <strong>Note:</strong> Employee accounts, passwords, and login logs will be preserved.
+            </p>
+            <button class="btn btn-danger" id="clearAttendanceBtn" onclick="clearAttendanceRecords()">
+                🗑️ Clear Attendance Records
             </button>
         </div>
         
@@ -295,6 +326,59 @@
             } catch (error) {
                 console.error('Error toggling maintenance:', error);
                 showMessage('Error: ' + error.message, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Clear attendance records function
+        async function clearAttendanceRecords() {
+            // Double confirmation
+            const confirm1 = confirm('⚠️ WARNING: This will permanently delete ALL attendance records!\n\nThis includes:\n- All attendance data\n- All punch-in/punch-out records\n- All status records\n- All attendance history\n\nThis action CANNOT be undone!\n\nNote: Employee accounts, passwords, and login logs will be preserved.\n\nAre you absolutely sure?');
+            
+            if (!confirm1) {
+                return;
+            }
+            
+            const confirm2 = confirm('🚨 FINAL WARNING 🚨\n\nYou are about to PERMANENTLY DELETE ALL ATTENDANCE RECORDS!\n\nType "CLEAR ATTENDANCE" to confirm:');
+            
+            if (!confirm2) {
+                return;
+            }
+            
+            const confirmText = prompt('Type "CLEAR ATTENDANCE" (exactly as shown) to proceed:');
+            
+            if (confirmText !== 'CLEAR ATTENDANCE') {
+                showMessage('Attendance clear cancelled. Confirmation text did not match.', 'error');
+                return;
+            }
+            
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            
+            // Show loading
+            loading.style.display = 'block';
+            message.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/admin/clear-attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Attendance records cleared successfully! All attendance data has been permanently deleted.', 'success');
+                } else {
+                    throw new Error(data.message);
+                }
+                
+            } catch (error) {
+                console.error('Error clearing attendance records:', error);
+                showMessage('Error clearing attendance records: ' + error.message, 'error');
             } finally {
                 loading.style.display = 'none';
             }

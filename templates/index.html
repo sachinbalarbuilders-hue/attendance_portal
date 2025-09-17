@@ -50,7 +50,6 @@
                 </div>
                 
                 <div id="login-form" class="login-form">
-                    <h3><i class="fas fa-lock"></i> Welcome Back</h3>
                     <div class="input-group">
                         <i class="fas fa-envelope"></i>
                         <input type="email" id="email" placeholder="Email Address" required>
@@ -79,6 +78,12 @@
                         <button onclick="login()" class="btn-primary">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </button>
+                    </div>
+                    
+                    <div class="forgot-password-section">
+                        <a href="#" onclick="showForgotPasswordModal(); return false;" class="forgot-password-link">
+                            <i class="fas fa-key"></i> Forgot Password?
+                        </a>
                     </div>
                 </div>
 
@@ -115,9 +120,14 @@
                         <h3><i class="fas fa-wrench"></i> System Maintenance</h3>
                         <div class="maintenance-control-content">
                             <p>Control maintenance mode for system updates</p>
-                            <a href="/admin/maintenance" class="maintenance-link" target="_blank">
-                                <i class="fas fa-cog"></i> Open Maintenance Control
-                            </a>
+                            <div class="maintenance-buttons">
+                                <a href="/admin/maintenance" class="maintenance-link" target="_blank">
+                                    <i class="fas fa-cog"></i> Open Maintenance Control
+                                </a>
+                                <button onclick="clearBrowserCache()" class="clear-cache-btn">
+                                    <i class="fas fa-trash-alt"></i> Clear Cache
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -561,6 +571,7 @@
         </div>
     </div>
 
+
     <!-- Login Logs Modal -->
     <div id="logs-modal" class="modal" style="display: none;">
         <div class="modal-content logs-modal-content">
@@ -628,6 +639,92 @@
         </div>
     </div>
 
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Reset Password</h3>
+                <button class="modal-close" onclick="closeForgotPasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: Email Input -->
+                <div id="forgot-email-step" class="forgot-step">
+                    <div class="step-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-text">Enter Email</div>
+                    </div>
+                    <div class="password-step">
+                        <label for="forgot-email">Email Address:</label>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="forgot-email" placeholder="Enter your company email address" required>
+                        </div>
+                        <p class="step-description">Enter your actual company email address (the one you provided when changing your password) to receive a password reset code. <strong>Note: This feature is only available for users who have changed their password at least once.</strong></p>
+                        <div class="button-group">
+                            <button onclick="sendForgotPasswordOTP()" class="btn-primary">
+                                <i class="fas fa-paper-plane"></i> Send Reset Code
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: OTP Verification -->
+                <div id="forgot-otp-step" class="forgot-step" style="display: none;">
+                    <div class="step-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-text">Verify Code</div>
+                    </div>
+                    <div class="password-step">
+                        <label for="forgot-otp">Enter Verification Code:</label>
+                        <div class="input-group">
+                            <i class="fas fa-shield-alt"></i>
+                            <input type="text" id="forgot-otp" placeholder="Enter 6-digit code" maxlength="6" required>
+                        </div>
+                        <p class="otp-info">
+                            <i class="fas fa-info-circle"></i> 
+                            A 6-digit verification code has been sent to your email. 
+                            <span id="forgot-otp-timer" class="otp-timer"></span>
+                        </p>
+                        <div class="button-group">
+                            <button onclick="verifyForgotPasswordOTP()" class="btn-primary">
+                                <i class="fas fa-check"></i> Verify Code
+                            </button>
+                            <button onclick="resendForgotPasswordOTP()" class="btn-secondary resend-btn">
+                                <i class="fas fa-redo"></i> Resend Code
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: New Password -->
+                <div id="forgot-new-password-step" class="forgot-step" style="display: none;">
+                    <div class="step-indicator">
+                        <div class="step-number">3</div>
+                        <div class="step-text">New Password</div>
+                    </div>
+                    <div class="password-step">
+                        <label for="forgot-new-password">New Password:</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="forgot-new-password" placeholder="Enter new password" required>
+                        </div>
+                        <label for="forgot-confirm-password">Confirm New Password:</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="forgot-confirm-password" placeholder="Confirm new password" required>
+                        </div>
+                        <div class="button-group">
+                            <button onclick="resetPassword()" class="btn-primary">
+                                <i class="fas fa-check"></i> Reset Password
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}?v={{ range(1000, 9999) | random }}"></script>
     
@@ -721,6 +818,221 @@
         
         // Start checking immediately
         startMaintenanceChecker();
+        
+        // Clear Browser Cache Function
+        async function clearBrowserCache() {
+            try {
+                const response = await fetch('/api/clear-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    showNotification('✅ Cache cleared successfully! Page will reload to apply changes.', 'success');
+                    
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        window.location.reload(true); // Force reload from server
+                    }, 2000);
+                } else {
+                    showNotification('❌ Failed to clear cache: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error clearing cache:', error);
+                showNotification('❌ Error clearing cache: ' + error.message, 'error');
+            }
+        }
+        
+        // Show notification function
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-message">${message}</span>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Employee Data Modal Functions
+        async function showEmployeeData(employeeName) {
+            try {
+                const response = await fetch(`/api/employee-data/${encodeURIComponent(employeeName)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayEmployeeData(result.data);
+                    document.getElementById('employee-data-modal').style.display = 'flex';
+                } else {
+                    showNotification('❌ Failed to load employee data: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error loading employee data:', error);
+                showNotification('❌ Error loading employee data: ' + error.message, 'error');
+            }
+        }
+        
+        function displayEmployeeData(data) {
+            const content = document.getElementById('employee-data-content');
+            
+            content.innerHTML = `
+                <div class="employee-data-container">
+                    <!-- Employee Info Section -->
+                    <div class="employee-info-section">
+                        <div class="employee-header">
+                            <div class="employee-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="employee-details">
+                                <h4>${data.employee_name}</h4>
+                                <p class="employee-email">${data.email}</p>
+                                <div class="employee-badges">
+                                    ${data.is_t_employee ? '<span class="badge badge-t">T Employee</span>' : ''}
+                                    ${data.has_changed_password ? '<span class="badge badge-password">Password Changed</span>' : '<span class="badge badge-default">Default Password</span>'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Password Info -->
+                        <div class="password-info">
+                            <label>Current Password:</label>
+                            <div class="password-display">
+                                <input type="text" value="${data.password}" readonly>
+                                <button onclick="copyPassword('${data.password}')" class="copy-btn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistics Section -->
+                    <div class="statistics-section">
+                        <h5><i class="fas fa-chart-bar"></i> Attendance Statistics</h5>
+                        <div class="stats-grid">
+                            <div class="stat-card stat-total">
+                                <div class="stat-number">${data.statistics.total_days}</div>
+                                <div class="stat-label">Total Days</div>
+                            </div>
+                            <div class="stat-card stat-present">
+                                <div class="stat-number">${data.statistics.present_days}</div>
+                                <div class="stat-label">Present</div>
+                            </div>
+                            <div class="stat-card stat-absent">
+                                <div class="stat-number">${data.statistics.absent_days}</div>
+                                <div class="stat-label">Absent</div>
+                            </div>
+                            <div class="stat-card stat-late">
+                                <div class="stat-number">${data.statistics.late_days}</div>
+                                <div class="stat-label">Late</div>
+                            </div>
+                        </div>
+                        <div class="attendance-percentage">
+                            <div class="percentage-bar">
+                                <div class="percentage-fill" style="width: ${data.statistics.attendance_percentage}%"></div>
+                            </div>
+                            <span class="percentage-text">${data.statistics.attendance_percentage}% Attendance</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Leave Eligibility -->
+                    <div class="leave-eligibility-section">
+                        <h5><i class="fas fa-calendar-check"></i> Leave Eligibility</h5>
+                        <div class="eligibility-grid">
+                            <div class="eligibility-item ${data.leave_eligibility.PL ? 'eligible' : 'not-eligible'}">
+                                <i class="fas fa-user-clock"></i>
+                                <span>Personal Leave</span>
+                            </div>
+                            <div class="eligibility-item ${data.leave_eligibility.SL ? 'eligible' : 'not-eligible'}">
+                                <i class="fas fa-bed"></i>
+                                <span>Sick Leave</span>
+                            </div>
+                            <div class="eligibility-item ${data.leave_eligibility.WO ? 'eligible' : 'not-eligible'}">
+                                <i class="fas fa-calendar-times"></i>
+                                <span>Week Off</span>
+                            </div>
+                            <div class="eligibility-item ${data.leave_eligibility.FL ? 'eligible' : 'not-eligible'}">
+                                <i class="fas fa-star"></i>
+                                <span>Festival Leave</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Records -->
+                    <div class="recent-records-section">
+                        <h5><i class="fas fa-history"></i> Recent Attendance Records</h5>
+                        <div class="records-table">
+                            <div class="record-header">
+                                <span>Date</span>
+                                <span>Punch In</span>
+                                <span>Punch Out</span>
+                                <span>Status</span>
+                            </div>
+                            ${data.recent_records.map(record => `
+                                <div class="record-row ${getStatusClass(record.Status)}">
+                                    <span>${formatDate(record.Date)}</span>
+                                    <span>${record['Punch-In'] || '-'}</span>
+                                    <span>${record['Punch-Out'] || '-'}</span>
+                                    <span class="status-badge">${record.Status}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function closeEmployeeDataModal() {
+            document.getElementById('employee-data-modal').style.display = 'none';
+        }
+        
+        function copyPassword(password) {
+            navigator.clipboard.writeText(password).then(() => {
+                showNotification('✅ Password copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('❌ Failed to copy password', 'error');
+            });
+        }
+        
+        function getStatusClass(status) {
+            if (status === 'Present') return 'status-present';
+            if (status === 'Absent') return 'status-absent';
+            if (status.includes('Late')) return 'status-late';
+            return '';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+        }
+        
+        // Show Employee Data Modal with name input
+        function showEmployeeDataModal() {
+            const employeeName = prompt('Enter employee name to view data:');
+            if (employeeName && employeeName.trim()) {
+                showEmployeeData(employeeName.trim());
+            }
+        }
     </script>
 </body>
 </html>

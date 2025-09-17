@@ -3,6 +3,7 @@ import pandas as pd
 from openpyxl import load_workbook
 import hashlib
 import datetime
+import time
 import os
 from werkzeug.utils import secure_filename
 import tempfile
@@ -1419,6 +1420,31 @@ def toggle_maintenance():
             
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/api/admin/clear-attendance', methods=['POST'])
+def clear_attendance_records():
+    """Clear only attendance records - ADMIN ONLY"""
+    try:
+        if 'user_data' not in session:
+            return jsonify({'success': False, 'message': 'Not authenticated'})
+        
+        if not session['user_data'].get('is_admin'):
+            return jsonify({'success': False, 'message': 'Admin access required'})
+        
+        # Clear only attendance records
+        db.clear_attendance_records()
+        
+        # Log this action
+        print(f"Attendance records cleared by admin: {session['user_data'].get('name', 'Unknown')} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Attendance records cleared successfully. All attendance data has been permanently deleted.'
+        })
+        
+    except Exception as e:
+        print(f"Error clearing attendance records: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while clearing attendance records'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

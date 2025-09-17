@@ -587,7 +587,24 @@ class AttendanceDatabase:
         except Exception as e:
             print(f"Error getting login logs: {e}")
             return []
-
+    
+    def clear_attendance_records(self) -> bool:
+        """Clear only attendance records - keeps all other data"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # Clear only attendance records
+                cursor.execute('DELETE FROM attendance_records')
+                print("Cleared attendance_records table")
+                
+                conn.commit()
+                print("Attendance records cleared successfully")
+                return True
+                
+        except Exception as e:
+            print(f"Error clearing attendance records: {e}")
+            return False
 
 
 # Global database instance

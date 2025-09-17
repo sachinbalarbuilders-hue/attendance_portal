@@ -249,13 +249,13 @@ function handleDesktopComments() {
 
 function showDesktopTooltip(event) {
     try {
-        const cell = event.currentTarget;
+    const cell = event.currentTarget;
         let comment = cell.getAttribute('data-comment');
         
         // Decode HTML entities
         comment = comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-        
-        if (!comment || !comment.trim()) return;
+    
+    if (!comment || !comment.trim()) return;
     
     // Remove any existing tooltips
     const existingTooltip = document.querySelector('.desktop-tooltip');
@@ -708,7 +708,7 @@ function showNewPasswordStep() {
     
     // Update button
     const btn = document.getElementById('password-modal-btn');
-    btn.innerHTML = '<i class="fas fa-key"></i> Change Password';
+    btn.innerHTML = '<i class="fas fa-check"></i> Submit';
     btn.onclick = handlePasswordChangeStep;
     
     // Clear password inputs
@@ -814,14 +814,13 @@ async function verifyOTP() {
     }
     
     try {
-        const response = await fetch('/api/verify-otp', {
+        const response = await fetch('/api/verify-otp-only', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                otp_code: otpCode,
-                new_password: 'temp_password' // We'll change this in the next step
+                otp_code: otpCode
             })
         });
         
@@ -861,13 +860,12 @@ async function changePasswordWithOTP() {
     }
     
     try {
-        const response = await fetch('/api/verify-otp', {
+        const response = await fetch('/api/change-password-final', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                otp_code: document.getElementById('otp-input').value.trim(),
                 new_password: newPassword
             })
         });
@@ -949,11 +947,16 @@ function skipPasswordChange() {
 function addChangePasswordButtonToTop() {
     // Don't show change password button for admin users
     if (currentUser && currentUser.is_admin) {
+        console.log('DEBUG: Skipping change password button for admin user');
         return;
     }
     
     const userInfoElement = document.getElementById('user-info');
+    console.log('DEBUG: userInfoElement found:', !!userInfoElement);
+    console.log('DEBUG: currentUser:', currentUser);
+    
     if (userInfoElement && !userInfoElement.querySelector('.change-password-btn-top')) {
+        console.log('DEBUG: Adding change password button to top');
         const changePasswordBtn = document.createElement('button');
         changePasswordBtn.className = 'change-password-btn-top';
         changePasswordBtn.innerHTML = '<i class="fas fa-key"></i> Change Password';
@@ -976,6 +979,9 @@ function addChangePasswordButtonToTop() {
             changePasswordBtn.style.backgroundColor = '#ff6b6b';
         });
         userInfoElement.appendChild(changePasswordBtn);
+        console.log('DEBUG: Change password button added successfully');
+    } else {
+        console.log('DEBUG: Change password button already exists or user-info element not found');
     }
 }
 
@@ -1368,12 +1374,14 @@ async function showDashboard() {
     // Check if user needs password change and show dialog directly
     console.log('DEBUG: Checking password change flag:', currentUser.needs_password_change);
     if (currentUser.needs_password_change && !currentUser.is_admin) {
-        console.log('DEBUG: Showing change password modal');
+        console.log('DEBUG: Showing change password modal for first-time users');
         setTimeout(() => {
             showChangePasswordModal();
         }, 1000); // Show after 1 second delay
-    } else if (!currentUser.is_admin) {
-        // If user doesn't need password change and is not admin, add the change password button
+    }
+    
+    // Always add change password button for non-admin users (if not already shown)
+    if (!currentUser.is_admin) {
         setTimeout(() => {
             addChangePasswordButtonToTop();
         }, 1000);
@@ -2970,6 +2978,299 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     
-    
 });
+
+// **FORGOT PASSWORD FUNCTIONALITY - GLOBAL FUNCTIONS**
+
+// Forgot Password Modal Functions
+function showForgotPasswordModal() {
+    const modal = document.getElementById('forgot-password-modal');
+    modal.classList.add('show');
+    resetForgotPasswordSteps();
+}
+
+function closeForgotPasswordModal() {
+    const modal = document.getElementById('forgot-password-modal');
+    modal.classList.remove('show');
+    resetForgotPasswordSteps();
+}
+
+function resetForgotPasswordSteps() {
+    // Show step 1, hide others
+    document.getElementById('forgot-email-step').style.display = 'block';
+    document.getElementById('forgot-otp-step').style.display = 'none';
+    document.getElementById('forgot-new-password-step').style.display = 'none';
+    
+    // Clear all inputs
+    document.getElementById('forgot-email').value = '';
+    document.getElementById('forgot-otp').value = '';
+    document.getElementById('forgot-new-password').value = '';
+    document.getElementById('forgot-confirm-password').value = '';
+    
+    // Clear any error messages
+    clearForgotPasswordErrors();
+}
+
+function clearForgotPasswordErrors() {
+    const errorElements = document.querySelectorAll('#forgot-password-modal .error-message');
+    errorElements.forEach(element => element.remove());
+}
+
+function showForgotPasswordError(message, stepId) {
+    clearForgotPasswordErrors();
+    const step = document.getElementById(stepId);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+    step.appendChild(errorDiv);
+}
+
+function showForgotPasswordSuccess(message, stepId) {
+    clearForgotPasswordErrors();
+    const step = document.getElementById(stepId);
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+    step.appendChild(successDiv);
+}
+
+// Step 1: Send OTP
+function sendForgotPasswordOTP() {
+    const email = document.getElementById('forgot-email').value.trim();
+    
+    if (!email) {
+        showForgotPasswordError('Please enter your email address', 'forgot-email-step');
+        return;
+    }
+    
+    if (!isValidEmail(email)) {
+        showForgotPasswordError('Please enter a valid email address', 'forgot-email-step');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    button.disabled = true;
+    
+    fetch('/api/forgot-password/send-otp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showForgotPasswordSuccess(data.message, 'forgot-email-step');
+            // Move to step 2
+            setTimeout(() => {
+                document.getElementById('forgot-email-step').style.display = 'none';
+                document.getElementById('forgot-otp-step').style.display = 'block';
+                startForgotPasswordTimer();
+            }, 1500);
+        } else {
+            showForgotPasswordError(data.message, 'forgot-email-step');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showForgotPasswordError('An error occurred. Please try again.', 'forgot-email-step');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Step 2: Verify OTP
+function verifyForgotPasswordOTP() {
+    const otp = document.getElementById('forgot-otp').value.trim();
+    
+    if (!otp) {
+        showForgotPasswordError('Please enter the verification code', 'forgot-otp-step');
+        return;
+    }
+    
+    if (otp.length !== 6) {
+        showForgotPasswordError('Please enter a valid 6-digit code', 'forgot-otp-step');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    button.disabled = true;
+    
+    fetch('/api/forgot-password/verify-otp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ otp: otp })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showForgotPasswordSuccess(data.message, 'forgot-otp-step');
+            // Move to step 3
+            setTimeout(() => {
+                document.getElementById('forgot-otp-step').style.display = 'none';
+                document.getElementById('forgot-new-password-step').style.display = 'block';
+            }, 1500);
+        } else {
+            showForgotPasswordError(data.message, 'forgot-otp-step');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showForgotPasswordError('An error occurred. Please try again.', 'forgot-otp-step');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Step 3: Reset Password
+function resetPassword() {
+    const newPassword = document.getElementById('forgot-new-password').value.trim();
+    const confirmPassword = document.getElementById('forgot-confirm-password').value.trim();
+    
+    if (!newPassword) {
+        showForgotPasswordError('Please enter a new password', 'forgot-new-password-step');
+        return;
+    }
+    
+    if (!confirmPassword) {
+        showForgotPasswordError('Please confirm your new password', 'forgot-new-password-step');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showForgotPasswordError('Password must be at least 6 characters long', 'forgot-new-password-step');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showForgotPasswordError('Passwords do not match', 'forgot-new-password-step');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+    button.disabled = true;
+    
+    fetch('/api/forgot-password/reset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            new_password: newPassword,
+            confirm_password: confirmPassword
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showForgotPasswordSuccess(data.message, 'forgot-new-password-step');
+            // Close modal after success
+            setTimeout(() => {
+                closeForgotPasswordModal();
+                showNotification('Password reset successfully! You can now login with your new password.', 'success');
+            }, 2000);
+        } else {
+            showForgotPasswordError(data.message, 'forgot-new-password-step');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showForgotPasswordError('An error occurred. Please try again.', 'forgot-new-password-step');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Resend OTP
+function resendForgotPasswordOTP() {
+    const email = document.getElementById('forgot-email').value.trim();
+    
+    if (!email) {
+        showForgotPasswordError('Email is required to resend code', 'forgot-otp-step');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resending...';
+    button.disabled = true;
+    
+    fetch('/api/forgot-password/send-otp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showForgotPasswordSuccess('New verification code sent!', 'forgot-otp-step');
+            startForgotPasswordTimer();
+        } else {
+            showForgotPasswordError(data.message, 'forgot-otp-step');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showForgotPasswordError('An error occurred. Please try again.', 'forgot-otp-step');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Timer for OTP expiry
+function startForgotPasswordTimer() {
+    const timerElement = document.getElementById('forgot-otp-timer');
+    let timeLeft = 300; // 5 minutes
+    
+    const timer = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `Code expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        timeLeft--;
+        
+        if (timeLeft < 0) {
+            clearInterval(timer);
+            timerElement.textContent = 'Code has expired. Please request a new one.';
+            timerElement.style.color = '#dc3545';
+        }
+    }, 1000);
+}
+
+// Email validation helper
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('forgot-password-modal');
+    if (event.target === modal && modal.classList.contains('show')) {
+        closeForgotPasswordModal();
+    }
+}
 
