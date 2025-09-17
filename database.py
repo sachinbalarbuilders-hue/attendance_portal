@@ -605,6 +605,28 @@ class AttendanceDatabase:
         except Exception as e:
             print(f"Error clearing attendance records: {e}")
             return False
+    
+    def clear_password_history(self) -> bool:
+        """Clear all password history - ADMIN ONLY"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # Clear password history
+                cursor.execute('DELETE FROM password_history')
+                print("Cleared password_history table")
+                
+                # Reset all users to default password status
+                cursor.execute('DELETE FROM user_password_status')
+                print("Cleared user_password_status table")
+                
+                conn.commit()
+                print("Password history cleared successfully")
+                return True
+                
+        except Exception as e:
+            print(f"Error clearing password history: {e}")
+            return False
 
 
 # Global database instance

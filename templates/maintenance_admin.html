@@ -227,11 +227,15 @@
         <div class="danger-section">
             <h3 style="color: #dc3545; margin: 30px 0 15px 0;">⚠️ DANGER ZONE</h3>
             <p style="color: #666; margin-bottom: 20px; font-size: 0.9em;">
-                The following action will permanently delete ALL attendance records from the database. This cannot be undone!<br>
-                <strong>Note:</strong> Employee accounts, passwords, and login logs will be preserved.
+                The following actions will permanently modify data. These cannot be undone!<br>
+                <strong>Clear Attendance:</strong> Deletes ALL attendance records (employee accounts preserved)<br>
+                <strong>Reset Passwords:</strong> Resets ALL employee passwords to "Balar123" (admin passwords preserved)
             </p>
             <button class="btn btn-danger" id="clearAttendanceBtn" onclick="clearAttendanceRecords()">
                 🗑️ Clear Attendance Records
+            </button>
+            <button class="btn btn-warning" id="resetPasswordsBtn" onclick="resetAllPasswords()">
+                🔄 Reset All Passwords to Default
             </button>
         </div>
         
@@ -379,6 +383,58 @@
             } catch (error) {
                 console.error('Error clearing attendance records:', error);
                 showMessage('Error clearing attendance records: ' + error.message, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        async function resetAllPasswords() {
+            // Double confirmation
+            const confirm1 = confirm('⚠️ WARNING: This will reset ALL employee passwords to default "Balar123"!\n\nThis includes:\n- All employee passwords will be reset to "Balar123"\n- All password change history will be cleared\n- All users will need to use "Balar123" to login\n- This action CANNOT be undone!\n\nNote: Admin passwords will NOT be affected.\n\nAre you absolutely sure?');
+            
+            if (!confirm1) {
+                return;
+            }
+            
+            const confirm2 = confirm('🚨 FINAL WARNING 🚨\n\nYou are about to RESET ALL EMPLOYEE PASSWORDS!\n\nType "RESET PASSWORDS" to confirm:');
+            
+            if (!confirm2) {
+                return;
+            }
+            
+            const confirmText = prompt('Type "RESET PASSWORDS" (exactly as shown) to proceed:');
+            
+            if (confirmText !== 'RESET PASSWORDS') {
+                showMessage('Password reset cancelled. Confirmation text did not match.', 'error');
+                return;
+            }
+            
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+            
+            // Show loading
+            loading.style.display = 'block';
+            message.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/admin/reset-all-passwords', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ All employee passwords reset successfully! All employees now use default password "Balar123".', 'success');
+                } else {
+                    throw new Error(data.message);
+                }
+                
+            } catch (error) {
+                console.error('Error resetting passwords:', error);
+                showMessage('Error resetting passwords: ' + error.message, 'error');
             } finally {
                 loading.style.display = 'none';
             }

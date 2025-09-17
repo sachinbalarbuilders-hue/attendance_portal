@@ -206,6 +206,17 @@ class EmployeeDatabase:
             default_password_hash = hashlib.sha256("Balar123".encode()).hexdigest()
             return self.EMPLOYEE_DB[email]["password"] == default_password_hash
         return False
+    
+    def reset_all_employee_passwords(self):
+        """Reset all employee passwords to default 'Balar123'"""
+        hashed_default = hashlib.sha256("Balar123".encode()).hexdigest()
+        
+        for email, user_data in self.EMPLOYEE_DB.items():
+            if not user_data.get('is_admin', False):  # Only reset employee passwords, not admin
+                self.EMPLOYEE_DB[email]["password"] = hashed_default
+                print(f"Reset password for {email} to default")
+        
+        print("All employee passwords reset to default 'Balar123'")
 
 # **FIXED: Single global instance**
 employee_db = EmployeeDatabase()
@@ -1444,6 +1455,34 @@ def clear_attendance_records():
     except Exception as e:
         print(f"Error clearing attendance records: {e}")
         return jsonify({'success': False, 'message': 'An error occurred while clearing attendance records'}), 500
+
+@app.route('/api/admin/reset-all-passwords', methods=['POST'])
+def reset_all_passwords():
+    """Reset all employee passwords to default 'Balar123' and clear password history - ADMIN ONLY"""
+    try:
+        if 'user_data' not in session:
+            return jsonify({'success': False, 'message': 'Not authenticated'})
+        
+        if not session['user_data'].get('is_admin'):
+            return jsonify({'success': False, 'message': 'Admin access required'})
+        
+        # Clear all password history
+        db.clear_password_history()
+        
+        # Reset all employee passwords to default
+        employee_db.reset_all_employee_passwords()
+        
+        # Log this action
+        print(f"All passwords reset to default by admin: {session['user_data'].get('name', 'Unknown')} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'All employee passwords have been reset to default "Balar123". Password history has been cleared.'
+        })
+        
+    except Exception as e:
+        print(f"Error resetting passwords: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while resetting passwords'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
