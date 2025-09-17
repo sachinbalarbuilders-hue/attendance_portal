@@ -713,6 +713,12 @@
                     }
                 });
                 
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Server returned non-JSON response. Please check server status.');
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
@@ -728,7 +734,11 @@
                 }
             } catch (error) {
                 console.error('Error clearing cache:', error);
-                showNotification('❌ Error clearing cache: ' + error.message, 'error');
+                if (error.message.includes('Unexpected token')) {
+                    showNotification('❌ Server error: Invalid response format. Please try again.', 'error');
+                } else {
+                    showNotification('❌ Error clearing cache: ' + error.message, 'error');
+                }
             }
         }
         

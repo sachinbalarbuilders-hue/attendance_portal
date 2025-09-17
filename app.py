@@ -1691,5 +1691,28 @@ def reset_all_passwords():
         print(f"Error resetting passwords: {e}")
         return jsonify({'success': False, 'message': 'An error occurred while resetting passwords'}), 500
 
+@app.route('/api/clear-cache', methods=['POST'])
+def clear_cache():
+    """Clear browser cache and session data"""
+    try:
+        # Clear session data
+        session.clear()
+        
+        # Clear any cached data in memory
+        if hasattr(app, 'cache'):
+            app.cache.clear()
+        
+        print("Cache cleared successfully")
+        return jsonify({
+            'success': True,
+            'message': 'Cache cleared successfully. Page will reload.'
+        })
+    except Exception as e:
+        print(f"Error clearing cache: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error clearing cache: {str(e)}'
+        })
+
 if __name__ == '__main__':
     app.run(debug=True)

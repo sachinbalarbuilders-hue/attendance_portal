@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Cache Clear</title>
+</head>
+<body>
+    <h1>Cache Clear Test</h1>
+    <button id="test-clear" onclick="testClearCredentials()">Test Clear Credentials</button>
+    <div id="result"></div>
+
+    <script>
+        function testClearCredentials() {
+            const resultDiv = document.getElementById('result');
+            try {
+                // Test localStorage access
+                localStorage.setItem('test_key', 'test_value');
+                const testValue = localStorage.getItem('test_key');
+                
+                if (testValue === 'test_value') {
+                    localStorage.removeItem('test_key');
+                    resultDiv.innerHTML = '<p style="color: green;">✅ localStorage is working correctly</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ localStorage read/write failed</p>';
+                }
+                
+                // Test clear credentials function
+                clearSavedCredentials();
+                resultDiv.innerHTML += '<p style="color: green;">✅ Clear credentials function executed</p>';
+                
+            } catch (error) {
+                resultDiv.innerHTML = '<p style="color: red;">❌ Error: ' + error.message + '</p>';
+            }
+        }
+        
+        function clearSavedCredentials() {
+            try {
+                console.log('Attempting to clear saved credentials...');
+                localStorage.removeItem('saved_email');
+                localStorage.removeItem('saved_password');
+                localStorage.removeItem('remember_me');
+                console.log('Saved credentials cleared successfully');
+                return true;
+            } catch (error) {
+                console.error('Failed to clear saved credentials:', error);
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>
