@@ -9,8 +9,8 @@ from werkzeug.utils import secure_filename
 import tempfile
 from database import db
 from utils.auth import EmployeeDatabase
-from email_service import email_service
 import gmail_config  # This will set up Gmail credentials
+from email_service import email_service
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
