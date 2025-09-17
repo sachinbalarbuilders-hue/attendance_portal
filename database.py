@@ -497,9 +497,10 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                # Check both expired and non-expired OTPs to find stored email
                 cursor.execute('''
                     SELECT actual_email FROM otp_verification 
-                    WHERE email = ? AND expires_at > CURRENT_TIMESTAMP
+                    WHERE email = ?
                     ORDER BY created_at DESC LIMIT 1
                 ''', (email,))
                 result = cursor.fetchone()

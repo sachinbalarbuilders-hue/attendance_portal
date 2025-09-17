@@ -1270,7 +1270,15 @@ def get_stored_email():
         return jsonify({'success': False, 'message': 'Not logged in'})
     
     email = session['user_email']
+    
+    # Check both tables for stored email
     actual_email = db.get_actual_email(email)
+    
+    # If not found in password status, check OTP verification table
+    if not actual_email:
+        actual_email = db.get_actual_email_from_otp(email)
+    
+    print(f"DEBUG: Checking stored email for {email}: {actual_email}")
     
     return jsonify({
         'success': True,
