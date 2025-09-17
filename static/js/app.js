@@ -2124,7 +2124,6 @@ function createAttendanceTable(data) {
                     <th>Punch-In</th>
                     <th>Punch-Out</th>
                     <th>Status</th>
-                    <th>Comments</th>
                 </tr>
             </thead>
             <tbody>
@@ -2132,7 +2131,6 @@ function createAttendanceTable(data) {
     
     data.forEach(record => {
         const statusClass = getStatusClass(record.Status);
-        const comments = formatComments(record);
         
        html += `
     <tr class="${statusClass}">
@@ -2156,7 +2154,6 @@ function createAttendanceTable(data) {
             data-comment="${(record.status_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record.Status}
         </td>
-        <td>${comments}</td>
     </tr>
 `;
     });
