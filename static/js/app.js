@@ -204,9 +204,9 @@ function handleDesktopComments() {
         
         // Only add desktop events if not on mobile
         if (!document.body.classList.contains('mobile') && !document.documentElement.classList.contains('mobile')) {
-            cell.addEventListener('mouseenter', showDesktopTooltip);
-            cell.addEventListener('mouseleave', hideDesktopTooltip);
-            cell.addEventListener('mousemove', moveDesktopTooltip);
+        cell.addEventListener('mouseenter', showDesktopTooltip);
+        cell.addEventListener('mouseleave', hideDesktopTooltip);
+        cell.addEventListener('mousemove', moveDesktopTooltip);
         }
     });
 }
@@ -2219,10 +2219,9 @@ function showMobileTooltip(element, comment) {
     
     // Enhanced positioning logic for mobile
     const rect = element.getBoundingClientRect();
-    const tooltipRect = tooltip.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
-    const padding = 20;
+    const padding = 15; // Reduced padding for better mobile fit
     
     // Force tooltip to recalculate its size
     tooltip.style.visibility = 'hidden';
@@ -2230,21 +2229,41 @@ function showMobileTooltip(element, comment) {
     const actualTooltipRect = tooltip.getBoundingClientRect();
     tooltip.style.visibility = 'visible';
     
+    // Ensure tooltip doesn't exceed viewport width
+    const maxTooltipWidth = Math.min(actualTooltipRect.width, viewportWidth - (padding * 2));
+    if (actualTooltipRect.width > maxTooltipWidth) {
+        tooltip.style.maxWidth = maxTooltipWidth + 'px';
+        tooltip.style.width = maxTooltipWidth + 'px';
+    }
+    
     // Calculate optimal position using actual tooltip dimensions
     let top, left;
+    
+    // Calculate preferred horizontal position (centered on cell)
+    const preferredLeft = rect.left + rect.width/2 - actualTooltipRect.width/2;
+    
+    // Ensure tooltip stays within viewport horizontally
+    left = Math.max(padding, Math.min(preferredLeft, viewportWidth - actualTooltipRect.width - padding));
     
     // Try to position above the cell first
     if (rect.top - actualTooltipRect.height - padding > 0) {
         top = rect.top - actualTooltipRect.height - padding;
-        left = Math.max(padding, Math.min(rect.left + rect.width/2 - actualTooltipRect.width/2, viewportWidth - actualTooltipRect.width - padding));
     } else if (rect.bottom + actualTooltipRect.height + padding < viewportHeight) {
         // Position below the cell
         top = rect.bottom + padding;
-        left = Math.max(padding, Math.min(rect.left + rect.width/2 - actualTooltipRect.width/2, viewportWidth - actualTooltipRect.width - padding));
     } else {
-        // Center in viewport if no space above or below
+        // If no space above or below, position in the middle of the screen
         top = Math.max(padding, (viewportHeight - actualTooltipRect.height) / 2);
-        left = Math.max(padding, Math.min((viewportWidth - actualTooltipRect.width) / 2, viewportWidth - actualTooltipRect.width - padding));
+    }
+    
+    // Final safety check to ensure tooltip is within viewport
+    top = Math.max(padding, Math.min(top, viewportHeight - actualTooltipRect.height - padding));
+    left = Math.max(padding, Math.min(left, viewportWidth - actualTooltipRect.width - padding));
+    
+    // For very small screens, center the tooltip
+    if (viewportWidth < 400) {
+        left = (viewportWidth - actualTooltipRect.width) / 2;
+        left = Math.max(padding, Math.min(left, viewportWidth - actualTooltipRect.width - padding));
     }
     
     tooltip.style.position = 'fixed';
