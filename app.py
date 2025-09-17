@@ -1004,7 +1004,7 @@ def change_password_final():
     
     try:
         # Get the actual email from OTP record
-        actual_email = db.get_actual_email(email)
+        actual_email = db.get_actual_email_from_otp(email)
         
         # Change password
         if employee_db.reset_password(email, new_password):
@@ -1047,6 +1047,10 @@ def forgot_password_send_otp():
     try:
         # Check if user has changed their password before (has actual email stored)
         stored_email = db.get_actual_email(email)
+        
+        # If not found in password status, check OTP verification table
+        if not stored_email:
+            stored_email = db.get_actual_email_from_otp(email)
         
         if not stored_email:
             return jsonify({
@@ -1308,21 +1312,28 @@ def get_current_password():
     # Check if user has changed their password
     has_changed_password = db.has_user_changed_password(email)
     
-    # Always show the default password for now, since login works with it
-    # This ensures consistency between what admin sees and what actually works
-    current_password = "Balar123"
+    # Get the actual current password
+    if user_data and 'password' in user_data:
+        # User has changed password, get the stored password
+        current_password = "***CHANGED***"  # Don't show actual password for security
+        password_status = "Changed"
+    else:
+        # User still has default password
+        current_password = "Balar123"
+        password_status = "Default"
     
     print(f"DEBUG: Password for {email}:")
     print(f"  - has_changed_password: {has_changed_password}")
+    print(f"  - password_status: {password_status}")
     print(f"  - showing password: {current_password}")
-    print(f"  - Note: Login works with Balar123, so showing that")
     
     print(f"DEBUG: Final password for {email}: {current_password}")
     
     return jsonify({
         'success': True, 
         'password': current_password,
-        'employee_name': employee_name
+        'employee_name': employee_name,
+        'password_status': password_status
     })
 
 

@@ -1264,7 +1264,24 @@ async function loadCurrentPassword(email) {
         
         if (result.success) {
             console.log('DEBUG: Setting password to:', result.password);
-            document.getElementById('current-password-display').value = result.password;
+            const passwordField = document.getElementById('current-password-display');
+            passwordField.value = result.password;
+            
+            // Add visual indicator for changed passwords
+            const statusIndicator = document.getElementById('password-status-indicator');
+            if (result.password_status === 'Changed') {
+                passwordField.style.backgroundColor = '#e8f5e8';
+                passwordField.style.borderColor = '#4caf50';
+                passwordField.title = 'Password has been changed from default';
+                statusIndicator.textContent = '✅ Password Changed';
+                statusIndicator.style.color = '#4caf50';
+            } else {
+                passwordField.style.backgroundColor = '#fff3cd';
+                passwordField.style.borderColor = '#ffc107';
+                passwordField.title = 'Default password (Balar123)';
+                statusIndicator.textContent = '⚠️ Default Password';
+                statusIndicator.style.color = '#ff9800';
+            }
         } else {
             showNotification('Failed to load password: ' + result.message, 'error');
         }

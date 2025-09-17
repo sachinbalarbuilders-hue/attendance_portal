@@ -464,7 +464,7 @@ class AttendanceDatabase:
             return False
     
     def get_actual_email(self, email: str) -> Optional[str]:
-        """Get the actual email address for a user"""
+        """Get the actual email address for a user from password status"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -476,6 +476,22 @@ class AttendanceDatabase:
                 return result[0] if result and result[0] else None
         except Exception as e:
             print(f"Error getting actual email: {e}")
+            return None
+    
+    def get_actual_email_from_otp(self, email: str) -> Optional[str]:
+        """Get the actual email address from OTP verification table"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT actual_email FROM otp_verification 
+                    WHERE email = ? AND expires_at > CURRENT_TIMESTAMP
+                    ORDER BY created_at DESC LIMIT 1
+                ''', (email,))
+                result = cursor.fetchone()
+                return result[0] if result and result[0] else None
+        except Exception as e:
+            print(f"Error getting actual email from OTP: {e}")
             return None
     
     def store_otp(self, email: str, otp_code: str, actual_email: str, expires_minutes: int = 5) -> bool:
