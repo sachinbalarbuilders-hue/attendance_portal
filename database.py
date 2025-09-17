@@ -109,6 +109,20 @@ class AttendanceDatabase:
                 )
             ''')
             
+            # Create employee passwords table for persistent storage
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS employee_passwords (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    employee_name TEXT NOT NULL,
+                    role TEXT DEFAULT 'Employee',
+                    is_admin BOOLEAN DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
             # Add actual_email column if it doesn't exist (for existing databases)
             try:
                 cursor.execute('ALTER TABLE user_password_status ADD COLUMN actual_email TEXT')
@@ -493,6 +507,74 @@ class AttendanceDatabase:
         except Exception as e:
             print(f"Error getting actual email from OTP: {e}")
             return None
+    
+    def store_employee_password(self, email: str, password_hash: str, employee_name: str, role: str = 'Employee', is_admin: bool = False) -> bool:
+        """Store employee password in database for persistence"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT OR REPLACE INTO employee_passwords 
+                    (email, password_hash, employee_name, role, is_admin, updated_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (email, password_hash, employee_name, role, is_admin))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error storing employee password: {e}")
+            return False
+    
+    def get_employee_password(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get employee password data from database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT email, password_hash, employee_name, role, is_admin, updated_at
+                    FROM employee_passwords 
+                    WHERE email = ?
+                ''', (email,))
+                result = cursor.fetchone()
+                if result:
+                    return {
+                        'email': result[0],
+                        'password_hash': result[1],
+                        'employee_name': result[2],
+                        'role': result[3],
+                        'is_admin': bool(result[4]),
+                        'updated_at': result[5]
+                    }
+                return None
+        except Exception as e:
+            print(f"Error getting employee password: {e}")
+            return None
+    
+    def load_all_employee_passwords(self) -> Dict[str, Dict[str, Any]]:
+        """Load all employee passwords from database into memory"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT email, password_hash, employee_name, role, is_admin
+                    FROM employee_passwords
+                ''')
+                results = cursor.fetchall()
+                
+                employee_db = {}
+                for result in results:
+                    email = result[0]
+                    employee_db[email] = {
+                        'password': result[1],
+                        'name': result[2],
+                        'role': result[3],
+                        'is_admin': bool(result[4])
+                    }
+                
+                print(f"Loaded {len(employee_db)} employee passwords from database")
+                return employee_db
+        except Exception as e:
+            print(f"Error loading employee passwords: {e}")
+            return {}
     
     def store_otp(self, email: str, otp_code: str, actual_email: str, expires_minutes: int = 5) -> bool:
         """Store OTP code for verification"""

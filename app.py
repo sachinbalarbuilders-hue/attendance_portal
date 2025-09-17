@@ -29,6 +29,20 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # **FIXED: Single EmployeeDatabase class definition**
 class EmployeeDatabase:
+    def load_employee_passwords_from_db(self):
+        """Load employee passwords from database into memory"""
+        try:
+            # Load passwords from database
+            db_passwords = db.load_all_employee_passwords()
+            
+            # Merge with existing EMPLOYEE_DB (database takes precedence)
+            for email, password_data in db_passwords.items():
+                self.EMPLOYEE_DB[email] = password_data
+            
+            print(f"Loaded {len(db_passwords)} employee passwords from database")
+        except Exception as e:
+            print(f"Error loading employee passwords from database: {e}")
+    
     def __init__(self):
         # Initialize with ONLY admin accounts - employees will be auto-created from Excel
         self.EMPLOYEE_DB = {
@@ -46,6 +60,9 @@ class EmployeeDatabase:
                 "is_admin": True
             }
         }
+        
+        # Load employee passwords from database
+        self.load_employee_passwords_from_db()
     
     def clean_employee_name(self, full_name):
         """Clean employee name by removing suffixes like (T), (TC), etc."""
@@ -94,6 +111,15 @@ class EmployeeDatabase:
                 "role": "Employee",
                 "is_admin": False
             }
+            
+            # Store in database for persistence
+            db.store_employee_password(
+                email=email,
+                password_hash=password_hash,
+                employee_name=employee_name,
+                role="Employee",
+                is_admin=False
+            )
             return True, email
         return False, email
 
@@ -195,8 +221,22 @@ class EmployeeDatabase:
     
     def reset_password(self, email, new_password):
         """Reset user password"""
+        password_hash = hashlib.sha256(new_password.encode()).hexdigest()
+        
         if email in self.EMPLOYEE_DB:
-            self.EMPLOYEE_DB[email]["password"] = hashlib.sha256(new_password.encode()).hexdigest()
+            # Update existing employee password
+            self.EMPLOYEE_DB[email]["password"] = password_hash
+            
+            # Store in database for persistence
+            employee_data = self.EMPLOYEE_DB[email]
+            db.store_employee_password(
+                email=email,
+                password_hash=password_hash,
+                employee_name=employee_data["name"],
+                role=employee_data["role"],
+                is_admin=employee_data["is_admin"]
+            )
+            print(f"Updated password for existing employee: {email}")
             return True
         else:
             # For employees not in EMPLOYEE_DB, add them with the new password
@@ -221,12 +261,21 @@ class EmployeeDatabase:
                 
                 # Add employee to EMPLOYEE_DB with new password
                 self.EMPLOYEE_DB[email] = {
-                    "password": hashlib.sha256(new_password.encode()).hexdigest(),
+                    "password": password_hash,
                     "name": employee_name,
                     "role": "Employee",
                     "is_admin": False
                 }
-                print(f"Added employee {email} ({employee_name}) to EMPLOYEE_DB with new password")
+                
+                # Store in database for persistence
+                db.store_employee_password(
+                    email=email,
+                    password_hash=password_hash,
+                    employee_name=employee_name,
+                    role="Employee",
+                    is_admin=False
+                )
+                print(f"Added employee {email} ({employee_name}) to EMPLOYEE_DB and database with new password")
                 return True
             else:
                 print(f"Email {email} not found in EMPLOYEE_DB and not an employee email")

@@ -1039,123 +1039,9 @@ async function submitPasswordChange() {
 }
 
 // Current password functionality
-function showCurrentPassword() {
-    if (!selectedEmployee) {
-        showNotification('Please select an employee first', 'error');
-        return;
-    }
-    
-    const modal = document.getElementById('current-password-modal');
-    modal.style.display = 'flex';
-    
-    // Get employee email
-    const employeeEmail = getEmployeeEmail(selectedEmployee);
-    console.log('DEBUG: Selected employee:', selectedEmployee);
-    console.log('DEBUG: Generated email:', employeeEmail);
-    
-    if (!employeeEmail) {
-        showNotification('Employee email not found', 'error');
-        return;
-    }
-    
-    // Set employee info
-    document.getElementById('password-employee-name').textContent = selectedEmployee;
-    document.getElementById('password-employee-email').textContent = employeeEmail;
-    
-    // Load current password
-    loadCurrentPassword(employeeEmail);
-}
 
-function showAllPasswords() {
-    // Check if user is admin before showing passwords
-    if (!currentUser || !currentUser.is_admin) {
-        showNotification('Access denied. Admin privileges required.', 'error');
-        return;
-    }
-    
-    // Get all unique employees from the current table data
-    const tableRows = document.querySelectorAll('.attendance-table tbody tr');
-    const employees = new Set();
-    
-    tableRows.forEach(row => {
-        const employeeCell = row.querySelector('td:first-child');
-        if (employeeCell) {
-            employees.add(employeeCell.textContent.trim());
-        }
-    });
-    
-    if (employees.size === 0) {
-        showNotification('No employees found in current table', 'error');
-        return;
-    }
-    
-    // Create a list of all employees with their passwords
-    let passwordList = '<div class="all-passwords-list">';
-    passwordList += '<h3><i class="fas fa-key"></i> All Employee Passwords</h3>';
-    passwordList += '<div class="password-items">';
-    
-    employees.forEach(employeeName => {
-        const employeeEmail = getEmployeeEmail(employeeName);
-        passwordList += `
-            <div class="password-item">
-                <div class="employee-info">
-                    <strong>${employeeName}</strong>
-                    <span class="email">${employeeEmail}</span>
-                </div>
-                <div class="password-display">
-                    <input type="text" value="Loading..." readonly class="password-input" data-email="${employeeEmail}">
-                    <button onclick="copyPassword(this.previousElementSibling.value)" class="copy-btn">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-    
-    passwordList += '</div></div>';
-    
-    // Show in a modal
-    const modal = document.getElementById('current-password-modal');
-    const modalBody = modal.querySelector('.modal-body');
-    modalBody.innerHTML = passwordList;
-    modal.style.display = 'flex';
-    
-    // Load passwords for all employees
-    employees.forEach(employeeName => {
-        const employeeEmail = getEmployeeEmail(employeeName);
-        loadPasswordForDisplay(employeeEmail, employeeName);
-    });
-}
 
-async function loadPasswordForDisplay(email, employeeName) {
-    try {
-        const response = await fetch(`/api/current-password?email=${encodeURIComponent(email)}`);
-        const result = await response.json();
-        
-        if (result.success) {
-            const passwordInput = document.querySelector(`input[data-email="${email}"]`);
-            if (passwordInput) {
-                passwordInput.value = result.password;
-            }
-        } else {
-            const passwordInput = document.querySelector(`input[data-email="${email}"]`);
-            if (passwordInput) {
-                passwordInput.value = "Error loading password";
-            }
-        }
-    } catch (error) {
-        console.error('Error loading password for', employeeName, ':', error);
-        const passwordInput = document.querySelector(`input[data-email="${email}"]`);
-        if (passwordInput) {
-            passwordInput.value = "Error loading password";
-        }
-    }
-}
 
-function closeCurrentPasswordModal() {
-    const modal = document.getElementById('current-password-modal');
-    modal.style.display = 'none';
-}
 
 // Login Logs functionality
 function showLogs() {
@@ -1254,49 +1140,6 @@ function displayLoginLogs(logs) {
     logsList.innerHTML = html;
 }
 
-async function loadCurrentPassword(email) {
-    try {
-        console.log('DEBUG: Loading password for email:', email);
-        const response = await fetch(`/api/current-password?email=${encodeURIComponent(email)}`);
-        const result = await response.json();
-        
-        console.log('DEBUG: API response:', result);
-        
-        if (result.success) {
-            console.log('DEBUG: Setting password to:', result.password);
-            const passwordField = document.getElementById('current-password-display');
-            passwordField.value = result.password;
-            
-            // Add visual indicator for changed passwords
-            const statusIndicator = document.getElementById('password-status-indicator');
-            if (result.password_status === 'Changed') {
-                passwordField.style.backgroundColor = '#e8f5e8';
-                passwordField.style.borderColor = '#4caf50';
-                passwordField.title = 'Password has been changed from default';
-                statusIndicator.textContent = '✅ Password Changed';
-                statusIndicator.style.color = '#4caf50';
-            } else {
-                passwordField.style.backgroundColor = '#fff3cd';
-                passwordField.style.borderColor = '#ffc107';
-                passwordField.title = 'Default password (Balar123)';
-                statusIndicator.textContent = '⚠️ Default Password';
-                statusIndicator.style.color = '#ff9800';
-            }
-        } else {
-            showNotification('Failed to load password: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('DEBUG: Error loading password:', error);
-        showNotification('Error loading password', 'error');
-    }
-}
-
-function copyCurrentPassword() {
-    const passwordField = document.getElementById('current-password-display');
-    passwordField.select();
-    document.execCommand('copy');
-    showNotification('Password copied to clipboard!', 'success');
-}
 
 function getEmployeeEmail(employeeName) {
     // Convert employee name to email format (matching backend logic)
@@ -2311,11 +2154,6 @@ function createAttendanceTable(data) {
                     <th>
                         <div class="header-cell">
                             <span>Employee</span>
-                            ${currentUser && currentUser.is_admin ? `
-                            <button class="header-eye-btn" onclick="showAllPasswords()" title="Show All Passwords">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            ` : ''}
                         </div>
                     </th>
                     <th>Date</th>
