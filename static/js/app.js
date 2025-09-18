@@ -1092,9 +1092,9 @@ function ensureNavbarFixed() {
         navbar.style.top = '0px';
         navbar.style.left = '0px';
         navbar.style.right = '0px';
-        navbar.style.width = '100vw';
-        navbar.style.maxWidth = '100vw';
-        navbar.style.minWidth = '100vw';
+        navbar.style.width = '100%';
+        navbar.style.maxWidth = '100%';
+        navbar.style.minWidth = '100%';
         navbar.style.height = '60px';
         navbar.style.zIndex = '9999';
         navbar.style.transform = 'none';
@@ -1157,9 +1157,9 @@ async function showDashboard() {
         navbar.style.display = 'flex';
         navbar.style.visibility = 'visible';
         navbar.style.opacity = '1';
-        navbar.style.width = '100vw';
-        navbar.style.maxWidth = '100vw';
-        navbar.style.minWidth = '100vw';
+        navbar.style.width = '100%';
+        navbar.style.maxWidth = '100%';
+        navbar.style.minWidth = '100%';
         navbar.style.left = '0px';
         navbar.style.right = '0px';
         navbar.style.margin = '0';
