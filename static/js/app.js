@@ -1092,12 +1092,15 @@ function ensureNavbarFixed() {
         navbar.style.top = '0px';
         navbar.style.left = '0px';
         navbar.style.right = '0px';
-        navbar.style.width = '100%';
+        navbar.style.width = '100vw';
+        navbar.style.maxWidth = '100vw';
+        navbar.style.minWidth = '100vw';
         navbar.style.height = '60px';
         navbar.style.zIndex = '9999';
         navbar.style.transform = 'none';
         navbar.style.margin = '0';
         navbar.style.padding = '1rem 2rem';
+        navbar.style.boxSizing = 'border-box';
     }
 }
 
@@ -1154,6 +1157,13 @@ async function showDashboard() {
         navbar.style.display = 'flex';
         navbar.style.visibility = 'visible';
         navbar.style.opacity = '1';
+        navbar.style.width = '100vw';
+        navbar.style.maxWidth = '100vw';
+        navbar.style.minWidth = '100vw';
+        navbar.style.left = '0px';
+        navbar.style.right = '0px';
+        navbar.style.margin = '0';
+        navbar.style.boxSizing = 'border-box';
     }
     
     document.getElementById('dashboard-section').style.display = 'block';
