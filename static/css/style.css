@@ -1935,33 +1935,52 @@ tr.status-MAT, tr.status-MAT td { background-color: #f3e5f5 !important; }
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 10000;
+    z-index: 9999;
+    pointer-events: none;
 }
 
 .notification {
-    background: white;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    margin-bottom: 0.5rem;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    border-left: 5px solid #667eea;
-    animation: slideIn 0.3s ease;
+    background: #28a745;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: slideInToast 0.3s ease-out;
     max-width: 350px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    word-wrap: break-word;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease-in-out;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .notification.success {
-    border-left-color: #27ae60;
+    background: #28a745;
 }
 
 .notification.error {
-    border-left-color: #e74c3c;
+    background: #dc3545;
 }
 
 .notification.warning {
-    border-left-color: #f39c12;
+    background: #ffc107;
+    color: #212529;
 }
 
-@keyframes slideIn {
+.notification.info {
+    background: #17a2b8;
+}
+
+@keyframes slideInToast {
     from {
         opacity: 0;
         transform: translateX(100%);
@@ -4398,14 +4417,18 @@ body, html, #app {
 
 /* Responsive notifications */
 @media (max-width: 768px) {
-    .notification {
+    .notification-container {
         top: 10px;
         right: 10px;
         left: 10px;
-        min-width: auto;
+    }
+    
+    .notification {
         max-width: none;
         width: auto;
-        font-size: 14px !important;
+        font-size: 13px;
+        padding: 12px 15px;
+        margin-bottom: 8px;
     }
 }
 

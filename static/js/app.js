@@ -390,8 +390,19 @@ function showNotification(message, type = 'success', duration = 5000, clickable 
     notification.textContent = message;
     container.appendChild(notification);
     
+    // Trigger animation after a small delay
     setTimeout(() => {
-        notification.remove();
+        notification.classList.add('show');
+    }, 100);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300); // Wait for animation to complete
     }, duration);
 }
 
