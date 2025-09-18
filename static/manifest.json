@@ -4,7 +4,7 @@
   "description": "Professional attendance management system for employees",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#667eea",
+  "background_color": "#ffffff",
   "theme_color": "#667eea",
   "orientation": "portrait-primary",
   "scope": "/",
