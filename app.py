@@ -53,6 +53,17 @@ class EmployeeDatabase:
                 "role": "Admin",
                 "is_admin": True
             },
+            "admin2@balarbuilders.com": {
+                "password": hashlib.sha256("admin123".encode()).hexdigest(),
+                "name": "Admin 2",
+                "role": "Admin",
+                "is_admin": True,
+                "restrictions": {
+                    "no_excel_upload": True,
+                    "no_maintenance_mode": True,
+                    "no_date_picker": True
+                }
+            },
             "bhavin@gmail.com": {
                 "password": hashlib.sha256("bhavin123".encode()).hexdigest(),
                 "name": "Bhavin Patel",
@@ -939,7 +950,8 @@ def login():
             'success': True, 
             'user': user_data,
             'needs_password_change': needs_password_change,
-            'leave_notification': not user_data.get('is_admin', False)  # Only show for non-admin users
+            'leave_notification': not user_data.get('is_admin', False),  # Only show for non-admin users
+            'restrictions': user_data.get('restrictions', {})  # Include admin restrictions
         })
 
     return jsonify({'success': False, 'message': 'Invalid credentials'})
@@ -1282,6 +1294,12 @@ def get_current_password():
 def upload_file():
     if 'user_data' not in session or not session['user_data'].get('is_admin'):
         return jsonify({'success': False, 'message': 'Admin access required'})
+    
+    # Check if admin has upload restrictions
+    user_data = session['user_data']
+    restrictions = user_data.get('restrictions', {})
+    if restrictions.get('no_excel_upload', False):
+        return jsonify({'success': False, 'message': 'Excel upload is not allowed for this admin account'})
 
     # Support multiple files under key 'files'
     files = request.files.getlist('files')
@@ -1703,6 +1721,13 @@ def maintenance_status():
 def toggle_maintenance():
     """Toggle maintenance mode"""
     try:
+        # Check if user has maintenance restrictions
+        if 'user_data' in session:
+            user_data = session['user_data']
+            restrictions = user_data.get('restrictions', {})
+            if restrictions.get('no_maintenance_mode', False):
+                return jsonify({'success': False, 'message': 'Maintenance mode control is not allowed for this admin account'})
+        
         data = request.get_json()
         action = data.get('action')  # 'enable' or 'disable'
         

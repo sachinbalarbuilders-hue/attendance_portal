@@ -13,11 +13,16 @@ html {
 
 body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     overflow-x: hidden;
     overflow-y: auto;
     width: 100%;
     max-width: 100%;
+    margin: 0;
+    padding: 0;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 /* Main app container - responsive */
@@ -60,11 +65,9 @@ body {
 }
 
 
-/* Enhanced gradient header with animated background - IMPROVED SIZE */
+/* Enhanced gradient header with single consistent background */
 .main-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
-    background-size: 400% 400%;
-    animation: gradientShift 8s ease infinite;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -74,28 +77,23 @@ body {
     padding: 2rem;
 }
 
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
 
 /* LOGIN CONTAINER */
 .login-container {
-    max-width: 600px;
+    max-width: 450px;
     width: 90%;
-    padding: 3rem 2rem;
+    padding: 2rem 1.5rem;
 }
 
 .login-container h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2.2rem;
+    margin-bottom: 0.8rem;
     text-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 .login-container > p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
     opacity: 0.9;
 }
 
@@ -103,41 +101,41 @@ body {
 .login-form {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(15px);
-    border-radius: 20px;
-    padding: 3rem;
+    border-radius: 16px;
+    padding: 2rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .login-form h3 {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     font-weight: 500;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
 }
 
 .input-group {
     position: relative;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
 }
 
 .input-group i {
     position: absolute;
-    left: 20px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: #667eea;
     z-index: 2;
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 .input-group input {
     width: 100%;
-    padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+    padding: 1rem 1.2rem 1rem 3rem;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -179,7 +177,7 @@ body {
 
 /* Remember Me Checkbox Styling */
 .remember-me-group {
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -258,14 +256,14 @@ body {
 }
 
 .security-notice {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     text-align: center;
     opacity: 0.8;
 }
 
 .security-notice small {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -283,11 +281,11 @@ body {
 }
 
 .btn-primary, .btn-secondary, .btn-logout, .export-btn {
-    padding: 1.2rem 2rem;
+    padding: 1rem 1.8rem;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -401,28 +399,86 @@ body {
 
 /* Dashboard Styles */
 .navbar {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    color: white;
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: fixed !important;
+    top: 0px !important;
+    left: 0px !important;
+    right: 0px !important;
+    width: 100% !important;
+    height: 60px !important;
+    z-index: 9999 !important;
+    background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+    color: white !important;
+    padding: 1rem 2rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    transform: none !important;
+    animation: none !important;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .nav-brand {
     font-size: 1.5rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.nav-brand:hover {
+    transform: translateY(-1px);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.nav-brand i {
+    transition: all 0.3s ease;
+}
+
+.nav-brand:hover i {
+    transform: scale(1.1);
 }
 
 .nav-user {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.nav-user button {
+    white-space: nowrap;
 }
 
 #user-info {
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .btn-logout {
@@ -430,26 +486,79 @@ body {
     color: white;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-logout:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+}
+
+.btn-logout i {
+    font-size: 0.8rem;
+}
+
+.btn-logout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-logout:disabled:hover {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard {
     max-width: 1400px;
     margin: 0 auto;
+    margin-top: 60px;
     padding: 2rem;
-    background: #f8f9fa;
-    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 60px);
     overflow-x: hidden;
     overflow-y: auto;
     width: 100%;
     box-sizing: border-box;
+    position: relative;
 }
 
 .dashboard-header {
     margin-bottom: 2rem;
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
 }
 
 .header-content {
@@ -467,13 +576,20 @@ body {
 
 .header-text h1 {
     color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-size: 2.2rem;
+    margin-bottom: 0.8rem;
+    font-size: 2.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2c3e50, #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .header-text p {
-    color: #7f8c8d;
-    font-size: 1.2rem;
+    color: #6c757d;
+    font-size: 1.1rem;
+    font-weight: 500;
+    opacity: 0.9;
 }
 
 .zoom-controls {
@@ -499,11 +615,22 @@ body {
     justify-content: center;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
 }
 
 .zoom-btn:hover {
     background: #5a6fd8;
     transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.zoom-btn:active {
+    transform: scale(0.95);
+}
+
+.zoom-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
 .zoom-level {
@@ -685,13 +812,27 @@ body {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
 .upload-section, .date-picker-section {
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.upload-section:hover, .date-picker-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .upload-section h3, .date-picker-section h3 {
@@ -1298,7 +1439,7 @@ body {
 }
 
 .attendance-table tr:hover {
-    /* Simple hover - no effects */
+    background-color: rgba(102, 126, 234, 0.05);
 }
 
 /* Default hover for rows without status */
@@ -2145,8 +2286,67 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
 
 /* Alternative approach for browsers that don't support :has() */
 #dashboard-section[style*="display: block"] {
-    position: relative;
+    position: static !important;
     z-index: 10;
+}
+
+/* Ensure dashboard section doesn't interfere with navbar */
+#dashboard-section {
+    position: static !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Force navbar to stay fixed - additional rules */
+#main-navbar.navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    transform: translateZ(0) !important;
+}
+
+/* Additional fix for navbar positioning */
+nav.navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+}
+
+/* Ensure navbar doesn't scroll with content */
+.navbar[style*="display: flex"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+}
+
+/* Ensure no parent elements interfere with navbar positioning */
+body, html, #app {
+    position: static !important;
+    transform: none !important;
+    overflow-x: visible !important;
+}
+
+/* Force navbar positioning - override everything */
+#main-navbar {
+    position: fixed !important;
+    top: 0px !important;
+    left: 0px !important;
+    right: 0px !important;
+    width: 100% !important;
+    height: 60px !important;
+    z-index: 9999 !important;
+    transform: none !important;
+    margin: 0px !important;
+    padding: 1rem 2rem !important;
 }
 
 #dashboard-section[style*="display: block"] ~ #login-section {
@@ -2177,16 +2377,16 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         background-image: none !important;
     }
     
-    /* Override any gradient backgrounds on mobile */
-    body * {
-        background-image: none !important;
+    /* Keep consistent gradient background on mobile */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
-    /* Specific override for main header gradient */
+    /* Consistent main header gradient on mobile */
     .main-header {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
     .main-header:not(#login-section .main-header) {
@@ -2215,17 +2415,17 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     }
     
     .login-container {
-        max-width: 600px !important;
+        max-width: 500px !important;
         width: 95% !important;
-        padding: 3rem 2rem !important;
+        padding: 2.5rem 2rem !important;
     }
     
     .login-container h1 {
-        font-size: 3rem !important;
+        font-size: 2.5rem !important;
     }
     
     .login-form {
-        padding: 3rem !important;
+        padding: 2.5rem !important;
     }
     
     body.mobile .dashboard { display: none; }
@@ -2280,17 +2480,87 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     }
     
     .navbar {
-        padding: 1rem 2rem !important;
+        padding: 0.8rem 1rem !important;
         display: flex !important;
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
         text-align: left !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+    }
+    
+    .nav-brand {
+        font-size: 1.2rem !important;
     }
     
     .nav-user {
         flex-direction: row !important;
-        gap: 1rem !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .nav-user button {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    #user-info {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Extra small screens */
+    @media (max-width: 480px) {
+        .navbar {
+            padding: 0.6rem 0.8rem !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+            height: 80px !important;
+            min-height: 80px !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+        }
+        
+        .nav-brand {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .nav-user {
+            width: 100% !important;
+            justify-content: center !important;
+            gap: 0.3rem !important;
+        }
+        
+        .nav-user button {
+            padding: 0.3rem 0.6rem !important;
+            font-size: 0.75rem !important;
+        }
+        
+        #user-info {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.3rem !important;
+        }
+        
+        .dashboard {
+            margin-top: 80px !important;
+            padding: 2rem !important;
+            min-height: calc(100vh - 80px) !important;
+        }
+    }
+    
+    .dashboard {
+        margin-top: 50px !important;
+        padding: 2rem !important;
+        min-height: calc(100vh - 50px) !important;
     }
     
     body.mobile .attendance-table { font-size: 0.95rem !important; min-width: 600px !important; }
@@ -2342,15 +2612,15 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         background-image: none !important;
     }
     
-    /* Remove all gradient backgrounds on small mobile */
-    * {
-        background-image: none !important;
+    /* Keep consistent gradient backgrounds on small mobile */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
     .main-header {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
     .login-container {
@@ -2366,13 +2636,13 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     }
     
     .login-container h1 {
-        font-size: 2.5rem !important;
+        font-size: 2rem !important;
         text-align: center !important;
         margin-bottom: 1rem !important;
     }
     
     .login-form {
-        padding: 2rem 1.5rem !important;
+        padding: 1.8rem 1.5rem !important;
         width: 100% !important;
         max-width: 100% !important;
     }
@@ -3671,10 +3941,10 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
 
 /* Logs Button Styling */
 .btn-logs {
-    background: #17a2b8;
+    background: linear-gradient(135deg, #17a2b8, #138496);
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
@@ -3682,16 +3952,35 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-right: 10px;
+    margin-right: 0.5rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-logs:hover {
-    background: #138496;
+    background: linear-gradient(135deg, #138496, #117a8b);
     transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-logs:active {
+    transform: translateY(0);
 }
 
 .btn-logs i {
     font-size: 0.8rem;
+}
+
+.btn-logs:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-logs:disabled:hover {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Logs Modal Styling */
@@ -3855,12 +4144,33 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
 
 /* Maintenance Control Section */
 .maintenance-control-section {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #fff5e6 0%, #ffffff 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 25px rgba(243, 156, 18, 0.1);
     border-left: 4px solid #f39c12;
+    border: 1px solid rgba(243, 156, 18, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.maintenance-control-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f39c12, #e67e22, #f39c12);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+.maintenance-control-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(243, 156, 18, 0.15);
 }
 
 .maintenance-control-section h3 {
@@ -4000,73 +4310,9 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     100% { opacity: 1; }
 }
 
-/* Notification Styles */
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-    min-width: 300px;
-    max-width: 500px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    animation: slideInRight 0.3s ease-out;
-}
 
-.notification-success {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
-    color: white;
-}
 
-.notification-error {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
-}
 
-.notification-content {
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-}
-
-.notification-message {
-    flex: 1;
-    font-weight: 500;
-    line-height: 1.4;
-}
-
-.notification-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5em;
-    cursor: pointer;
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s ease;
-}
-
-.notification-close:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
 
 /* Responsive notifications */
 @media (max-width: 768px) {
@@ -4076,6 +4322,8 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
         left: 10px;
         min-width: auto;
         max-width: none;
+        width: auto;
+        font-size: 14px !important;
     }
 }
 
@@ -4102,34 +4350,68 @@ body:has(#dashboard-section[style*="display: block"]) #login-section {
     }
 }
 
-/* FINAL MOBILE OVERRIDE - Remove all blue backgrounds on mobile */
+/* CONSISTENT BACKGROUND FOR ALL SCREEN SIZES */
 @media screen and (max-width: 768px) {
     html {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
     body {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
-    /* Remove all gradient backgrounds */
-    * {
-        background-image: none !important;
+    /* Consistent main header background */
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
     }
     
-    /* Force white backgrounds for all elements */
-    .main-header,
-    .login-container,
-    .dashboard-container,
-    .navbar,
-    .attendance-table-container {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+    /* Keep login container background consistent */
+    .login-container {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px) !important;
     }
+}
+
+/* NAVBAR VISIBILITY CONTROL */
+#main-navbar {
+    display: none !important;
+}
+
+#main-navbar[style*="display: flex"] {
+    display: flex !important;
+    position: fixed !important;
+    top: 0px !important;
+    left: 0px !important;
+    right: 0px !important;
+    width: 100vw !important;
+    height: 60px !important;
+    z-index: 99999 !important;
+    transform: translate3d(0, 0, 0) !important;
+    backface-visibility: hidden !important;
+    perspective: 1000px !important;
+    will-change: auto !important;
+    contain: layout !important;
+}
+
+/* FINAL NAVBAR FIX - OVERRIDE EVERYTHING */
+nav#main-navbar.navbar,
+#main-navbar.navbar,
+.navbar#main-navbar,
+nav.navbar#main-navbar {
+    position: fixed !important;
+    top: 0px !important;
+    left: 0px !important;
+    right: 0px !important;
+    width: 100vw !important;
+    height: 60px !important;
+    z-index: 99999 !important;
+    transform: translate3d(0, 0, 0) !important;
+    backface-visibility: hidden !important;
+    perspective: 1000px !important;
+    will-change: auto !important;
+    contain: layout !important;
 }
 

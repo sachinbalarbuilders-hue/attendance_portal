@@ -82,22 +82,32 @@
             </div>
         </div>
 
+        <!-- Navbar - Always present but hidden initially -->
+        <nav id="main-navbar" class="navbar" role="navigation" aria-label="Main navigation" style="display: none;">
+            <div class="nav-brand">
+                <i class="fas fa-building" aria-hidden="true"></i> 
+                <span>Employee Portal</span>
+            </div>
+            <div class="nav-user">
+                <span id="user-info" class="user-info">
+                    <i class="fas fa-user" aria-hidden="true"></i> 
+                    <span id="user-name"></span>
+                </span>
+                <button id="logs-btn" onclick="showLogs()" class="btn-logs" style="display: none;" 
+                        aria-label="View system logs" title="View system logs">
+                    <i class="fas fa-list-alt" aria-hidden="true"></i> 
+                    <span>Logs</span>
+                </button>
+                <button onclick="logout()" class="btn-logout" 
+                        aria-label="Logout from system" title="Logout">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i> 
+                    <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+
         <!-- Dashboard Section -->
         <div id="dashboard-section" style="display: none;">
-            <nav class="navbar">
-                <div class="nav-brand">
-                    <i class="fas fa-building"></i> Employee Portal
-                </div>
-                <div class="nav-user">
-                    <span id="user-info"><i class="fas fa-user"></i> <span id="user-name"></span></span>
-                    <button id="logs-btn" onclick="showLogs()" class="btn-logs" style="display: none;">
-                        <i class="fas fa-list-alt"></i> Logs
-                    </button>
-                    <button onclick="logout()" class="btn-logout">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </div>
-            </nav>
 
             <main class="dashboard">
                 <!-- Admin Panel -->

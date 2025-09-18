@@ -11,6 +11,12 @@ let resetToken = null;
 
 // Initialize app focus on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure navbar is hidden on page load
+    const navbar = document.getElementById('main-navbar');
+    if (navbar) {
+        navbar.style.display = 'none';
+    }
+    
     // Load saved credentials if available
     loadSavedCredentials();
     
@@ -428,10 +434,15 @@ async function login() {
             currentUser.needs_password_change = result.needs_password_change;
             console.log('DEBUG: needs_password_change flag set to:', result.needs_password_change);
             
+            // Store admin restrictions
+            currentUser.restrictions = result.restrictions || {};
+            console.log('DEBUG: Admin restrictions:', currentUser.restrictions);
+            
             // Show logs button only for admin users
             const logsBtn = document.getElementById('logs-btn');
             if (logsBtn) {
                 logsBtn.style.display = currentUser.is_admin ? 'flex' : 'none';
+                logsBtn.setAttribute('aria-hidden', !currentUser.is_admin);
             }
             
             // Show leave application notification if flag is set
@@ -459,17 +470,57 @@ async function login() {
 
 async function logout() {
     try {
+        // Show loading state
+        const logoutBtn = document.querySelector('.btn-logout');
+        if (logoutBtn) {
+            const originalText = logoutBtn.innerHTML;
+            logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> <span>Logging out...</span>';
+            logoutBtn.disabled = true;
+        }
+        
         await fetch('/api/logout', { method: 'POST' });
+        
+        // Clear all data
         currentUser = null;
         attendanceData = [];
         employees = [];
         selectedEmployee = null;
+        
+        // Hide logs button
+        const logsBtn = document.getElementById('logs-btn');
+        if (logsBtn) {
+            logsBtn.style.display = 'none';
+            logsBtn.setAttribute('aria-hidden', 'true');
+        }
+        
+        // Hide navbar completely
+        const navbar = document.getElementById('main-navbar');
+        if (navbar) {
+            navbar.style.display = 'none';
+            navbar.style.visibility = 'hidden';
+            navbar.style.opacity = '0';
+        }
+        
         showLoginPage();
-        showNotification('Successfully logged out!');
+        showNotification('Successfully logged out!', 'success');
     } catch (error) {
         console.error('Logout error:', error);
+        showNotification('Logout failed, but redirecting to login', 'warning');
         // Still redirect to login even if server request fails
+        const navbar = document.getElementById('main-navbar');
+        if (navbar) {
+            navbar.style.display = 'none';
+            navbar.style.visibility = 'hidden';
+            navbar.style.opacity = '0';
+        }
         showLoginPage();
+    } finally {
+        // Reset button state
+        const logoutBtn = document.querySelector('.btn-logout');
+        if (logoutBtn) {
+            logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt" aria-hidden="true"></i> <span>Logout</span>';
+            logoutBtn.disabled = false;
+        }
     }
 }
 
@@ -921,6 +972,11 @@ function showLogs() {
     }
     
     const modal = document.getElementById('logs-modal');
+    if (!modal) {
+        showNotification('Logs modal not found', 'error');
+        return;
+    }
+    
     modal.style.display = 'flex';
     loadLoginLogs();
 }
@@ -1029,8 +1085,25 @@ function getEmployeeEmail(employeeName) {
 
 
 // Dashboard functions
+function ensureNavbarFixed() {
+    const navbar = document.getElementById('main-navbar');
+    if (navbar) {
+        navbar.style.position = 'fixed';
+        navbar.style.top = '0px';
+        navbar.style.left = '0px';
+        navbar.style.right = '0px';
+        navbar.style.width = '100%';
+        navbar.style.height = '60px';
+        navbar.style.zIndex = '9999';
+        navbar.style.transform = 'none';
+        navbar.style.margin = '0';
+        navbar.style.padding = '1rem 2rem';
+    }
+}
+
 function showLoginPage() {
     document.getElementById('dashboard-section').style.display = 'none';
+    document.getElementById('main-navbar').style.display = 'none';
     document.getElementById('login-section').style.display = 'flex';
     
     // Check if running as PWA
@@ -1074,6 +1147,15 @@ function showLoginPage() {
 
 async function showDashboard() {
     document.getElementById('login-section').style.display = 'none';
+    
+    // Show and properly position navbar
+    const navbar = document.getElementById('main-navbar');
+    if (navbar) {
+        navbar.style.display = 'flex';
+        navbar.style.visibility = 'visible';
+        navbar.style.opacity = '1';
+    }
+    
     document.getElementById('dashboard-section').style.display = 'block';
     
     // Check if running as PWA
@@ -1093,6 +1175,15 @@ async function showDashboard() {
     }
     
     document.getElementById('user-name').textContent = cleanEmployeeName(currentUser.name);
+    
+    // Ensure navbar stays fixed on scroll
+    ensureNavbarFixed();
+    
+    // Add scroll event listener to maintain fixed position
+    window.addEventListener('scroll', ensureNavbarFixed);
+    
+    // Initialize zoom for dashboard
+    initializeZoom();
     
     if (currentUser.is_admin) {
         showAdminDashboard();
@@ -1412,8 +1503,51 @@ function showAdminDashboard() {
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('employee-panel').style.display = 'none';
     
+    // Apply admin restrictions
+    applyAdminRestrictions();
+    
     // Load admin late statistics
     loadAdminLateStatistics();
+}
+
+function applyAdminRestrictions() {
+    if (!currentUser || !currentUser.restrictions) {
+        return;
+    }
+    
+    const restrictions = currentUser.restrictions;
+    
+    // Hide Excel upload section if restricted
+    if (restrictions.no_excel_upload) {
+        const uploadSection = document.querySelector('.upload-section');
+        if (uploadSection) {
+            uploadSection.style.display = 'none';
+        }
+    }
+    
+    // Hide maintenance control section if restricted
+    if (restrictions.no_maintenance_mode) {
+        const maintenanceSection = document.querySelector('.maintenance-control-section');
+        if (maintenanceSection) {
+            maintenanceSection.style.display = 'none';
+        }
+    }
+    
+    // Hide date picker section if restricted
+    if (restrictions.no_date_picker) {
+        const datePickerSection = document.querySelector('.date-picker-section');
+        if (datePickerSection) {
+            datePickerSection.style.display = 'none';
+        }
+    }
+    
+    // Hide entire control panel if both upload and date picker are restricted
+    if (restrictions.no_excel_upload && restrictions.no_date_picker) {
+        const controlPanel = document.querySelector('.control-panel');
+        if (controlPanel) {
+            controlPanel.style.display = 'none';
+        }
+    }
 }
 
 function showEmployeeDashboard() {
@@ -2701,6 +2835,7 @@ function zoomIn() {
         applyZoom(currentZoomLevel);
         updateZoomDisplay();
         saveZoomLevel();
+        console.log('Zoomed in to:', currentZoomLevel + '%');
     }
 }
 
@@ -2710,6 +2845,7 @@ function zoomOut() {
         applyZoom(currentZoomLevel);
         updateZoomDisplay();
         saveZoomLevel();
+        console.log('Zoomed out to:', currentZoomLevel + '%');
     }
 }
 
@@ -2718,18 +2854,33 @@ function resetZoom() {
     applyZoom(currentZoomLevel);
     updateZoomDisplay();
     saveZoomLevel();
+    console.log('Zoom reset to:', currentZoomLevel + '%');
 }
 
 function applyZoom(zoomLevel) {
-    const app = document.getElementById('app');
-    if (app) {
-        app.style.transform = `scale(${zoomLevel / 100})`;
-        app.style.transformOrigin = 'center top';
+    const dashboardSection = document.getElementById('dashboard-section');
+    if (dashboardSection) {
+        console.log('Applying zoom:', zoomLevel + '%', 'to dashboard section');
         
-        // Adjust container height to prevent scrolling issues
-        const body = document.body;
+        // Apply zoom transform
+        dashboardSection.style.transform = `scale(${zoomLevel / 100})`;
+        dashboardSection.style.transformOrigin = 'center top';
+        dashboardSection.style.transition = 'transform 0.3s ease';
+        
+        // Adjust container to prevent layout issues
         const scale = zoomLevel / 100;
-        body.style.height = `${100 / scale}vh`;
+        if (scale < 1) {
+            dashboardSection.style.marginBottom = `${(1 - scale) * 50}vh`;
+        } else {
+            dashboardSection.style.marginBottom = '0';
+        }
+        
+        // Ensure the dashboard section is visible
+        if (dashboardSection.style.display === 'none') {
+            console.log('Dashboard section is hidden, zoom not applied');
+        }
+    } else {
+        console.log('Dashboard section not found');
     }
 }
 
@@ -2753,6 +2904,11 @@ function saveZoomLevel() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeZoom();
 });
+
+// Make zoom functions globally available
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+window.resetZoom = resetZoom;
 
 // Employee Data Modal Functions
 async function showEmployeeData(employeeName) {

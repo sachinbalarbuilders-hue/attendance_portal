@@ -11,6 +11,17 @@ class EmployeeDatabase:
                 "role": "Admin",
                 "is_admin": True
             },
+            "admin2@balarbuilders.com": {
+                "password": hashlib.sha256("admin123".encode()).hexdigest(),
+                "name": "Admin 2",
+                "role": "Admin",
+                "is_admin": True,
+                "restrictions": {
+                    "no_excel_upload": True,
+                    "no_maintenance_mode": True,
+                    "no_date_picker": True
+                }
+            },
             "bhavin.balarbuilders@gmail.com": {
                 "password": hashlib.sha256("bhavin123".encode()).hexdigest(),
                 "name": "Bhavin Patel",
