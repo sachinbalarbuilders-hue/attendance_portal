@@ -9,12 +9,16 @@
 html {
     overflow-x: hidden !important;
     overflow-y: auto !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     background-attachment: fixed;
     min-height: 100vh;
+    height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
     width: 100%;
@@ -69,12 +73,15 @@ body {
 .main-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     text-align: center;
     padding: 2rem;
+    margin: 0;
+    box-sizing: border-box;
 }
 
 
@@ -4562,6 +4569,9 @@ nav.navbar#main-navbar {
         background: #764ba2 !important;
         background-color: #764ba2 !important;
         background-image: none !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Ensure solid purple background in PWA mode */
@@ -4569,6 +4579,39 @@ nav.navbar#main-navbar {
         background: #764ba2 !important;
         background-color: #764ba2 !important;
         background-image: none !important;
+        height: 100% !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Fix login section height in PWA mode */
+    #login-section.main-header {
+        height: 100vh !important;
+        min-height: 100vh !important;
+        max-height: 100vh !important;
+        background: #764ba2 !important;
+        background-color: #764ba2 !important;
+        background-image: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Ensure login container fills properly in PWA */
+    .login-container {
+        height: auto !important;
+        min-height: auto !important;
+        max-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 2rem 1.5rem !important;
     }
 }
 
