@@ -5,6 +5,7 @@ import hashlib
 import datetime
 import time
 import os
+import pytz
 from werkzeug.utils import secure_filename
 import tempfile
 from database import db
@@ -19,6 +20,11 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Maintenance mode configuration
 MAINTENANCE_FLAG_FILE = 'maintenance_mode.flag'
+
+def get_indian_time():
+    """Get current time in Indian Standard Time (IST)"""
+    ist = pytz.timezone('Asia/Kolkata')
+    return datetime.datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
 
 def is_maintenance_mode():
     """Check if maintenance mode is enabled by looking for flag file"""
@@ -1763,7 +1769,7 @@ def clear_attendance_records():
         db.clear_attendance_records()
         
         # Log this action
-        print(f"Attendance records cleared by admin: {session['user_data'].get('name', 'Unknown')} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Attendance records cleared by admin: {session['user_data'].get('name', 'Unknown')} at {get_indian_time()}")
         
         return jsonify({
             'success': True, 
@@ -1791,7 +1797,7 @@ def reset_all_passwords():
         employee_db.reset_all_employee_passwords()
         
         # Log this action
-        print(f"All passwords reset to default by admin: {session['user_data'].get('name', 'Unknown')} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"All passwords reset to default by admin: {session['user_data'].get('name', 'Unknown')} at {get_indian_time()}")
         
         return jsonify({
             'success': True, 

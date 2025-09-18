@@ -8,12 +8,18 @@ import sqlite3
 import os
 import datetime
 from typing import List, Dict, Any, Optional
+import pytz
 
 class AttendanceDatabase:
     def __init__(self, db_path: str = 'attendance.db'):
         """Initialize database connection"""
         self.db_path = db_path
         self.init_database()
+    
+    def get_indian_time(self):
+        """Get current time in Indian Standard Time (IST)"""
+        ist = pytz.timezone('Asia/Kolkata')
+        return datetime.datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
     
     def init_database(self):
         """Create database tables if they don't exist"""
@@ -399,11 +405,12 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                indian_time = self.get_indian_time()
                 cursor.execute('''
                     INSERT INTO password_history 
-                    (email, employee_name, current_password, changed_by)
-                    VALUES (?, ?, ?, ?)
-                ''', (email, employee_name, current_password, changed_by))
+                    (email, employee_name, current_password, changed_at, changed_by)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (email, employee_name, current_password, indian_time, changed_by))
                 conn.commit()
                 return True
         except Exception as e:
@@ -583,14 +590,16 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                # Calculate expiration time
-                expires_at = datetime.datetime.now() + datetime.timedelta(minutes=expires_minutes)
+                # Calculate expiration time in Indian timezone
+                ist = pytz.timezone('Asia/Kolkata')
+                now_ist = datetime.datetime.now(ist)
+                expires_at = now_ist + datetime.timedelta(minutes=expires_minutes)
                 
                 cursor.execute('''
                     INSERT INTO otp_verification 
-                    (email, otp_code, actual_email, expires_at)
-                    VALUES (?, ?, ?, ?)
-                ''', (email, otp_code, actual_email, expires_at))
+                    (email, otp_code, actual_email, created_at, expires_at)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (email, otp_code, actual_email, now_ist.strftime('%Y-%m-%d %H:%M:%S'), expires_at.strftime('%Y-%m-%d %H:%M:%S')))
                 conn.commit()
                 return True
         except Exception as e:
@@ -602,10 +611,11 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                indian_time = self.get_indian_time()
                 cursor.execute('''
                     SELECT id, actual_email FROM otp_verification 
-                    WHERE email = ? AND otp_code = ? AND is_used = 0 AND expires_at > CURRENT_TIMESTAMP
-                ''', (email, otp_code))
+                    WHERE email = ? AND otp_code = ? AND is_used = 0 AND expires_at > ?
+                ''', (email, otp_code, indian_time))
                 result = cursor.fetchone()
                 
                 if result:
@@ -625,10 +635,11 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                indian_time = self.get_indian_time()
                 cursor.execute('''
                     DELETE FROM otp_verification 
-                    WHERE expires_at < CURRENT_TIMESTAMP OR is_used = 1
-                ''')
+                    WHERE expires_at < ? OR is_used = 1
+                ''', (indian_time,))
                 conn.commit()
                 return True
         except Exception as e:
@@ -640,11 +651,12 @@ class AttendanceDatabase:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                indian_time = self.get_indian_time()
                 cursor.execute('''
                     INSERT INTO login_logs 
                     (email, user_name, is_admin, login_time, ip_address, user_agent)
-                    VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-                ''', (email, user_name, is_admin, ip_address, user_agent))
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (email, user_name, is_admin, indian_time, ip_address, user_agent))
                 conn.commit()
                 return True
         except Exception as e:
