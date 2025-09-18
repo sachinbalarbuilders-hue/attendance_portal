@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- FORCE DESKTOP VIEW ON ALL DEVICES -->
-    <meta name="viewport" content="width=1200, initial-scale=0.5, user-scalable=yes">
-    
-    <!-- Mobile viewport optimization -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" media="(max-width: 768px)">
+    <!-- Responsive viewport with reduced scale -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Employee Attendance Portal</title>
     
     <!-- PWA Meta Tags -->
@@ -106,8 +103,24 @@
                 <!-- Admin Panel -->
                 <div id="admin-panel" style="display: none;">
                     <div class="dashboard-header">
-                        <h1><i class="fas fa-tools"></i> Admin Dashboard</h1>
-                        <p>Complete System Management</p>
+                        <div class="header-content">
+                            <div class="header-text">
+                                <h1><i class="fas fa-tools"></i> Admin Dashboard</h1>
+                                <p>Complete System Management</p>
+                            </div>
+                            <div class="zoom-controls">
+                                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <span class="zoom-level" id="zoom-level">100%</span>
+                                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Maintenance Control -->
@@ -308,8 +321,24 @@
                 <!-- Employee Panel -->
                 <div id="employee-panel" style="display: none;">
                     <div class="dashboard-header">
-                        <h1><i class="fas fa-user"></i> Welcome, <span id="employee-name"></span>!</h1>
-                        <p>Your Personal Attendance Dashboard</p>
+                        <div class="header-content">
+                            <div class="header-text">
+                                <h1><i class="fas fa-user"></i> Welcome, <span id="employee-name"></span>!</h1>
+                                <p>Your Personal Attendance Dashboard</p>
+                            </div>
+                            <div class="zoom-controls">
+                                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <span class="zoom-level" id="zoom-level-employee">100%</span>
+                                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="employee-stats">
@@ -914,6 +943,7 @@
         function formatDate(dateStr) {
             const date = new Date(dateStr);
             return date.toLocaleDateString('en-US', { 
+                weekday: 'short',
                 month: 'short', 
                 day: 'numeric', 
                 year: 'numeric' 
@@ -928,5 +958,22 @@
             }
         }
     </script>
+
+    <!-- Employee Data Modal -->
+    <div id="employee-data-modal" class="modal" style="display: none;">
+        <div class="modal-content employee-data-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user"></i> Employee Data</h3>
+                <button class="modal-close" onclick="closeEmployeeDataModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="employee-data-content">
+                    <!-- Employee data will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

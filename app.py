@@ -1408,6 +1408,92 @@ def get_leave_totals():
 
     return jsonify({'success': True, 'data': totals})
 
+@app.route('/api/employee-data/<employee_name>')
+def get_employee_data(employee_name):
+    """Get detailed employee data including attendance statistics and leave breakdown"""
+    if 'user_data' not in session:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    user_data = session['user_data']
+    
+    # Non-admins can only view their own data
+    if not user_data.get('is_admin'):
+        if user_data['name'] != employee_name:
+            return jsonify({'success': False, 'message': 'Access denied'})
+    
+    try:
+        # Get employee attendance records
+        employee_records = db.get_attendance_records(employee_filter=employee_name)
+        
+        if not employee_records:
+            return jsonify({'success': False, 'message': 'No data found for this employee'})
+        
+        # Calculate statistics
+        total_days = len(employee_records)
+        present_days = len([r for r in employee_records if r['Status'].startswith('P')])
+        absent_days = len([r for r in employee_records if r['Status'].startswith('A')])
+        
+        # Calculate half days
+        half_days = len([r for r in employee_records if r['Status'].startswith('HF')])
+        paid_half_days = len([r for r in employee_records if r['Status'].startswith('PHF')])
+        sick_half_days = len([r for r in employee_records if r['Status'].startswith('SHF')])
+        
+        # Calculate leave breakdown
+        wo_used = len([r for r in employee_records if r['Status'].startswith('W/O')])
+        pl_used = len([r for r in employee_records if r['Status'].startswith('PL')])
+        sl_used = len([r for r in employee_records if r['Status'].startswith('SL')])
+        fl_used = len([r for r in employee_records if r['Status'].startswith('FL')])
+        hl_used = len([r for r in employee_records if r['Status'].startswith('HL')])
+        pat_used = len([r for r in employee_records if r['Status'].startswith('PAT')])
+        mat_used = len([r for r in employee_records if r['Status'].startswith('MAT')])
+        
+        # Calculate total leave days
+        leave_days = wo_used + pl_used + sl_used + fl_used + hl_used + pat_used + mat_used
+        
+        # Calculate working days (exclude W/O)
+        working_days = total_days - wo_used
+        
+        # Calculate weighted present days
+        present_days_weighted = present_days + (half_days * 0.5) + (paid_half_days * 0.5) + (sick_half_days * 0.5)
+        
+        # Calculate attendance rate based on working days
+        attendance_rate = (present_days_weighted / working_days * 100) if working_days > 0 else 0
+        
+        # Get recent records (last 10)
+        recent_records = sorted(employee_records, key=lambda x: x['Date'], reverse=True)[:10]
+        
+        # Get employee email
+        employee_email = employee_db.create_employee_email(employee_name)
+        
+        # Prepare response data
+        data = {
+            'employee_name': employee_name,
+            'email': employee_email,
+            'joining_date': 'N/A',  # Could be added to database if needed
+            'total_days': total_days,
+            'working_days': working_days,
+            'present_days': present_days_weighted,
+            'absent_days': absent_days,
+            'leave_days': leave_days,
+            'attendance_rate': round(attendance_rate, 1),
+            'leave_breakdown': {
+                'wo_used': wo_used,
+                'pl_used': pl_used,
+                'sl_used': sl_used,
+                'fl_used': fl_used,
+                'hl_used': hl_used,
+                'pat_used': pat_used,
+                'mat_used': mat_used
+            },
+            'recent_records': recent_records
+        }
+        
+        return jsonify({'success': True, 'data': data})
+        
+    except Exception as e:
+        print(f"Error getting employee data: {e}")
+        return jsonify({'success': False, 'message': 'Error retrieving employee data'})
+
 @app.route('/api/employee-leave-eligibility')
 def get_employee_leave_eligibility():
     """Get leave eligibility for an employee (T employees not eligible for PL/SL)"""

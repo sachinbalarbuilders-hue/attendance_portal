@@ -1,5 +1,7 @@
 // Global variables
+// Cache bust: Date format updated to show full day names
 let currentUser = null;
+let currentZoomLevel = 100;
 let attendanceData = [];
 let employees = [];
 let filteredData = [];
@@ -212,89 +214,8 @@ function handleDesktopComments() {
 }
 
 function showDesktopTooltip(event) {
-    try {
-    const cell = event.currentTarget;
-        let comment = cell.getAttribute('data-comment');
-        
-        // Decode HTML entities
-        comment = comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-    
-    if (!comment || !comment.trim()) return;
-    
-    // Remove any existing tooltips
-    const existingTooltip = document.querySelector('.desktop-tooltip');
-    if (existingTooltip) {
-        existingTooltip.remove();
-    }
-    
-    // Add visual feedback to the cell
-    cell.style.transform = 'scale(1.02)';
-    cell.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-    
-    const tooltip = document.createElement('div');
-    tooltip.className = 'desktop-tooltip';
-    tooltip.innerHTML = `
-        <div class="tooltip-header">
-            <span class="tooltip-icon">💬</span>
-            <span class="tooltip-title">Comment</span>
-        </div>
-        <div class="tooltip-content">${comment.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-    `;
-    
-    document.body.appendChild(tooltip);
-    
-    // Position tooltip with enhanced logic
-    const rect = cell.getBoundingClientRect();
-    const tooltipRect = tooltip.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Calculate optimal position (prefer above, fallback to below)
-    let top = rect.top + window.scrollY - tooltipRect.height - 20;
-    let left = rect.left + window.scrollX + rect.width/2 - tooltipRect.width/2;
-    
-    // If tooltip would go above viewport, position below
-    if (top < window.scrollY + 10) {
-        top = rect.bottom + window.scrollY + 20;
-    }
-    
-    // Keep tooltip within horizontal viewport bounds with padding
-    const padding = 15;
-    if (left < padding) {
-        left = padding;
-    } else if (left + tooltipRect.width > viewportWidth - padding) {
-        left = viewportWidth - tooltipRect.width - padding;
-    }
-    
-    tooltip.style.left = left + 'px';
-    tooltip.style.top = top + 'px';
-    
-    // Add enhanced fade-in animation
-    tooltip.style.opacity = '0';
-    tooltip.style.transform = 'translateY(-10px) scale(0.9)';
-    
-    requestAnimationFrame(() => {
-        tooltip.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        tooltip.style.opacity = '1';
-        tooltip.style.transform = 'translateY(0) scale(1)';
-    });
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        if (tooltip.parentNode) {
-            tooltip.style.transition = 'all 0.2s ease-out';
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'translateY(-5px) scale(0.95)';
-            setTimeout(() => {
-                if (tooltip.parentNode) {
-                    tooltip.remove();
-                }
-            }, 200);
-        }
-    }, 5000);
-    } catch (error) {
-        console.error('Error showing desktop tooltip:', error);
-    }
+    // Tooltips disabled
+    return;
 }
 
 function moveDesktopTooltip(event) {
@@ -309,24 +230,8 @@ function moveDesktopTooltip(event) {
 }
 
 function hideDesktopTooltip() {
-    const tooltip = document.querySelector('.desktop-tooltip');
-    if (tooltip) {
-        tooltip.style.transition = 'all 0.2s ease-out';
-        tooltip.style.opacity = '0';
-        tooltip.style.transform = 'translateY(-5px) scale(0.95)';
-        setTimeout(() => {
-            if (tooltip.parentNode) {
-                tooltip.remove();
-            }
-        }, 200);
-    }
-    
-    // Reset cell styling
-    const commentCells = document.querySelectorAll('[data-comment]:not([data-comment=""])');
-    commentCells.forEach(cell => {
-        cell.style.transform = '';
-        cell.style.boxShadow = '';
-    });
+    // Tooltips disabled
+    return;
 }
 
 // Initialize desktop view on page load
@@ -1810,17 +1715,18 @@ async function showEmployeeProfile(employeeName) {
     const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length + 
                       (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
-    // Use total days in the month for attendance rate calculation
+    // Use working days only for attendance rate calculation (exclude W/O)
     const totalDaysInMonth = employeeData.length; // Total records = total days in month
+    const totalWorkingDays = employeeData.filter(record => !record.Status.startsWith('W/O')).length; // Exclude W/O days
     const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
     const leaveDays = employeeData.filter(record => 
-        ['W/O', 'PL', 'SL', 'FL', 'HL'].some(leave => record.Status.startsWith(leave))
+        ['W/O', 'PL', 'SL', 'FL'].some(leave => record.Status.startsWith(leave))
     ).length;
     const wo = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const pl = employeeData.filter(record => record.Status.startsWith('PL')).length;
     const sl = employeeData.filter(record => record.Status.startsWith('SL')).length;
     const fl = employeeData.filter(record => record.Status.startsWith('FL')).length;
-    const attendanceRate = totalDaysInMonth > 0 ? ((presentDaysWeighted / totalDaysInMonth) * 100).toFixed(1) : 0;
+    const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -2072,6 +1978,9 @@ function displayAdminAttendanceData(showUpdateNote = false) {
     
     const table = createAttendanceTable(dataToDisplay);
     container.innerHTML = table;
+    
+    // Add enhanced hover effects to status rows
+    addStatusRowHoverEffects();
 }
 
 function displayEmployeeAttendanceData(showUpdateNote = false) {
@@ -2102,6 +2011,9 @@ function displayEmployeeAttendanceData(showUpdateNote = false) {
     
     const table = createAttendanceTable(employeeData);
     container.innerHTML = table;
+    
+    // Add enhanced hover effects to status rows
+    addStatusRowHoverEffects();
 }
 
 function createAttendanceTable(data) {
@@ -2135,28 +2047,28 @@ function createAttendanceTable(data) {
         const comments = formatComments(record);
         
        html += `
-    <tr class="${statusClass}">
-        <td>${cleanEmployeeName(record.Employee)}</td>
-        <td>${formatDate(record.Date)}</td>
+    <tr class="${statusClass}" style="${getStatusStyle(record.Status)}">
+        <td style="${getStatusStyle(record.Status)}">${cleanEmployeeName(record.Employee)}</td>
+        <td style="${getStatusStyle(record.Status)}">${formatDate(record.Date)}</td>
         <td class="${record.pin_highlight ? 'red-text' : ''}" 
+            style="${getStatusStyle(record.Status)}"
             title="${record.pin_comment || ''}"
-            ${isMobileDevice() ? 'onclick="showMobileTooltip(this, this.getAttribute(\'data-comment\'))"' : ''}
             data-comment="${(record.pin_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record['Punch-In']}
         </td>
         <td class="${record.pout_highlight ? 'red-text' : ''}" 
+            style="${getStatusStyle(record.Status)}"
             title="${record.pout_comment || ''}"
-            ${isMobileDevice() ? 'onclick="showMobileTooltip(this, this.getAttribute(\'data-comment\'))"' : ''}
             data-comment="${(record.pout_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record['Punch-Out']}
         </td>
         <td class="${record.status_highlight ? 'red-text' : ''}" 
+            style="${getStatusStyle(record.Status)}"
             title="${record.status_comment || ''}"
-            ${isMobileDevice() ? 'onclick="showMobileTooltip(this, this.getAttribute(\'data-comment\'))"' : ''}
             data-comment="${(record.status_comment || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
             ${record.Status}
         </td>
-        <td>${comments}</td>
+        <td style="${getStatusStyle(record.Status)}">${comments}</td>
     </tr>
 `;
     });
@@ -2169,186 +2081,58 @@ function createAttendanceTable(data) {
     return html;
 }
 
+function addStatusRowHoverEffects() {
+    // Add hover effects to all status rows
+    const statusRows = document.querySelectorAll('.attendance-table tr[class*="status-"]');
+    
+    statusRows.forEach(row => {
+        const statusClass = Array.from(row.classList).find(cls => cls.startsWith('status-'));
+        if (!statusClass) return;
+        
+        const status = statusClass.replace('status-', '').toUpperCase();
+        
+        // Add mouseenter event
+        row.addEventListener('mouseenter', function() {
+            const hoverStyle = getStatusHoverStyle(status);
+            if (hoverStyle) {
+                this.style.cssText += hoverStyle;
+                // Apply to all cells in the row
+                const cells = this.querySelectorAll('td');
+                cells.forEach(cell => {
+                    cell.style.cssText += hoverStyle;
+                });
+            }
+        });
+        
+        // Add mouseleave event
+        row.addEventListener('mouseleave', function() {
+            const originalStyle = getStatusStyle(status);
+            if (originalStyle) {
+                this.style.cssText = originalStyle;
+                // Apply to all cells in the row
+                const cells = this.querySelectorAll('td');
+                cells.forEach(cell => {
+                    cell.style.cssText = originalStyle;
+                });
+            }
+        });
+    });
+}
+
 // application submission flow removed
 
 // Mobile tooltip function
 function showMobileTooltip(element, comment) {
-    try {
-        // Only show mobile tooltip on mobile devices
-        if (!isMobileDevice()) {
-            return;
-        }
-        
-        // Get comment from data attribute if not provided directly
-        if (!comment) {
-            comment = element.getAttribute('data-comment') || '';
-        }
-        
-        // Decode HTML entities
-        comment = comment.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-        
-        if (!comment || !comment.trim()) return;
-    
-    const existingTooltip = document.querySelector('.mobile-tooltip');
-    if (existingTooltip) {
-        existingTooltip.remove();
-    }
-    
-    // Add enhanced visual feedback to the clicked cell
-    element.style.backgroundColor = 'rgba(102, 126, 234, 0.25)';
-    element.style.transform = 'scale(1.05)';
-    element.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
-    element.style.transition = 'all 0.2s ease';
-    
-    setTimeout(() => {
-        element.style.backgroundColor = '';
-        element.style.transform = '';
-        element.style.boxShadow = '';
-    }, 300);
-    
-    const tooltip = document.createElement('div');
-    tooltip.className = 'mobile-tooltip';
-    tooltip.innerHTML = `
-        <div class="mobile-tooltip-header">
-            <span class="mobile-tooltip-icon">💬</span>
-            <span class="mobile-tooltip-title">Comment</span>
-            <button class="mobile-tooltip-close" onclick="hideMobileTooltip()">×</button>
-        </div>
-        <div class="mobile-tooltip-content">${comment.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-        <div class="mobile-tooltip-footer">Tap anywhere to close</div>
-    `;
-    
-    document.body.appendChild(tooltip);
-    
-    // Enhanced positioning logic for mobile
-    const rect = element.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-    const padding = 15; // Reduced padding for better mobile fit
-    
-    // Force tooltip to recalculate its size
-    tooltip.style.visibility = 'hidden';
-    tooltip.style.display = 'block';
-    const actualTooltipRect = tooltip.getBoundingClientRect();
-    tooltip.style.visibility = 'visible';
-    
-    // Ensure tooltip doesn't exceed viewport width
-    const maxTooltipWidth = Math.min(actualTooltipRect.width, viewportWidth - (padding * 2));
-    if (actualTooltipRect.width > maxTooltipWidth) {
-        tooltip.style.maxWidth = maxTooltipWidth + 'px';
-        tooltip.style.width = maxTooltipWidth + 'px';
-    }
-    
-    // Calculate optimal position using actual tooltip dimensions
-    let top, left;
-    
-    // Calculate preferred horizontal position (centered on cell)
-    const preferredLeft = rect.left + rect.width/2 - actualTooltipRect.width/2;
-    
-    // Ensure tooltip stays within viewport horizontally
-    left = Math.max(padding, Math.min(preferredLeft, viewportWidth - actualTooltipRect.width - padding));
-    
-    // Try to position above the cell first
-    if (rect.top - actualTooltipRect.height - padding > 0) {
-        top = rect.top - actualTooltipRect.height - padding;
-    } else if (rect.bottom + actualTooltipRect.height + padding < viewportHeight) {
-        // Position below the cell
-        top = rect.bottom + padding;
-    } else {
-        // If no space above or below, position in the middle of the screen
-        top = Math.max(padding, (viewportHeight - actualTooltipRect.height) / 2);
-    }
-    
-    // Final safety check to ensure tooltip is within viewport
-    top = Math.max(padding, Math.min(top, viewportHeight - actualTooltipRect.height - padding));
-    left = Math.max(padding, Math.min(left, viewportWidth - actualTooltipRect.width - padding));
-    
-    // For very small screens, center the tooltip
-    if (viewportWidth < 400) {
-        left = (viewportWidth - actualTooltipRect.width) / 2;
-        left = Math.max(padding, Math.min(left, viewportWidth - actualTooltipRect.width - padding));
-    }
-    
-    tooltip.style.position = 'fixed';
-    tooltip.style.top = top + 'px';
-    tooltip.style.left = left + 'px';
-    tooltip.style.transform = 'none';
-    
-    // Add enhanced entrance animation
-    tooltip.style.opacity = '0';
-    tooltip.style.transform = 'scale(0.8) translateY(-20px)';
-    
-    requestAnimationFrame(() => {
-        tooltip.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        tooltip.style.opacity = '1';
-        tooltip.style.transform = 'scale(1) translateY(0)';
-    });
-    
-    // Auto-remove after 10 seconds (longer for mobile)
-    setTimeout(() => {
-        if (tooltip.parentNode) {
-            tooltip.style.transition = 'all 0.3s ease-out';
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'scale(0.9) translateY(-10px)';
-            setTimeout(() => {
-                if (tooltip.parentNode) {
-                    tooltip.remove();
-                }
-            }, 300);
-        }
-    }, 10000);
-    } catch (error) {
-        console.error('Error showing mobile tooltip:', error);
-    }
+    // Tooltips disabled
+    return;
 }
 
 function hideMobileTooltip() {
-    const existingTooltip = document.querySelector('.mobile-tooltip');
-    if (existingTooltip) {
-        existingTooltip.style.transition = 'all 0.2s ease-out';
-        existingTooltip.style.opacity = '0';
-        existingTooltip.style.transform = 'scale(0.9) translateY(-10px)';
-        setTimeout(() => {
-            if (existingTooltip.parentNode) {
-                existingTooltip.remove();
-            }
-        }, 200);
-    }
+    // Tooltips disabled
+    return;
 }
 
-// Close tooltip when tapping elsewhere
-document.addEventListener('touchstart', function(e) {
-    if (!e.target.closest('.attendance-table td[data-comment]') && !e.target.closest('.mobile-tooltip')) {
-        const tooltip = document.querySelector('.mobile-tooltip');
-        if (tooltip) {
-            tooltip.style.transition = 'all 0.2s ease-out';
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'scale(0.9) translateY(-10px)';
-            setTimeout(() => {
-                if (tooltip.parentNode) {
-                    tooltip.remove();
-                }
-            }, 200);
-        }
-    }
-});
-
-// Also close on regular click for better compatibility
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.attendance-table td[data-comment]') && !e.target.closest('.mobile-tooltip')) {
-        const tooltip = document.querySelector('.mobile-tooltip');
-        if (tooltip) {
-            tooltip.style.transition = 'all 0.2s ease-out';
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'scale(0.9) translateY(-10px)';
-            setTimeout(() => {
-                if (tooltip.parentNode) {
-                    tooltip.remove();
-                }
-            }, 200);
-        }
-    }
-});
+// Tooltip event listeners disabled
 
 function formatComments(record) {
     const comments = [];
@@ -2383,14 +2167,78 @@ function getStatusClass(status) {
     return '';
 }
 
+function getStatusStyle(status) {
+    if (!status) return '';
+    const s = status.toUpperCase();
+    
+    // Simple styles - just background colors
+    if (s.startsWith('P')) return 'background-color: #d4edda !important;';
+    if (s.startsWith('A')) return 'background-color: #f8d7da !important;';
+    if (s.startsWith('W/O')) return 'background-color: #eaf4ff !important;';
+    if (s.startsWith('PL')) return 'background-color: #fff3cd !important;';
+    if (s.startsWith('SL')) return 'background-color: #fde2e4 !important;';
+    if (s.startsWith('FL')) return 'background-color: #fcefe3 !important;';
+    if (s.startsWith('HL')) return 'background-color: #e8eaf6 !important;';
+    if (s.startsWith('PHF')) return 'background-color: #e2f0cb !important;';
+    if (s.startsWith('SHF')) return 'background-color: #e0f7fa !important;';
+    if (s.startsWith('PAT')) return 'background-color: #ffe0b2 !important;';
+    if (s.startsWith('MAT')) return 'background-color: #f3e5f5 !important;';
+    if (s.startsWith('HF')) return 'background-color: #e1f5fe !important;';
+    return '';
+}
+
+function getStatusHoverStyle(status) {
+    if (!status) return '';
+    const s = status.toUpperCase();
+    
+    // Simple hover styles - just darker colors
+    if (s.startsWith('P')) return 'background-color: #c3e6cb !important;';
+    if (s.startsWith('A')) return 'background-color: #f5c6cb !important;';
+    if (s.startsWith('W/O')) return 'background-color: #d1ecf1 !important;';
+    if (s.startsWith('PL')) return 'background-color: #ffeaa7 !important;';
+    if (s.startsWith('SL')) return 'background-color: #f8d7da !important;';
+    if (s.startsWith('FL')) return 'background-color: #fadbd8 !important;';
+    if (s.startsWith('HL')) return 'background-color: #d1c4e9 !important;';
+    if (s.startsWith('PHF')) return 'background-color: #c8e6c9 !important;';
+    if (s.startsWith('SHF')) return 'background-color: #b2ebf2 !important;';
+    if (s.startsWith('PAT')) return 'background-color: #ffcc80 !important;';
+    if (s.startsWith('MAT')) return 'background-color: #e1bee7 !important;';
+    if (s.startsWith('HF')) return 'background-color: #b3e5fc !important;';
+    return '';
+}
+
 function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
+    if (!dateStr) return '';
+    
+    // Handle different date formats
+    let date;
+    if (typeof dateStr === 'string') {
+        // Try different date formats
+        date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+            // Try parsing as YYYY-MM-DD format
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                date = new Date(parts[0], parts[1] - 1, parts[2]);
+            }
+        }
+    } else {
+        date = new Date(dateStr);
+    }
+    
+    if (isNaN(date.getTime())) {
+        console.log('Invalid date:', dateStr);
+        return dateStr; // Return original string if can't parse
+    }
+    
+    const formatted = date.toLocaleDateString('en-US', { 
         weekday: 'short', 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
     });
+    console.log('formatDate input:', dateStr, 'output:', formatted);
+    return formatted;
 }
 
 function getDayOfWeek(dateString) {
@@ -2435,10 +2283,10 @@ function updateEmployeeStats() {
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length + 
                       (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
     
-    // Use total days in the month for attendance rate calculation
-    const totalDaysInMonth = employeeData.length; // Total records = total days in month
+    // Use working days only for attendance rate calculation (exclude W/O)
+    const totalWorkingDays = employeeData.filter(record => !record.Status.startsWith('W/O')).length; // Exclude W/O days
     const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
-    const attendanceRate = totalDaysInMonth > 0 ? ((presentDaysWeighted / totalDaysInMonth) * 100).toFixed(1) : 0;
+    const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -2834,6 +2682,211 @@ document.addEventListener('DOMContentLoaded', function() {
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+}
+
+// Zoom functionality
+function initializeZoom() {
+    // Load saved zoom level from localStorage
+    const savedZoom = localStorage.getItem('attendancePortalZoom');
+    if (savedZoom) {
+        currentZoomLevel = parseInt(savedZoom);
+        applyZoom(currentZoomLevel);
+        updateZoomDisplay();
+    }
+}
+
+function zoomIn() {
+    if (currentZoomLevel < 200) {
+        currentZoomLevel += 10;
+        applyZoom(currentZoomLevel);
+        updateZoomDisplay();
+        saveZoomLevel();
+    }
+}
+
+function zoomOut() {
+    if (currentZoomLevel > 50) {
+        currentZoomLevel -= 10;
+        applyZoom(currentZoomLevel);
+        updateZoomDisplay();
+        saveZoomLevel();
+    }
+}
+
+function resetZoom() {
+    currentZoomLevel = 100;
+    applyZoom(currentZoomLevel);
+    updateZoomDisplay();
+    saveZoomLevel();
+}
+
+function applyZoom(zoomLevel) {
+    const app = document.getElementById('app');
+    if (app) {
+        app.style.transform = `scale(${zoomLevel / 100})`;
+        app.style.transformOrigin = 'center top';
+        
+        // Adjust container height to prevent scrolling issues
+        const body = document.body;
+        const scale = zoomLevel / 100;
+        body.style.height = `${100 / scale}vh`;
+    }
+}
+
+function updateZoomDisplay() {
+    const adminZoomLevel = document.getElementById('zoom-level');
+    const employeeZoomLevel = document.getElementById('zoom-level-employee');
+    
+    if (adminZoomLevel) {
+        adminZoomLevel.textContent = `${currentZoomLevel}%`;
+    }
+    if (employeeZoomLevel) {
+        employeeZoomLevel.textContent = `${currentZoomLevel}%`;
+    }
+}
+
+function saveZoomLevel() {
+    localStorage.setItem('attendancePortalZoom', currentZoomLevel.toString());
+}
+
+// Initialize zoom when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeZoom();
+});
+
+// Employee Data Modal Functions
+async function showEmployeeData(employeeName) {
+    try {
+        const response = await fetch(`/api/employee-data/${encodeURIComponent(employeeName)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayEmployeeData(result.data);
+            document.getElementById('employee-data-modal').style.display = 'flex';
+        } else {
+            showNotification('❌ Failed to load employee data: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error loading employee data:', error);
+        showNotification('❌ Error loading employee data', 'error');
+    }
+}
+
+function displayEmployeeData(data) {
+    const content = document.getElementById('employee-data-content');
+    if (!content) return;
+    
+    content.innerHTML = `
+        <div class="employee-data-container">
+            <div class="employee-info-section">
+                <div class="employee-header">
+                    <div class="employee-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="employee-details">
+                        <h4>${data.employee_name}</h4>
+                        <p><i class="fas fa-envelope"></i> ${data.email}</p>
+                        <p><i class="fas fa-calendar"></i> ${data.joining_date}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="employee-stats-section">
+                <h5><i class="fas fa-chart-bar"></i> Attendance Statistics</h5>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Days</span>
+                        <span class="stat-value">${data.total_days}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Working Days</span>
+                        <span class="stat-value">${data.working_days}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Present Days</span>
+                        <span class="stat-value">${data.present_days}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Absent Days</span>
+                        <span class="stat-value">${data.absent_days}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Leave Days</span>
+                        <span class="stat-value">${data.leave_days}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Attendance Rate</span>
+                        <span class="stat-value">${data.attendance_rate}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="employee-leave-breakdown-section">
+                <h5><i class="fas fa-calendar-alt"></i> Leave Breakdown</h5>
+                <div class="leave-breakdown-grid">
+                    <div class="leave-item">
+                        <span class="leave-label">W/O Used</span>
+                        <span class="leave-value">${data.leave_breakdown.wo_used}</span>
+                    </div>
+                    <div class="leave-item">
+                        <span class="leave-label">PL Used</span>
+                        <span class="leave-value">${data.leave_breakdown.pl_used}</span>
+                    </div>
+                    <div class="leave-item">
+                        <span class="leave-label">SL Used</span>
+                        <span class="leave-value">${data.leave_breakdown.sl_used}</span>
+                    </div>
+                    <div class="leave-item">
+                        <span class="leave-label">FL Used</span>
+                        <span class="leave-value">${data.leave_breakdown.fl_used}</span>
+                    </div>
+                    <div class="leave-item">
+                        <span class="leave-label">HL Used</span>
+                        <span class="leave-value">${data.leave_breakdown.hl_used}</span>
+                    </div>
+                    <div class="leave-item">
+                        <span class="leave-label">PAT Used</span>
+                        <span class="leave-value">${data.leave_breakdown.pat_used}</span>
+                    </div>
+                    <div class="leave-item">
+                        <span class="leave-label">MAT Used</span>
+                        <span class="leave-value">${data.leave_breakdown.mat_used}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="recent-records-section">
+                <h5><i class="fas fa-history"></i> Recent Attendance Records</h5>
+                <div class="records-table">
+                    <div class="record-header">
+                        <span>Date</span>
+                        <span>Punch In</span>
+                        <span>Punch Out</span>
+                        <span>Status</span>
+                    </div>
+                    ${data.recent_records.map(record => `
+                        <div class="record-row ${getStatusClass(record.Status)}">
+                            <span>${formatDate(record.Date)}</span>
+                            <span>${record['Punch-In'] || '-'}</span>
+                            <span>${record['Punch-Out'] || '-'}</span>
+                            <span>${record.Status}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getStatusClass(status) {
+    if (status === 'Present') return 'status-present';
+    if (status === 'Absent') return 'status-absent';
+    if (status.includes('Late')) return 'status-late';
+    return '';
+}
+
+function closeEmployeeDataModal() {
+    document.getElementById('employee-data-modal').style.display = 'none';
 }
 
 
