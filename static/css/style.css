@@ -1935,7 +1935,7 @@ tr.status-MAT, tr.status-MAT td { background-color: #f3e5f5 !important; }
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 9999;
+    z-index: 999999;
     pointer-events: none;
 }
 
@@ -1956,6 +1956,8 @@ tr.status-MAT, tr.status-MAT td { background-color: #f3e5f5 !important; }
     opacity: 0;
     transform: translateX(100%);
     transition: all 0.3s ease-in-out;
+    position: relative;
+    z-index: 999999;
 }
 
 .notification.show {
