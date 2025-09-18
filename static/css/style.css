@@ -4485,19 +4485,19 @@ nav.navbar#main-navbar {
     box-sizing: border-box !important;
 }
 
-/* PWA Background Fix - Match login page gradient when installed as APK */
+/* PWA Background Fix - Solid blue background when installed as APK */
 @media (display-mode: standalone) {
     html, body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        background-attachment: fixed !important;
+        background: #667eea !important;
         background-color: #667eea !important;
+        background-image: none !important;
     }
     
-    /* Ensure gradient background matches login page in PWA mode */
+    /* Ensure solid blue background in PWA mode */
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        background-attachment: fixed !important;
+        background: #667eea !important;
         background-color: #667eea !important;
+        background-image: none !important;
     }
 }
 
