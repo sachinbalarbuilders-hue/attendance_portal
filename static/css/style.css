@@ -4485,19 +4485,19 @@ nav.navbar#main-navbar {
     box-sizing: border-box !important;
 }
 
-/* PWA Background Fix - Remove extra background layers when installed as APK */
+/* PWA Background Fix - Match login page gradient when installed as APK */
 @media (display-mode: standalone) {
     html, body {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
+        background-color: #667eea !important;
     }
     
-    /* Ensure no gradient background shows in PWA mode */
+    /* Ensure gradient background matches login page in PWA mode */
     body {
-        background: #ffffff !important;
-        background-color: #ffffff !important;
-        background-image: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-attachment: fixed !important;
+        background-color: #667eea !important;
     }
 }
 
