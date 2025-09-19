@@ -1454,8 +1454,8 @@ def get_employee_data(employee_name):
         
         # Calculate statistics
         total_days = len(employee_records)
-        present_days = len([r for r in employee_records if r['Status'].startswith('P')])
-        absent_days = len([r for r in employee_records if r['Status'].startswith('A')])
+        present_days = len([r for r in employee_records if r['Status'].startswith('P') and not r['Status'].startswith(('PL', 'SL', 'FL', 'PAT', 'MAT', 'HL'))])
+        absent_days = len([r for r in employee_records if r['Status'].startswith('A')]) + (len([r for r in employee_records if r['Status'].startswith('HF')]) * 0.5) + (len([r for r in employee_records if r['Status'].startswith('PHF')]) * 0.5) + (len([r for r in employee_records if r['Status'].startswith('SHF')]) * 0.5)
         
         # Calculate half days
         half_days = len([r for r in employee_records if r['Status'].startswith('HF')])
@@ -1471,8 +1471,8 @@ def get_employee_data(employee_name):
         pat_used = len([r for r in employee_records if r['Status'].startswith('PAT')])
         mat_used = len([r for r in employee_records if r['Status'].startswith('MAT')])
         
-        # Calculate total leave days
-        leave_days = wo_used + pl_used + sl_used + fl_used + hl_used + pat_used + mat_used
+        # Calculate total paid leave days
+        paid_leave_days = wo_used + pl_used + sl_used + fl_used + hl_used + pat_used + mat_used
         
         # Calculate working days (exclude W/O)
         working_days = total_days - wo_used
@@ -1498,7 +1498,7 @@ def get_employee_data(employee_name):
             'working_days': working_days,
             'present_days': present_days_weighted,
             'absent_days': absent_days,
-            'leave_days': leave_days,
+            'paid_leave_days': paid_leave_days,
             'attendance_rate': round(attendance_rate, 1),
             'leave_breakdown': {
                 'wo_used': wo_used,
