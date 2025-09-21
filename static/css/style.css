@@ -4482,6 +4482,18 @@ body, html, #app {
         background: rgba(255, 255, 255, 0.95) !important;
         backdrop-filter: blur(10px) !important;
     }
+    
+    /* Fix dashboard height on mobile to prevent blue space */
+    .dashboard {
+        min-height: 100vh !important;
+        height: 100vh !important;
+    }
+    
+    /* Ensure dashboard section covers full height */
+    #dashboard-section {
+        min-height: 100vh !important;
+        height: 100vh !important;
+    }
 }
 
 /* NAVBAR VISIBILITY CONTROL */
