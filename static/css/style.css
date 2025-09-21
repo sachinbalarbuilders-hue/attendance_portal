@@ -29,6 +29,47 @@ body {
     margin-top: 0 !important;
 }
 
+/* Override body background when dashboard is active */
+body.dashboard-active {
+    background: #f8f9fa !important;
+    background-color: #f8f9fa !important;
+    background-image: none !important;
+}
+
+/* Ensure dashboard section takes full viewport */
+#dashboard-section {
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Make dashboard content fill the entire container */
+.dashboard {
+    min-height: 100vh;
+    margin-top: 60px;
+}
+
+/* Reduce excessive padding and margins */
+.dashboard-header {
+    margin-bottom: 1.5rem;
+    padding: 2rem;
+}
+
+/* Ensure stats sections don't have excessive spacing */
+.stats-section, .employee-stats {
+    margin-bottom: 1.5rem;
+}
+
+/* Reduce spacing in control panels */
+.control-panel {
+    margin-bottom: 1.5rem;
+}
+
+.upload-section, .date-picker-section {
+    margin-bottom: 1rem;
+}
+
 /* Main app container - responsive */
 #app {
     width: 100%;
@@ -534,10 +575,10 @@ body {
 }
 
 .dashboard {
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     margin-top: 60px;
-    padding: 2rem;
+    padding: 1.5rem;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: calc(100vh - 60px);
     overflow-x: hidden;
@@ -4487,12 +4528,20 @@ body, html, #app {
     .dashboard {
         min-height: 100vh !important;
         height: 100vh !important;
+        padding: 1rem !important;
     }
     
     /* Ensure dashboard section covers full height */
     #dashboard-section {
         min-height: 100vh !important;
         height: 100vh !important;
+    }
+    
+    /* Override body background on mobile when dashboard is active */
+    body.dashboard-active {
+        background: #f8f9fa !important;
+        background-color: #f8f9fa !important;
+        background-image: none !important;
     }
 }
 

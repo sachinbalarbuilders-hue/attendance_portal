@@ -1120,6 +1120,9 @@ function showLoginPage() {
     document.getElementById('main-navbar').style.display = 'none';
     document.getElementById('login-section').style.display = 'flex';
     
+    // Remove dashboard-active class to restore blue background
+    document.body.classList.remove('dashboard-active');
+    
     // Check if running as PWA
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
                   window.navigator.standalone === true ||
@@ -1161,6 +1164,9 @@ function showLoginPage() {
 
 async function showDashboard() {
     document.getElementById('login-section').style.display = 'none';
+    
+    // Add dashboard-active class to body to change background
+    document.body.classList.add('dashboard-active');
     
     // Show and properly position navbar
     const navbar = document.getElementById('main-navbar');
