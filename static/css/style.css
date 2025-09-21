@@ -70,12 +70,30 @@ body.dashboard-active {
     margin-bottom: 1rem;
 }
 
-/* Main app container - responsive */
+/* Main app container - force desktop view */
 #app {
     width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
+    min-width: 1200px;
+    overflow-x: auto;
     overflow-y: auto;
+}
+
+/* Force desktop view on all devices */
+html, body {
+    min-width: 1200px !important;
+}
+
+/* Disable responsive behavior completely */
+@media screen and (max-width: 1199px) {
+    html, body {
+        min-width: 1200px !important;
+        overflow-x: auto !important;
+    }
+    
+    #app {
+        min-width: 1200px !important;
+        overflow-x: auto !important;
+    }
 }
 
 /* Custom scrollbar styling */

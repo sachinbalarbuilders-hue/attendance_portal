@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved credentials if available
     loadSavedCredentials();
     
+    // Auto-focus on email input
+    autoFocusEmailInput();
+    
     // Initialize horizontal scroll functionality
     
     // Focus functionality removed
@@ -113,6 +116,17 @@ function clearSavedCredentials() {
     }
 }
 
+
+// Auto-focus on email input
+function autoFocusEmailInput() {
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        // Small delay to ensure page is fully loaded
+        setTimeout(() => {
+            emailInput.focus();
+        }, 300);
+    }
+}
 
 // Helper function to clean employee names (remove suffixes like (T), (TC), etc.)
 function cleanEmployeeName(fullName) {
@@ -1122,6 +1136,9 @@ function showLoginPage() {
     
     // Remove dashboard-active class to restore blue background
     document.body.classList.remove('dashboard-active');
+    
+    // Auto-focus on email input when returning to login
+    autoFocusEmailInput();
     
     // Check if running as PWA
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
