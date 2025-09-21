@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-focus on email input
     autoFocusEmailInput();
     
+    // Test data update message visibility
+    setTimeout(() => {
+        testDataUpdateMessage();
+    }, 2000);
+    
     // Initialize horizontal scroll functionality
     
     // Focus functionality removed
@@ -125,6 +130,39 @@ function autoFocusEmailInput() {
         setTimeout(() => {
             emailInput.focus();
         }, 300);
+    }
+}
+
+// Test function to verify data update message is working
+function testDataUpdateMessage() {
+    console.log('Testing data update message...');
+    
+    // Test admin data update message
+    const adminNote = document.getElementById('data-update-note');
+    if (adminNote) {
+        console.log('Admin data update note found:', adminNote);
+        // Temporarily show the message for 5 seconds
+        adminNote.style.display = 'flex';
+        setTimeout(() => {
+            adminNote.style.display = 'none';
+            console.log('Admin data update note hidden');
+        }, 5000);
+    } else {
+        console.log('Admin data update note NOT found');
+    }
+    
+    // Test employee data update message
+    const employeeNote = document.getElementById('employee-data-update-note');
+    if (employeeNote) {
+        console.log('Employee data update note found:', employeeNote);
+        // Temporarily show the message for 5 seconds
+        employeeNote.style.display = 'flex';
+        setTimeout(() => {
+            employeeNote.style.display = 'none';
+            console.log('Employee data update note hidden');
+        }, 7000);
+    } else {
+        console.log('Employee data update note NOT found');
     }
 }
 
