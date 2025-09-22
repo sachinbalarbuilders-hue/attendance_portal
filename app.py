@@ -903,7 +903,18 @@ def extract_leave_totals(file_path):
 def index():
     if is_maintenance_mode():
         return render_template('maintenance.html')
-    return render_template('index.html')
+    
+    # Check if it's a mobile browser and force desktop view
+    user_agent = request.headers.get('User-Agent', '').lower()
+    is_mobile = any(mobile in user_agent for mobile in ['android', 'iphone', 'ipad', 'mobile', 'opera mini', 'blackberry', 'iemobile'])
+    
+    # Debug logging
+    print(f"User-Agent: {request.headers.get('User-Agent', '')}")
+    print(f"Is Mobile: {is_mobile}")
+    print(f"Force Desktop View: {is_mobile}")
+    
+    # Force desktop view for mobile browsers
+    return render_template('index.html', force_desktop_view=is_mobile)
 
 @app.route('/manifest.json')
 def manifest():
@@ -1832,4 +1843,4 @@ def clear_cache():
         })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

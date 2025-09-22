@@ -9,8 +9,106 @@ let selectedEmployee = null;
 let globalShowUpdateNote = false;
 let resetToken = null;
 
+// Force desktop viewport for entire application - ULTRA AGGRESSIVE
+function forceDesktopViewport() {
+    // Override viewport meta tag to force desktop view
+    let viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewportMeta) {
+        viewportMeta.content = 'width=1200, initial-scale=1.0, user-scalable=no';
+    } else {
+        // Create viewport meta tag if it doesn't exist
+        viewportMeta = document.createElement('meta');
+        viewportMeta.name = 'viewport';
+        viewportMeta.content = 'width=1200, initial-scale=1.0, user-scalable=no';
+        document.head.appendChild(viewportMeta);
+    }
+    
+    // Force body width for entire application
+    document.body.style.minWidth = '1200px';
+    document.body.style.width = '1200px';
+    document.body.style.maxWidth = 'none';
+    document.body.style.overflowX = 'auto';
+    
+    // Force HTML element as well
+    document.documentElement.style.minWidth = '1200px';
+    document.documentElement.style.width = '1200px';
+    document.documentElement.style.maxWidth = 'none';
+    
+    // Force all main containers
+    const containers = document.querySelectorAll('#app, #dashboard-section, .dashboard, .main-wrapper, .content');
+    containers.forEach(container => {
+        container.style.minWidth = '1200px';
+        container.style.width = '1200px';
+        container.style.maxWidth = 'none';
+    });
+    
+    // Disable text size adjustment
+    document.documentElement.style.setProperty('-webkit-text-size-adjust', 'none', 'important');
+    document.documentElement.style.setProperty('-moz-text-size-adjust', 'none', 'important');
+    document.documentElement.style.setProperty('text-size-adjust', 'none', 'important');
+}
+
+// Keep desktop viewport for login (no restore function needed)
+function keepDesktopViewport() {
+    // Same as forceDesktopViewport - always desktop
+    forceDesktopViewport();
+}
+
+// Continuous desktop view enforcement
+function continuousDesktopEnforcement() {
+    // Force desktop viewport every 2 seconds
+    setInterval(function() {
+        forceDesktopViewport();
+        
+        // Force all dashboard elements to desktop width
+        const dashboardElements = document.querySelectorAll('#dashboard-section, .dashboard, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table, .action-buttons, #admin-panel');
+        dashboardElements.forEach(element => {
+            element.style.minWidth = '1200px';
+            element.style.width = '1200px';
+            element.style.maxWidth = 'none';
+        });
+    }, 2000);
+}
+
 // Initialize app focus on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Force desktop viewport immediately on page load
+    forceDesktopViewport();
+    
+    // Start continuous enforcement
+    continuousDesktopEnforcement();
+    
+    // ULTRA-AGGRESSIVE: Set up observer to force desktop view on any dashboard elements
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { // Element node
+                        // Check if dashboard section is visible
+                        if (document.getElementById('dashboard-section') && document.getElementById('dashboard-section').style.display !== 'none') {
+                            // Force desktop view immediately
+                            forceDesktopViewport();
+                            
+                            // Force all dashboard elements to desktop width
+                            const dashboardElements = document.querySelectorAll('#dashboard-section, .dashboard, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table, .action-buttons, #admin-panel');
+                            dashboardElements.forEach(element => {
+                                element.style.minWidth = '1200px';
+                                element.style.width = '1200px';
+                                element.style.maxWidth = 'none';
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
     // Ensure navbar is hidden on page load
     const navbar = document.getElementById('main-navbar');
     if (navbar) {
@@ -1151,6 +1249,9 @@ function showLoginPage() {
     // Remove dashboard-active class to restore blue background
     document.body.classList.remove('dashboard-active');
     
+    // Keep desktop viewport for login page too
+    keepDesktopViewport();
+    
     // Auto-focus on email input when returning to login
     autoFocusEmailInput();
     
@@ -1198,6 +1299,32 @@ async function showDashboard() {
     
     // Add dashboard-active class to body to change background
     document.body.classList.add('dashboard-active');
+    
+    // ULTRA-AGGRESSIVE: Force desktop viewport for dashboard
+    forceDesktopViewport();
+    
+    // Additional aggressive desktop view enforcement
+    setTimeout(function() {
+        // Force viewport again after a short delay
+        let viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+            viewportMeta.content = 'width=1200, initial-scale=1.0, user-scalable=no';
+        }
+        
+        // Force body styles again
+        document.body.style.minWidth = '1200px';
+        document.body.style.width = '1200px';
+        document.body.style.maxWidth = 'none';
+        document.body.style.overflowX = 'auto';
+        
+        // Force all dashboard elements to desktop width
+        const dashboardElements = document.querySelectorAll('#dashboard-section, .dashboard, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table, .action-buttons, #admin-panel');
+        dashboardElements.forEach(element => {
+            element.style.minWidth = '1200px';
+            element.style.width = '1200px';
+            element.style.maxWidth = 'none';
+        });
+    }, 100);
     
     // Show and properly position navbar
     const navbar = document.getElementById('main-navbar');
