@@ -23,6 +23,10 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#667eea">
     {% endif %}
+    <!-- Prevent caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Employee Attendance Portal</title>
     
     <!-- PWA Meta Tags -->
@@ -47,7 +51,7 @@
     <!-- External Resources -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=19.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=100.0&t={{ range(100000, 999999) | random }}">
     
     {% if force_desktop_view %}
     <!-- ULTRA-AGGRESSIVE Server-side forced desktop view for mobile browsers -->

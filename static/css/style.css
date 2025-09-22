@@ -1,4 +1,4 @@
-/* ULTRA-AGGRESSIVE: Force desktop view for mobile browsers - CSS v19.0 */
+/* ULTRA-AGGRESSIVE: Force desktop view for mobile browsers - CSS v20.0 */
 html, body {
     min-width: 1200px !important;
     width: 1200px !important;
@@ -11,6 +11,14 @@ html, body {
     -moz-text-size-adjust: none !important;
     -ms-text-size-adjust: none !important;
     text-size-adjust: none !important;
+    /* Hide scrollbar but keep scrolling functionality */
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+    display: none !important;
 }
 
 /* Force desktop view on ALL elements */
@@ -22,11 +30,34 @@ html, body {
 }
 
 /* Force desktop view for dashboard only - not login page */
-#dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table {
+#dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section {
     min-width: 1200px !important;
     width: 1200px !important;
     max-width: none !important;
     overflow-x: auto !important;
+    /* Hide scrollbar but keep scrolling functionality */
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+#dashboard-section::-webkit-scrollbar, 
+.dashboard::-webkit-scrollbar, 
+.main-wrapper::-webkit-scrollbar, 
+.content::-webkit-scrollbar, 
+.dashboard-header::-webkit-scrollbar, 
+.control-panel::-webkit-scrollbar, 
+.stats-section::-webkit-scrollbar, 
+.filters-section::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* Table container and table - no individual scrollbars */
+.table-container, .attendance-table {
+    min-width: 1200px !important;
+    width: 1200px !important;
+    max-width: none !important;
+    overflow-x: hidden !important;
 }
 
 /* Make login page responsive within desktop view */
@@ -55,6 +86,9 @@ body.force-desktop-view body {
         width: 1200px !important;
         max-width: none !important;
         overflow-x: auto !important;
+        /* Hide scrollbar but keep scrolling functionality */
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* Internet Explorer 10+ */
     }
     
     #dashboard-section, .dashboard, .main-wrapper, .content {
@@ -62,6 +96,9 @@ body.force-desktop-view body {
         width: 1200px !important;
         max-width: none !important;
         overflow-x: auto !important;
+        /* Hide scrollbar but keep scrolling functionality */
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* Internet Explorer 10+ */
     }
 }
 
@@ -94,7 +131,7 @@ body.force-desktop-view body {
 }
 
 /* ULTRA-AGGRESSIVE: Force desktop view on ALL elements immediately */
-html, body, #app, #login-section, #dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table, .action-buttons, #admin-panel {
+html, body, #app, #login-section, #dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section, .action-buttons, #admin-panel {
     min-width: 1200px !important;
     width: 1200px !important;
     max-width: none !important;
