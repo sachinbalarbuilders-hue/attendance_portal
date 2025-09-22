@@ -82,6 +82,10 @@ body.dashboard-active {
     margin-top: 60px;
     width: 100% !important;
     max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 /* Main wrapper sections always expand */
@@ -101,12 +105,15 @@ table {
         padding: 1rem !important;
         width: 100% !important;
         max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
     
     .dashboard-header {
         padding: 1.5rem !important;
         width: 100% !important;
         max-width: 100% !important;
+        border-radius: 0 !important;
     }
     
     .login-container {
@@ -124,6 +131,10 @@ table {
     .control-panel, .stats-section, .employee-stats, .filters-section {
         width: 100% !important;
         max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
     }
     
     /* Force tables to be responsive */
@@ -138,11 +149,14 @@ table {
 @media screen and (max-width: 480px) {
     .dashboard {
         padding: 0.5rem !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
     
     .dashboard-header {
         padding: 1rem !important;
         margin-bottom: 1rem !important;
+        border-radius: 0 !important;
     }
     
     .login-container {
@@ -711,18 +725,24 @@ html, body {
     width: 100% !important;
     box-sizing: border-box;
     position: relative;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 .dashboard-header {
     margin-bottom: 2rem;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     padding: 2.5rem;
-    border-radius: 16px;
+    border-radius: 0;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 .dashboard-header::before {
