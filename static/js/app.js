@@ -2350,14 +2350,34 @@ function createAttendanceTable(data) {
                 <tr>
                     <th>
                         <div class="header-cell">
-                            <span>Employee</span>
+                            <span>Employee Name</span>
                         </div>
                     </th>
-                    <th>Date</th>
-                    <th>Punch-In</th>
-                    <th>Punch-Out</th>
-                    <th>Status</th>
-                    <th>Comments</th>
+                    <th>
+                        <div class="header-cell">
+                            <span>Date</span>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="header-cell">
+                            <span>Punch In</span>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="header-cell">
+                            <span>Punch Out</span>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="header-cell">
+                            <span>Status</span>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="header-cell">
+                            <span>Comment</span>
+                        </div>
+                    </th>
                 </tr>
             </thead>
             <tbody>
