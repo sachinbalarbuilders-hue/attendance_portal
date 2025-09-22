@@ -5,6 +5,38 @@
     font-family: 'Poppins', sans-serif;
 }
 
+/* CRITICAL: Force responsive layout - override any conflicting rules */
+html, body, #app, #dashboard-section, .dashboard, .main-wrapper, .content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: auto !important;
+}
+
+/* Force all tables and containers to be responsive */
+table, .attendance-table, .table-container, .control-panel, .stats-section, .employee-stats {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: auto !important;
+}
+
+/* CRITICAL: Override any viewport-based constraints */
+@media screen and (max-width: 9999px) {
+    html, body, #app, #dashboard-section, .dashboard {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: auto !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* Force tables to always be responsive regardless of screen size */
+    .attendance-table, .table-container, table {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: auto !important;
+        table-layout: auto !important;
+    }
+}
+
 /* Responsive design for all devices */
 html {
     overflow-x: hidden !important;
@@ -67,10 +99,14 @@ table {
 @media screen and (max-width: 768px) {
     .dashboard {
         padding: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .dashboard-header {
         padding: 1.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .login-container {
@@ -80,6 +116,21 @@ table {
     
     .main-header {
         padding: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Force all containers to be responsive */
+    .control-panel, .stats-section, .employee-stats, .filters-section {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Force tables to be responsive */
+    .attendance-table, .table-container {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
     }
 }
 
@@ -2780,7 +2831,7 @@ body, html, #app {
         min-height: calc(100vh - 50px) !important;
     }
     
-    body.mobile .attendance-table { font-size: 0.95rem !important; min-width: 600px !important; }
+    body.mobile .attendance-table { font-size: 0.95rem !important; min-width: 100% !important; }
     
     .attendance-table th,
     .attendance-table td {
