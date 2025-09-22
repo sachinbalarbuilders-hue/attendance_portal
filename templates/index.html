@@ -2,12 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Responsive viewport for mobile and desktop -->
-    {% if force_desktop_view %}
-    <meta name="viewport" content="width=1200, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no">
-    {% else %}
+    <!-- Responsive viewport for all devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    {% endif %}
     {% if force_desktop_view %}
     <!-- Force desktop view - disable mobile features -->
     <meta name="mobile-web-app-capable" content="no">
@@ -54,178 +50,53 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=100.0&t={{ range(100000, 999999) | random }}">
     
     {% if force_desktop_view %}
-    <!-- ULTRA-AGGRESSIVE Server-side forced desktop view for mobile browsers -->
-    <style id="server-forced-desktop">
-        /* Force desktop view on ALL elements immediately */
+    <!-- Responsive design for all devices -->
+    <style id="responsive-design">
+        /* Responsive layout for all screen sizes */
         html, body, #app, #login-section, #dashboard-section { 
-            min-width: 1200px !important; 
-            width: 1200px !important; 
-            max-width: none !important; 
-            overflow-x: auto !important;
+            width: 100% !important; 
+            max-width: 100% !important; 
+            min-width: 320px !important; 
+            overflow-x: hidden !important;
             overflow-y: auto !important;
-            zoom: 1 !important;
-            transform: none !important;
-            -webkit-text-size-adjust: none !important;
-            -moz-text-size-adjust: none !important;
-            -ms-text-size-adjust: none !important;
-            text-size-adjust: none !important;
-            -webkit-transform: none !important;
-            -moz-transform: none !important;
-            -ms-transform: none !important;
-            transform: none !important;
+            box-sizing: border-box !important;
         }
         
-        /* Force all text elements to not scale */
+        /* Responsive text sizing */
         *, *::before, *::after {
-            -webkit-text-size-adjust: none !important;
-            -moz-text-size-adjust: none !important;
-            -ms-text-size-adjust: none !important;
-            text-size-adjust: none !important;
+            -webkit-text-size-adjust: 100% !important;
+            -moz-text-size-adjust: 100% !important;
+            -ms-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
         }
         
-        /* Force desktop view for all screen sizes */
-        @media screen and (max-width: 9999px) {
-            html, body, #app, #login-section, #dashboard-section { 
-                min-width: 1200px !important; 
-                width: 1200px !important; 
-                max-width: none !important; 
-                overflow-x: auto !important;
-                zoom: 1 !important;
-                transform: none !important;
-            }
-        }
-        
-        /* Extra aggressive for mobile screens */
-        @media screen and (max-width: 768px) {
-            html, body, #app, #login-section, #dashboard-section { 
-                min-width: 1200px !important; 
-                width: 1200px !important; 
-                max-width: none !important; 
-                overflow-x: auto !important;
-                zoom: 1 !important;
-                transform: none !important;
-                -webkit-text-size-adjust: none !important;
-                -moz-text-size-adjust: none !important;
-                text-size-adjust: none !important;
-            }
-        }
-        
-        /* Force login page to be centered and desktop-sized */
+        /* Responsive login page */
         #login-section {
-            min-width: 1200px !important;
-            width: 1200px !important;
-            max-width: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 320px !important;
             margin: 0 auto !important;
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
+            padding: 2rem !important;
+            box-sizing: border-box !important;
         }
         
         .login-container {
-            min-width: 400px !important;
-            width: 400px !important;
+            width: 100% !important;
             max-width: 400px !important;
+            min-width: 320px !important;
+            box-sizing: border-box !important;
         }
     </style>
     {% endif %}
     
-    <!-- ULTRA-AGGRESSIVE desktop view enforcement - runs before page loads -->
+    <!-- Responsive initialization script -->
     <script>
-        // ULTRA-AGGRESSIVE desktop viewport enforcement - runs immediately
+        // Initialize responsive layout
         (function() {
-            // Override viewport meta tag immediately
-            let viewportMeta = document.querySelector('meta[name="viewport"]');
-            if (viewportMeta) {
-                viewportMeta.content = 'width=1200, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no';
-            }
-            
-            // Force desktop view immediately
-            document.documentElement.style.setProperty('-webkit-text-size-adjust', 'none', 'important');
-            document.documentElement.style.setProperty('-moz-text-size-adjust', 'none', 'important');
-            document.documentElement.style.setProperty('text-size-adjust', 'none', 'important');
-            
-            // Inject CSS directly into document head to force desktop view
-            const desktopCSS = `
-                html, body, #app { 
-                    min-width: 1200px !important; 
-                    width: 1200px !important; 
-                    max-width: none !important; 
-                    overflow-x: auto !important;
-                    zoom: 1 !important;
-                    transform: none !important;
-                    -webkit-text-size-adjust: none !important;
-                    -moz-text-size-adjust: none !important;
-                    text-size-adjust: none !important;
-                }
-                * {
-                    -webkit-text-size-adjust: none !important;
-                    -moz-text-size-adjust: none !important;
-                    text-size-adjust: none !important;
-                }
-                @media screen and (max-width: 768px) {
-                    html, body, #app { 
-                        min-width: 1200px !important; 
-                        width: 1200px !important; 
-                        max-width: none !important; 
-                        overflow-x: auto !important;
-                        zoom: 1 !important;
-                        transform: none !important;
-                    }
-                }
-            `;
-            
-            const style = document.createElement('style');
-            style.id = 'force-desktop-view';
-            style.textContent = desktopCSS;
-            document.head.appendChild(style);
-            
-            // Force HTML and body styles immediately
-            document.documentElement.style.minWidth = '1200px';
-            document.documentElement.style.width = '1200px';
-            document.documentElement.style.maxWidth = 'none';
-            document.documentElement.style.overflowX = 'auto';
-            document.documentElement.className = 'force-desktop-view';
-            
-            // Force body styles immediately
-            document.body.style.minWidth = '1200px';
-            document.body.style.width = '1200px';
-            document.body.style.maxWidth = 'none';
-            document.body.style.overflowX = 'auto';
-            document.body.className = 'force-desktop-view';
-            
-            // Force app container
-            const app = document.getElementById('app');
-            if (app) {
-                app.style.minWidth = '1200px';
-                app.style.width = '1200px';
-                app.style.maxWidth = 'none';
-                app.style.overflowX = 'auto';
-            }
-            
-            // Detect mobile browser and force desktop view
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobile) {
-                // Force desktop view for mobile browsers
-                document.documentElement.style.setProperty('min-width', '1200px', 'important');
-                document.documentElement.style.setProperty('width', '1200px', 'important');
-                document.body.style.setProperty('min-width', '1200px', 'important');
-                document.body.style.setProperty('width', '1200px', 'important');
-                if (app) {
-                    app.style.setProperty('min-width', '1200px', 'important');
-                    app.style.setProperty('width', '1200px', 'important');
-                }
-            }
-            
-            // Force all main containers immediately
             document.addEventListener('DOMContentLoaded', function() {
-                const containers = document.querySelectorAll('#app, #dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table');
-                containers.forEach(container => {
-                    container.style.minWidth = '1200px';
-                    container.style.width = '1200px';
-                    container.style.maxWidth = 'none';
-                    container.style.overflowX = 'auto';
-                });
-                
                 // Ensure navbar is hidden on page load
                 const navbar = document.getElementById('main-navbar');
                 if (navbar) {
@@ -242,87 +113,10 @@
                     autoFocusEmailInput();
                 }
             });
-            
-            // Continuous enforcement every 200ms
-            setInterval(function() {
-                let viewportMeta = document.querySelector('meta[name="viewport"]');
-                if (viewportMeta) {
-                    viewportMeta.content = 'width=1200, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, shrink-to-fit=no';
-                }
-                
-                // Force desktop view properties continuously
-                document.documentElement.style.setProperty('-webkit-text-size-adjust', 'none', 'important');
-                document.documentElement.style.setProperty('-moz-text-size-adjust', 'none', 'important');
-                document.documentElement.style.setProperty('text-size-adjust', 'none', 'important');
-                
-                // Re-inject desktop CSS if removed
-                if (!document.getElementById('force-desktop-view')) {
-                    const desktopCSS = `
-                        html, body, #app { 
-                            min-width: 1200px !important; 
-                            width: 1200px !important; 
-                            max-width: none !important; 
-                            overflow-x: auto !important;
-                            zoom: 1 !important;
-                            transform: none !important;
-                            -webkit-text-size-adjust: none !important;
-                            -moz-text-size-adjust: none !important;
-                            text-size-adjust: none !important;
-                        }
-                        * {
-                            -webkit-text-size-adjust: none !important;
-                            -moz-text-size-adjust: none !important;
-                            text-size-adjust: none !important;
-                        }
-                        @media screen and (max-width: 768px) {
-                            html, body, #app { 
-                                min-width: 1200px !important; 
-                                width: 1200px !important; 
-                                max-width: none !important; 
-                                overflow-x: auto !important;
-                                zoom: 1 !important;
-                                transform: none !important;
-                            }
-                        }
-                    `;
-                    
-                    const style = document.createElement('style');
-                    style.id = 'force-desktop-view';
-                    style.textContent = desktopCSS;
-                    document.head.appendChild(style);
-                }
-                document.documentElement.style.minWidth = '1200px';
-                document.documentElement.style.width = '1200px';
-                document.documentElement.style.maxWidth = 'none';
-                document.documentElement.style.overflowX = 'auto';
-                
-                document.body.style.minWidth = '1200px';
-                document.body.style.width = '1200px';
-                document.body.style.maxWidth = 'none';
-                document.body.style.overflowX = 'auto';
-                
-                // Force app container continuously
-                const app = document.getElementById('app');
-                if (app) {
-                    app.style.minWidth = '1200px';
-                    app.style.width = '1200px';
-                    app.style.maxWidth = 'none';
-                    app.style.overflowX = 'auto';
-                }
-                
-                // Force all containers continuously
-                const containers = document.querySelectorAll('#app, #dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table');
-                containers.forEach(container => {
-                    container.style.minWidth = '1200px';
-                    container.style.width = '1200px';
-                    container.style.maxWidth = 'none';
-                    container.style.overflowX = 'auto';
-                });
-            }, 200);
         })();
     </script>
 </head>
-<body class="force-desktop-view{% if force_desktop_view %} server-mobile-detected{% endif %}">
+<body class="responsive-layout{% if force_desktop_view %} server-mobile-detected{% endif %}">
     <div id="app">
         <!-- Login Section -->
         <div id="login-section" class="main-header">

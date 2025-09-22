@@ -1,19 +1,16 @@
-/* ULTRA-AGGRESSIVE: Force desktop view for mobile browsers - CSS v20.0 */
+/* Responsive design for all screen sizes - CSS v20.0 */
 html, body {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
     overflow-y: auto !important;
     transform: none !important;
     zoom: 1 !important;
-    -webkit-text-size-adjust: none !important;
-    -moz-text-size-adjust: none !important;
-    -ms-text-size-adjust: none !important;
-    text-size-adjust: none !important;
-    /* Hide scrollbar but keep scrolling functionality */
-    scrollbar-width: none !important; /* Firefox */
-    -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
 }
 
 /* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
@@ -29,15 +26,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     text-size-adjust: none !important;
 }
 
-/* Force desktop view for dashboard only - not login page */
+/* Responsive dashboard layout */
 #dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
-    /* Hide scrollbar but keep scrolling functionality */
-    scrollbar-width: none !important; /* Firefox */
-    -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }
 
 /* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
@@ -52,74 +47,81 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     display: none !important;
 }
 
-/* Table container and table - no individual scrollbars */
+/* Responsive table container */
 .table-container, .attendance-table {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: auto !important;
+    box-sizing: border-box !important;
 }
 
-/* Make login page responsive within desktop view */
-#login-section, .login-container, .login-form {
-    min-width: 400px !important;
-    width: 400px !important;
+/* Responsive login page */
+#login-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 2rem !important;
+    box-sizing: border-box !important;
+}
+
+.login-container, .login-form {
+    width: 100% !important;
     max-width: 400px !important;
+    min-width: 320px !important;
     overflow-x: hidden !important;
     margin: 0 auto !important;
+    box-sizing: border-box !important;
 }
 
-/* Force desktop view for body class - global desktop view */
-body.force-desktop-view,
-body.force-desktop-view html,
-body.force-desktop-view body {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+/* Responsive body layout */
+body.responsive-layout,
+body.responsive-layout html,
+body.responsive-layout body {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
 }
 
-/* Force desktop view for all screen sizes */
+/* Responsive design for all screen sizes */
 @media screen and (max-width: 9999px) {
     html, body, #app {
-        min-width: 1200px !important;
-        width: 1200px !important;
-        max-width: none !important;
-        overflow-x: auto !important;
-        /* Hide scrollbar but keep scrolling functionality */
-        scrollbar-width: none !important; /* Firefox */
-        -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 320px !important;
+        overflow-x: hidden !important;
     }
     
     #dashboard-section, .dashboard, .main-wrapper, .content {
-        min-width: 1200px !important;
-        width: 1200px !important;
-        max-width: none !important;
-        overflow-x: auto !important;
-        /* Hide scrollbar but keep scrolling functionality */
-        scrollbar-width: none !important; /* Firefox */
-        -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 320px !important;
+        overflow-x: hidden !important;
     }
 }
 
-/* ULTRA-AGGRESSIVE: Force desktop view specifically for mobile devices */
+/* Mobile responsive design */
 @media screen and (max-width: 768px) {
     html, body, #app {
-        min-width: 1200px !important;
-        width: 1200px !important;
-        max-width: none !important;
-        overflow-x: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 320px !important;
+        overflow-x: hidden !important;
         zoom: 1 !important;
         transform: none !important;
-        -webkit-text-size-adjust: none !important;
-        -moz-text-size-adjust: none !important;
-        text-size-adjust: none !important;
+        -webkit-text-size-adjust: 100% !important;
+        -moz-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
     
     * {
-        -webkit-text-size-adjust: none !important;
-        -moz-text-size-adjust: none !important;
-        text-size-adjust: none !important;
+        -webkit-text-size-adjust: 100% !important;
+        -moz-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
 }
 
@@ -130,12 +132,13 @@ body.force-desktop-view body {
     font-family: 'Poppins', sans-serif;
 }
 
-/* ULTRA-AGGRESSIVE: Force desktop view on ALL elements immediately */
+/* Responsive layout for all elements */
 html, body, #app, #login-section, #dashboard-section, .dashboard, .main-wrapper, .content, .dashboard-header, .control-panel, .stats-section, .filters-section, .action-buttons, #admin-panel {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }
 
 /* Force all table elements to be visible */
@@ -146,45 +149,45 @@ html, body, #app, #login-section, #dashboard-section, .dashboard, .main-wrapper,
     overflow: visible !important;
 }
 
-/* IMMEDIATE: Force desktop view from the very first moment - PREVENT MOBILE VIEW COMPLETELY */
+/* Responsive base layout */
 html, body {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
     overflow-y: auto !important;
 }
 
-/* ULTRA-AGGRESSIVE: Disable all mobile viewport behaviors */
+/* Responsive text sizing */
 html {
-    -webkit-text-size-adjust: none !important;
-    -moz-text-size-adjust: none !important;
-    -ms-text-size-adjust: none !important;
-    text-size-adjust: none !important;
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
 }
 
-/* Force desktop layout regardless of viewport settings */
+/* Responsive layout for all screen sizes */
 @media screen and (max-width: 9999px) {
     html, body, #app, #dashboard-section, .dashboard, .main-wrapper, .content {
-        min-width: 1200px !important;
-        width: 1200px !important;
-        max-width: none !important;
-        overflow-x: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 320px !important;
+        overflow-x: hidden !important;
     }
 }
 
-/* ULTRA-AGGRESSIVE: Force desktop view on ALL elements */
+/* Responsive layout for main elements */
 html, body, #app, #dashboard-section, .dashboard, .main-wrapper, .content {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
 }
 
-/* CRITICAL: Force desktop layout - override any conflicting rules */
+/* Responsive layout override */
 html, body, #app, #dashboard-section, .dashboard, .main-wrapper, .content {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
 }
 
 /* ULTRA-AGGRESSIVE: Ensure no content overflows */
@@ -192,88 +195,89 @@ html, body, #app, #dashboard-section, .dashboard, .main-wrapper, .content {
     box-sizing: border-box !important;
 }
 
-/* Force all containers to desktop width */
+/* Responsive containers */
 .dashboard, .dashboard-header, .control-panel, .stats-section, .filters-section, .table-container, .attendance-table, .action-buttons, #admin-panel {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }
 
-/* Force desktop view for ENTIRE APPLICATION - ULTRA AGGRESSIVE */
-/* This applies ALWAYS for the entire application, regardless of screen size or user settings */
+/* Responsive application layout */
 html, body {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
     overflow-y: auto !important;
 }
 
 #app {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
 }
 
 #login-section {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     padding: 2rem !important;
+    box-sizing: border-box !important;
 }
 
 .login-container {
-    min-width: 400px !important;
-    width: 400px !important;
+    width: 100% !important;
     max-width: 400px !important;
+    min-width: 320px !important;
+    box-sizing: border-box !important;
 }
 
-/* Force desktop view for dashboard after login - ULTRA AGGRESSIVE - NO MEDIA QUERY */
-/* This applies ALWAYS when dashboard is active, regardless of screen size or user settings */
+/* Responsive dashboard when active */
 body.dashboard-active {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
     overflow-y: auto !important;
 }
 
 body.dashboard-active #dashboard-section {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
     overflow-y: auto !important;
 }
 
 body.dashboard-active html,
 body.dashboard-active body {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    overflow-x: hidden !important;
 }
 
 body.dashboard-active .dashboard {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     padding: 2rem !important;
-    overflow-x: auto !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }
 
-/* ULTRA AGGRESSIVE: Override any user browser viewport settings */
+/* Responsive dashboard elements */
 body.dashboard-active * {
-    min-width: auto !important;
-    max-width: none !important;
+    box-sizing: border-box !important;
 }
 
-/* Force all dashboard elements to desktop width */
+/* Responsive dashboard elements */
 body.dashboard-active .dashboard,
 body.dashboard-active .dashboard-header,
 body.dashboard-active .control-panel,
@@ -283,26 +287,30 @@ body.dashboard-active .table-container,
 body.dashboard-active .attendance-table,
 body.dashboard-active .action-buttons,
 body.dashboard-active #admin-panel {
-    min-width: 1200px !important;
-    width: 1200px !important;
-    max-width: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
+    box-sizing: border-box !important;
 }
 
-/* Override viewport meta tag behavior */
+/* Responsive text sizing for dashboard */
 body.dashboard-active {
-    -webkit-text-size-adjust: none !important;
-    -moz-text-size-adjust: none !important;
-    -ms-text-size-adjust: none !important;
-    text-size-adjust: none !important;
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
 }
 
-/* Restore desktop layout for dashboard components */
+/* Responsive dashboard header */
 body.dashboard-active .dashboard-header {
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     padding: 2rem !important;
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .dashboard-header .user-info {
@@ -317,11 +325,14 @@ body.dashboard-active .dashboard-header .logout-btn {
 }
 
 body.dashboard-active .control-panel {
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
     padding: 1.5rem !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .control-panel .date-selector {
@@ -341,14 +352,20 @@ body.dashboard-active .control-panel .date-selector button {
 
 body.dashboard-active .stats-section {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     gap: 1.5rem !important;
     padding: 1.5rem !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .filters-section {
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     padding: 1.5rem !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .filters-section .filter-group {
@@ -374,20 +391,24 @@ body.dashboard-active .filters-section .filter-actions button {
 }
 
 body.dashboard-active .table-container {
-    min-width: 1200px !important;
-    width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     padding: 1.5rem !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .attendance-table {
-    min-width: 1200px !important;
-    width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     font-size: 0.9rem !important;
-    table-layout: fixed !important;
+    table-layout: auto !important;
     border-collapse: separate !important;
     border-spacing: 0 !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .attendance-table th,
@@ -399,10 +420,13 @@ body.dashboard-active .attendance-table td {
 }
 
 body.dashboard-active .action-buttons {
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     flex-direction: row !important;
     gap: 1rem !important;
     padding: 1.5rem !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active .action-buttons button {
@@ -411,8 +435,11 @@ body.dashboard-active .action-buttons button {
 }
 
 body.dashboard-active #admin-panel {
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 320px !important;
     padding: 1.5rem !important;
+    box-sizing: border-box !important;
 }
 
 body.dashboard-active #admin-panel .admin-actions {
