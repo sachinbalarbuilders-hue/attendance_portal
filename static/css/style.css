@@ -48,6 +48,59 @@ body.dashboard-active {
 .dashboard {
     min-height: 100vh;
     margin-top: 60px;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Main wrapper sections always expand */
+.main-wrapper, .content {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Tables always expand to full width */
+table {
+    width: 100% !important;
+}
+
+/* Additional responsive rules for mobile compatibility */
+@media screen and (max-width: 768px) {
+    .dashboard {
+        padding: 1rem !important;
+    }
+    
+    .dashboard-header {
+        padding: 1.5rem !important;
+    }
+    
+    .login-container {
+        max-width: 95% !important;
+        width: 95% !important;
+    }
+    
+    .main-header {
+        padding: 1rem !important;
+    }
+}
+
+/* Ensure all containers are fluid on mobile */
+@media screen and (max-width: 480px) {
+    .dashboard {
+        padding: 0.5rem !important;
+    }
+    
+    .dashboard-header {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .login-container {
+        padding: 1rem !important;
+    }
+    
+    .login-form {
+        padding: 1.5rem !important;
+    }
 }
 
 /* Reduce excessive padding and margins */
@@ -70,29 +123,32 @@ body.dashboard-active {
     margin-bottom: 1rem;
 }
 
-/* Main app container - force desktop view */
+/* Main app container - responsive design */
 #app {
     width: 100%;
-    min-width: 1200px;
-    overflow-x: auto;
+    max-width: 100%;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
-/* Force desktop view on all devices */
+/* Responsive design for all devices */
 html, body {
-    min-width: 1200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
-/* Disable responsive behavior completely */
+/* Responsive behavior for all screen sizes */
 @media screen and (max-width: 1199px) {
     html, body {
-        min-width: 1200px !important;
-        overflow-x: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
     }
     
     #app {
-        min-width: 1200px !important;
-        overflow-x: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
     }
 }
 
@@ -593,7 +649,7 @@ html, body {
 }
 
 .dashboard {
-    max-width: none;
+    max-width: 100% !important;
     margin: 0;
     margin-top: 60px;
     padding: 1.5rem;
@@ -601,7 +657,7 @@ html, body {
     min-height: calc(100vh - 60px);
     overflow-x: hidden;
     overflow-y: auto;
-    width: 100%;
+    width: 100% !important;
     box-sizing: border-box;
     position: relative;
 }
@@ -1475,16 +1531,16 @@ html, body {
     border-radius: 15px;
     overflow-x: auto;
     box-shadow: none;
-    width: 100%;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box;
 }
 
 .attendance-table {
-    width: 100%;
+    width: 100% !important;
     border-collapse: separate;
     border-spacing: 0 8px;
-    min-width: 600px; /* Reduced minimum width for better responsiveness */
+    min-width: 100% !important;
     border: none;
 }
 
