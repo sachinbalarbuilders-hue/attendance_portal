@@ -2046,8 +2046,6 @@ async function showEmployeeProfile(employeeName) {
     ).length;
     
     // Add PHF and SHF to paid days (both count as 0.5)
-    const paidHalfDays = employeeData.filter(record => record.Status.startsWith('PHF')).length;
-    const sickHalfDays = employeeData.filter(record => record.Status.startsWith('SHF')).length;
     const totalPaidDays = paidLeaveDays + (paidHalfDays * 0.5) + (sickHalfDays * 0.5);
     
     // Calculate unpaid days: HF = 0.5, A = 1.0
