@@ -15,12 +15,12 @@ GMAIL_APP_PASSWORD = "syrx imud ysel upqf"
 os.environ['GMAIL_EMAIL'] = GMAIL_EMAIL
 os.environ['GMAIL_APP_PASSWORD'] = GMAIL_APP_PASSWORD
 
-print("✅ Gmail configuration loaded!")
-print(f"📧 Email: {GMAIL_EMAIL}")
-print("🔐 App Password: Configured")
+print("Gmail configuration loaded!")
+print(f"Email: {GMAIL_EMAIL}")
+print("App Password: Configured")
 
 # Instructions for getting App Password:
-print("\n📋 To get your Gmail App Password:")
+print("\nTo get your Gmail App Password:")
 print("1. Go to: https://myaccount.google.com/security")
 print("2. Enable 2-factor authentication")
 print("3. Click 'App passwords'")
