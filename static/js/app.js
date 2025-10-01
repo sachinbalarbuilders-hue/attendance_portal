@@ -2035,12 +2035,12 @@ async function showEmployeeProfile(employeeName) {
     const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length + 
                       (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5) +
-                      (employeeData.filter(record => record.Status.startsWith('PHF')).length * 0.5) +
-                      (employeeData.filter(record => record.Status.startsWith('SHF')).length * 0.5);
+                      (employeeData.filter(record => record.Status.startsWith('PHF')).length * 1) +
+                      (employeeData.filter(record => record.Status.startsWith('SHF')).length * 1);
     // Use working days only for attendance rate calculation (exclude W/O)
     const totalDaysInMonth = employeeData.length; // Total records = total days in month
     const totalWorkingDays = employeeData.filter(record => !record.Status.startsWith('W/O')).length; // Exclude W/O days
-    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
+    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 1) + (sickHalfDays * 1); // P=1, HF=0.5, PHF/SHF=1
     const paidLeaveDays = employeeData.filter(record => 
         ['W/O', 'PL', 'SL', 'FL'].some(leave => record.Status.startsWith(leave))
     ).length;
@@ -2059,8 +2059,8 @@ async function showEmployeeProfile(employeeName) {
         'W/O': 1,
         'HL': 1,
         'HF': 0.5,
-        'PHF': 0.5,
-        'SHF': 0.5,
+        'PHF': 1,
+        'SHF': 1,
     };
     const payableDays = employeeData.reduce((sum, r) => {
         const s = (r.Status || '').toUpperCase();
@@ -2591,12 +2591,12 @@ function updateEmployeeStats() {
     const weekOffDays = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const absentDays = employeeData.filter(record => record.Status.startsWith('A')).length + 
                       (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5) +
-                      (employeeData.filter(record => record.Status.startsWith('PHF')).length * 0.5) +
-                      (employeeData.filter(record => record.Status.startsWith('SHF')).length * 0.5);
+                      (employeeData.filter(record => record.Status.startsWith('PHF')).length * 1) +
+                      (employeeData.filter(record => record.Status.startsWith('SHF')).length * 1);
     
     // Use working days only for attendance rate calculation (exclude W/O)
     const totalWorkingDays = employeeData.filter(record => !record.Status.startsWith('W/O')).length; // Exclude W/O days
-    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 0.5) + (sickHalfDays * 0.5); // P=1, HF/PHF/SHF=0.5
+    const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 1) + (sickHalfDays * 1); // P=1, HF=0.5, PHF/SHF=1
     const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
     const weightByStatus = {
         'P': 1,
@@ -2608,8 +2608,8 @@ function updateEmployeeStats() {
         'W/O': 1,
         'HL': 1,
         'HF': 0.5,
-        'PHF': 0.5,
-        'SHF': 0.5,
+        'PHF': 1,
+        'SHF': 1,
     };
     const payableDays = employeeData.reduce((sum, r) => {
         const s = (r.Status || '').toUpperCase();
