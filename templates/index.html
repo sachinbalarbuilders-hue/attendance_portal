@@ -281,6 +281,10 @@
                                 <p>Paid Leave Days</p>
                             </div>
                             <div class="employee-profile-stat">
+                                <h4 id="profile-unpaid-days">0</h4>
+                                <p>Unpaid Days</p>
+                            </div>
+                            <div class="employee-profile-stat">
                                 <h4 id="profile-attendance-rate">0%</h4>
                                 <p>Attendance Rate</p>
                             </div>
@@ -430,6 +434,13 @@
                             <div class="metric-content">
                                 <h3 id="present-days">--</h3>
                                 <p>Present Days</p>
+                            </div>
+                        </div>
+                        <div class="metric-card metric-unpaid">
+                            <i class="fas fa-times-circle"></i>
+                            <div class="metric-content">
+                                <h3 id="unpaid-days">--</h3>
+                                <p>Unpaid Days</p>
                             </div>
                         </div>
                         <div class="metric-card metric-total">
@@ -901,6 +912,10 @@
                             <div class="stat-card stat-present">
                                 <div class="stat-number">${data.statistics.present_days}</div>
                                 <div class="stat-label">Present</div>
+                            </div>
+                            <div class="stat-card stat-unpaid">
+                                <div class="stat-number">${data.statistics.unpaid_days}</div>
+                                <div class="stat-label">Unpaid</div>
                             </div>
                             <div class="stat-card stat-late">
                                 <div class="stat-number">${data.statistics.late_days}</div>

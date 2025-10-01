@@ -2044,6 +2044,10 @@ async function showEmployeeProfile(employeeName) {
     const paidLeaveDays = employeeData.filter(record => 
         ['W/O', 'PL', 'SL', 'FL'].some(leave => record.Status.startsWith(leave))
     ).length;
+    
+    // Calculate unpaid days: HF = 0.5, A = 1.0
+    const unpaidDays = (employeeData.filter(record => record.Status.startsWith('A')).length) + 
+                      (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
     const wo = employeeData.filter(record => record.Status.startsWith('W/O')).length;
     const pl = employeeData.filter(record => record.Status.startsWith('PL')).length;
     const sl = employeeData.filter(record => record.Status.startsWith('SL')).length;
@@ -2077,6 +2081,7 @@ async function showEmployeeProfile(employeeName) {
     document.getElementById('profile-total-days').textContent = totalDaysInMonth;
     document.getElementById('profile-present-days').textContent = presentDaysWeighted;
     document.getElementById('profile-leave-days').textContent = paidLeaveDays;
+    document.getElementById('profile-unpaid-days').textContent = unpaidDays;
     document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
     const payableEl = document.getElementById('profile-payable-days');
     if (payableEl) payableEl.textContent = payableDays;
@@ -2597,6 +2602,10 @@ function updateEmployeeStats() {
     const totalWorkingDays = employeeData.filter(record => !record.Status.startsWith('W/O')).length; // Exclude W/O days
     const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 1) + (sickHalfDays * 1); // P=1, HF=0.5, PHF/SHF=1
     const attendanceRate = totalWorkingDays > 0 ? ((presentDaysWeighted / totalWorkingDays) * 100).toFixed(1) : 0;
+    
+    // Calculate unpaid days: HF = 0.5, A = 1.0
+    const unpaidDays = (employeeData.filter(record => record.Status.startsWith('A')).length) + 
+                      (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
     const weightByStatus = {
         'P': 1,
         'PL': 1,
@@ -2630,6 +2639,7 @@ function updateEmployeeStats() {
     
     document.getElementById('attendance-rate').textContent = `${attendanceRate}%`;
     document.getElementById('present-days').textContent = presentDaysWeighted;
+    document.getElementById('unpaid-days').textContent = unpaidDays;
     document.getElementById('performance-status').innerHTML = `${performanceEmoji} ${performanceStatus}`;
     const payableDaysEl = document.getElementById('payable-days');
     if (payableDaysEl) payableDaysEl.textContent = payableDays;
