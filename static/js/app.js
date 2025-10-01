@@ -1398,12 +1398,17 @@ async function showDashboard() {
         showChangePasswordModal();
     };
     
-    // Set today's date as default
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('date-picker').value = today;
-    
-    // Load initial data
+    // Load initial data first to get stored date
     await loadAttendanceData();
+    
+    // Only set today's date as default if no date was loaded from server
+    const dp = document.getElementById('date-picker');
+    if (!dp.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dp.value = today;
+        // Save the default date to server
+        await saveAdminDate(today);
+    }
     
     if (currentUser.is_admin) {
         await loadEmployees();
@@ -1740,8 +1745,6 @@ function showEmployeeDashboard() {
     document.getElementById('employee-panel').style.display = 'block';
     document.getElementById('employee-name').textContent = cleanEmployeeName(currentUser.name);
     
-    // Populate personal cumulative leave totals
-    fetchAndRenderLeaveTotals(currentUser.name, true);
     
     // Load late statistics
     loadLateStatistics();
@@ -1961,8 +1964,6 @@ function selectEmployee(employeeName) {
     
     // Show employee profile and data
     showEmployeeProfile(employeeName);
-    // Also fetch cumulative leave totals from Excel and render breakdown
-    fetchAndRenderLeaveTotals(employeeName, false);
     
     
     displayAdminAttendanceData(globalShowUpdateNote);
@@ -2080,39 +2081,6 @@ async function showEmployeeProfile(employeeName) {
     document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
     const payableEl = document.getElementById('profile-payable-days');
     if (payableEl) payableEl.textContent = payableDays;
-    // Leave breakdown
-    const woEl = document.getElementById('profile-wo');
-    const plEl = document.getElementById('profile-pl');
-    const slEl = document.getElementById('profile-sl');
-    const flEl = document.getElementById('profile-fl');
-    if (woEl) woEl.textContent = wo;
-    if (plEl) {
-        // For T employees, show "FL" instead of count
-        if (isTEmployee) {
-            plEl.textContent = 'FL';
-            plEl.style.color = '#ff6b6b';
-            plEl.style.fontStyle = 'italic';
-        } else {
-            plEl.textContent = pl;
-            // Reset styling for normal employees
-            plEl.style.color = '';
-            plEl.style.fontStyle = '';
-        }
-    }
-    if (slEl) {
-        // For T employees, show "FL" instead of count
-        if (isTEmployee) {
-            slEl.textContent = 'FL';
-            slEl.style.color = '#ff6b6b';
-            slEl.style.fontStyle = 'italic';
-        } else {
-            slEl.textContent = sl;
-            // Reset styling for normal employees
-            slEl.style.color = '';
-            slEl.style.fontStyle = '';
-        }
-    }
-    if (flEl) flEl.textContent = fl;
     
     // Show the profile card
     profileCard.classList.add('show');
@@ -2668,95 +2636,6 @@ function updateEmployeeStats() {
     if (payableDaysEl) payableDaysEl.textContent = payableDays;
 }
 
-// Fetch cumulative leave totals from backend and render
-async function fetchAndRenderLeaveTotals(employeeName, isSelf) {
-    try {
-        // First get leave eligibility for this employee
-        const eligibilityUrl = new URL('/api/employee-leave-eligibility', window.location.origin);
-        eligibilityUrl.searchParams.append('employee', employeeName);
-        const eligibilityRes = await fetch(eligibilityUrl);
-        const eligibilityResult = await eligibilityRes.json();
-        
-        // Then get leave totals
-        const url = new URL('/api/leave-totals', window.location.origin);
-        url.searchParams.append('employee', employeeName);
-        const res = await fetch(url);
-        const result = await res.json();
-        if (!result.success) return;
-        const data = result.data && result.data[employeeName] ? result.data[employeeName] : { 'W/O': 0, 'PL': 0, 'SL': 0, 'FL': 0 };
-
-        if (!isSelf) {
-            const woEl = document.getElementById('profile-wo');
-            const plEl = document.getElementById('profile-pl');
-            const slEl = document.getElementById('profile-sl');
-            const flEl = document.getElementById('profile-fl');
-            if (woEl) woEl.textContent = data['W/O'] ?? 0;
-            if (plEl) {
-                // Handle "FL" text for T employees - show "Not Eligible"
-                if (data['PL'] === 'FL') {
-                    plEl.textContent = 'Not Eligible';
-                    plEl.style.color = '#ff6b6b';
-                    plEl.style.fontStyle = 'italic';
-                } else {
-                    plEl.textContent = data['PL'] ?? 0;
-                    // Reset styling for normal employees
-                    plEl.style.color = '';
-                    plEl.style.fontStyle = '';
-                }
-            }
-            if (slEl) {
-                // Handle "FL" text for T employees - show "Not Eligible"
-                if (data['SL'] === 'FL') {
-                    slEl.textContent = 'Not Eligible';
-                    slEl.style.color = '#ff6b6b';
-                    slEl.style.fontStyle = 'italic';
-                } else {
-                    slEl.textContent = data['SL'] ?? 0;
-                    // Reset styling for normal employees
-                    slEl.style.color = '';
-                    slEl.style.fontStyle = '';
-                }
-            }
-            if (flEl) flEl.textContent = data['FL'] ?? 0;
-        } else {
-            const myWOEl = document.getElementById('my-wo');
-            const myPLEl = document.getElementById('my-pl');
-            const mySLEl = document.getElementById('my-sl');
-            const myFLEl = document.getElementById('my-fl');
-            if (myWOEl) myWOEl.textContent = data['W/O'] ?? 0;
-            if (myPLEl) {
-                // Handle "FL" text for T employees - show "Not Eligible"
-                if (data['PL'] === 'FL') {
-                    myPLEl.textContent = 'Not Eligible';
-                    myPLEl.style.color = '#ff6b6b';
-                    myPLEl.style.fontStyle = 'italic';
-                } else {
-                    myPLEl.textContent = data['PL'] ?? 0;
-                    // Reset styling for normal employees
-                    myPLEl.style.color = '';
-                    myPLEl.style.fontStyle = '';
-                }
-            }
-            if (mySLEl) {
-                // Handle "FL" text for T employees - show "Not Eligible"
-                if (data['SL'] === 'FL') {
-                    mySLEl.textContent = 'Not Eligible';
-                    mySLEl.style.color = '#ff6b6b';
-                    mySLEl.style.fontStyle = 'italic';
-                } else {
-                    mySLEl.textContent = data['SL'] ?? 0;
-                    // Reset styling for normal employees
-                    mySLEl.style.color = '';
-                    mySLEl.style.fontStyle = '';
-                }
-            }
-            if (myFLEl) myFLEl.textContent = data['FL'] ?? 0;
-        }
-    } catch (e) {
-        // Silent fail; UI will keep previously computed values
-        console.error('Failed to load leave totals', e);
-    }
-}
 
 // **FIXED: Employee dropdown filter function**
 function updateEmployeeFilter() {
