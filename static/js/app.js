@@ -2042,7 +2042,7 @@ async function showEmployeeProfile(employeeName) {
     const totalWorkingDays = employeeData.filter(record => !record.Status.startsWith('W/O')).length; // Exclude W/O days
     const presentDaysWeighted = presentDays + (halfDays * 0.5) + (paidHalfDays * 1) + (sickHalfDays * 1); // P=1, HF=0.5, PHF/SHF=1
     const paidLeaveDays = employeeData.filter(record => 
-        ['W/O', 'PL', 'SL', 'FL'].some(leave => record.Status.startsWith(leave))
+        ['PL', 'SL', 'FL', 'PAT', 'MAT', 'HL'].some(leave => record.Status.startsWith(leave))
     ).length;
     
     // Calculate unpaid days: HF = 0.5, A = 1.0

@@ -1482,8 +1482,8 @@ def get_employee_data(employee_name):
         pat_used = len([r for r in employee_records if r['Status'].startswith('PAT')])
         mat_used = len([r for r in employee_records if r['Status'].startswith('MAT')])
         
-        # Calculate total paid leave days
-        paid_leave_days = wo_used + pl_used + sl_used + fl_used + hl_used + pat_used + mat_used
+        # Calculate total paid leave days (exclude W/O as it's not a leave)
+        paid_leave_days = pl_used + sl_used + fl_used + hl_used + pat_used + mat_used
         
         # Calculate working days (exclude W/O)
         working_days = total_days - wo_used
