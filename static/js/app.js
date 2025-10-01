@@ -2076,7 +2076,6 @@ async function showEmployeeProfile(employeeName) {
     
     document.getElementById('profile-total-days').textContent = totalDaysInMonth;
     document.getElementById('profile-present-days').textContent = presentDaysWeighted;
-    document.getElementById('profile-absent-days').textContent = absentDays;
     document.getElementById('profile-leave-days').textContent = paidLeaveDays;
     document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
     const payableEl = document.getElementById('profile-payable-days');
