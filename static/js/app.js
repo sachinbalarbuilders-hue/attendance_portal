@@ -2045,6 +2045,11 @@ async function showEmployeeProfile(employeeName) {
         ['PL', 'SL', 'FL', 'PAT', 'MAT', 'HL'].some(leave => record.Status.startsWith(leave))
     ).length;
     
+    // Add PHF and SHF to paid days (both count as 0.5)
+    const paidHalfDays = employeeData.filter(record => record.Status.startsWith('PHF')).length;
+    const sickHalfDays = employeeData.filter(record => record.Status.startsWith('SHF')).length;
+    const totalPaidDays = paidLeaveDays + (paidHalfDays * 0.5) + (sickHalfDays * 0.5);
+    
     // Calculate unpaid days: HF = 0.5, A = 1.0
     const unpaidDays = (employeeData.filter(record => record.Status.startsWith('A')).length) + 
                       (employeeData.filter(record => record.Status.startsWith('HF')).length * 0.5);
@@ -2080,7 +2085,7 @@ async function showEmployeeProfile(employeeName) {
     
     document.getElementById('profile-total-days').textContent = totalDaysInMonth;
     document.getElementById('profile-present-days').textContent = presentDaysWeighted;
-    document.getElementById('profile-leave-days').textContent = paidLeaveDays;
+    document.getElementById('profile-leave-days').textContent = totalPaidDays;
     document.getElementById('profile-unpaid-days').textContent = unpaidDays;
     document.getElementById('profile-attendance-rate').textContent = `${attendanceRate}%`;
     const payableEl = document.getElementById('profile-payable-days');
