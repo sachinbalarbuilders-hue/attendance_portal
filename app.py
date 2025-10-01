@@ -763,16 +763,16 @@ def process_attendance_file(file_path, selected_date=None):
                     # Show punches for P, HF, SHF, PHF statuses even when one is missing
                     if status in ["P", "HF", "PHF", "SHF"]:
                         if t1.hour >= 12:
-                            pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
+                            pin, pout = "MISSING", t1.strftime("%H:%M")
                         else:
-                            pin, pout = t1.strftime("%H:%M"), "⚠️ MISSING"
+                            pin, pout = t1.strftime("%H:%M"), "MISSING"
                         if status in ["HF", "PHF", "SHF"]:
                             print(f"DEBUG: {status} status with missing time: {sheet.title} on {date_val} - {pin} to {pout}")
                     elif status not in ignore_statuses:
                         if t1.hour >= 12:
-                            pin, pout = "⚠️ MISSING", t1.strftime("%H:%M")
+                            pin, pout = "MISSING", t1.strftime("%H:%M")
                         else:
-                            pin, pout = t1.strftime("%H:%M"), "⚠️ MISSING"
+                            pin, pout = t1.strftime("%H:%M"), "MISSING"
                         if status in ["HF", "PHF", "SHF"]:
                             print(f"DEBUG: {status} status with missing time: {sheet.title} on {date_val} - {pin} to {pout}")
                     else:
@@ -800,11 +800,11 @@ def process_attendance_file(file_path, selected_date=None):
                     # Both punches missing
                     # Show punches for P, HF, SHF, PHF statuses even when both are missing
                     if status in ["P", "HF", "PHF", "SHF"]:
-                        pin, pout = "⚠️ MISSING", "⚠️ MISSING"
+                        pin, pout = "MISSING", "MISSING"
                         if status in ["HF", "PHF", "SHF"]:
                             print(f"DEBUG: {status} status with both times missing: {sheet.title} on {date_val}")
                     elif status not in ignore_statuses:
-                        pin, pout = "⚠️ MISSING", "⚠️ MISSING"
+                        pin, pout = "MISSING", "MISSING"
                         if status in ["HF", "PHF", "SHF"]:
                             print(f"DEBUG: {status} status with both times missing: {sheet.title} on {date_val}")
                     else:

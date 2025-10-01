@@ -2633,13 +2633,13 @@ function updateEmployeeStats() {
     let performanceStatus, performanceEmoji;
     if (attendanceRate >= 90) {
         performanceStatus = 'Excellent';
-        performanceEmoji = '🌟';
+        performanceEmoji = 'Excellent';
     } else if (attendanceRate >= 75) {
         performanceStatus = 'Good';
-        performanceEmoji = '👍';
+        performanceEmoji = 'Good';
     } else {
         performanceStatus = 'Needs Improvement';
-        performanceEmoji = '⚠️';
+        performanceEmoji = 'Needs Improvement';
     }
     
     document.getElementById('attendance-rate').textContent = `${attendanceRate}%`;
@@ -3022,11 +3022,11 @@ async function showEmployeeData(employeeName) {
             displayEmployeeData(result.data);
             document.getElementById('employee-data-modal').style.display = 'flex';
         } else {
-            showNotification('❌ Failed to load employee data: ' + result.message, 'error');
+            showNotification('Failed to load employee data: ' + result.message, 'error');
         }
     } catch (error) {
         console.error('Error loading employee data:', error);
-        showNotification('❌ Error loading employee data', 'error');
+        showNotification('Error loading employee data', 'error');
     }
 }
 

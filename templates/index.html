@@ -808,19 +808,19 @@
                 
                 if (data.success) {
                     // Show success message
-                    showNotification('✅ Cache cleared successfully! Page will reload to apply changes.', 'success');
+                    showNotification('Cache cleared successfully! Page will reload to apply changes.', 'success');
                     
                     // Reload page after a short delay
                     setTimeout(() => {
                         window.location.reload(true); // Force reload from server
                     }, 2000);
                 } else {
-                    showNotification('❌ Failed to clear cache: ' + data.message, 'error');
+                    showNotification('Failed to clear cache: ' + data.message, 'error');
                 }
             } catch (error) {
                 console.error('Error clearing cache:', error);
                 if (error.message.includes('Unexpected token')) {
-                    showNotification('❌ Server error: Invalid response format. Please try again.', 'error');
+                    showNotification('Server error: Invalid response format. Please try again.', 'error');
                 } else {
                     showNotification('❌ Error clearing cache: ' + error.message, 'error');
                 }
